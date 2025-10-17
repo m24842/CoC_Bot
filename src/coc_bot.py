@@ -173,6 +173,8 @@ class CoC_Bot:
                     continue
                 
                 if self.start():
+                    self.update_status("now")
+                    
                     self.upgrader.run()
                     self.attacker.run()
                     
