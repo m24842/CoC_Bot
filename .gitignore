@@ -1,0 +1,7 @@
+.vscode
+.venv
+debug
+*.pyc
+*.log
+src/configs.py
+app/notifications.db

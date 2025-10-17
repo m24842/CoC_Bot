@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CoC Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='coc_bot_logo.jpg') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='coc_bot_logo.jpg') }}" alt="CoC Bot">
+        <h1 class="themed_text">CoC Bot</h1>
+    </header>
+
+    <div class="container">
+        <div style="margin-bottom:25px;">
+            <p>
+                <span class="themed_padding" id="left_padding"></span><!--
+            --><strong class="themed_text" id="countdown_title"></strong><!--
+            --><span class="themed_text" id="countdown_time"></span><!--
+            --><span class="themed_padding" id="right_padding">.</span>
+            </p>
+            <strong class="themed_text" id="run_status" style="font-size:1.5em; padding:0;"></strong>
+        </div>
+
+        <form method="POST" class="stacked-buttons">
+            <button type="submit" name="preset" value="5">5 min</button>
+            <button type="submit" name="preset" value="15">15 min</button>
+            <button type="submit" name="preset" value="30">30 min</button>
+        </form>
+
+        <form method="POST" class="custom-input-form">
+            <input type="number" name="custom_input" placeholder="Custom" min="1"  required title="Minutes">
+            <button type="submit" ><i class="fas fa-arrow-right"></i></button>
+        </form>
+
+        <form method="POST" class="cancel-button">
+            <button type="submit" name="cancel">Cancel</button>
+        </form>
+
+        <div id="notifications" class="notifications" style="margin-top:30px;">
+            <h1 class="notifications_title">Recent Notifications</h1>
+        </div>
+        
+        <script>
+            document.addEventListener("touchstart", () => {}, true);
+        </script>
+
+        {% if end_time is number and current_time is number %}
+        <script>
+            const start = Date.now();
+            const current_time = {{ current_time }};
+            let end_time = {{ end_time }};
+            let run_status = {{ run_status | tojson }};
+
+            let notifications = {{ notifications | tojson }};
+            const time_labels = ['d', 'h', 'm', 's'];
+
+            function updateNotifications() {
+                let currentIndex = 0;
+                while (currentIndex < notifications.length) {
+                    const now = Date.now();
+
+                    const notif = notifications[currentIndex];
+
+                    const age = current_time - notif.time_stamp + (now - start) / 1000;
+                    const days = Math.floor(age / 86400);
+                    if (days > 7) continue;
+                    const hours = Math.floor((age % 86400) / 3600);
+                    const minutes = Math.floor((age % 3600) / 60);
+                    const seconds = Math.floor(age % 60);
+                    const time_array = [days, hours, minutes, seconds];
+                    let time_index = 0;
+                    while (time_index < time_array.length-1 && time_array[time_index]===0) {
+                        time_index++;
+                    }
+                    const time_string = time_array[time_index] + time_labels[time_index];
+
+                    if (document.getElementById(`notif_${currentIndex}`)) {
+                        document.getElementById(`notif_${currentIndex}`).innerHTML = `
+                        <div class="notif">
+                            <div class="notif_data">${notif.data}</div>
+                            <div class="notif_age">${time_string}</div>
+                        </div>
+                        `;
+                    } else {
+                        const notifDiv = document.createElement("div");
+                        notifDiv.className = "notification";
+                        notifDiv.id = `notif_${currentIndex}`;
+                        notifDiv.innerHTML = `
+                        <div class="notif">
+                            <div class="notif_data">${notif.data}</div>
+                            <div class="notif_age">${time_string}</div>
+                        </div>
+                        `;
+
+                        document.getElementById("notifications").appendChild(notifDiv);
+                    }
+
+                    currentIndex++;
+                }
+                requestAnimationFrame(updateNotifications);
+            }
+            
+            setInterval(updateNotifications, 500);
+
+            async function fetchNotifications() {
+                try {
+                    const response = await fetch("/notify");
+                    if (response.ok) {
+                        notifications = await response.json();
+                        updateNotifications();
+                    }
+                } catch (error) {
+                    console.error("Error fetching notifications:", error);
+                }
+            }
+
+            setInterval(fetchNotifications, 1000);
+
+            function fetchError() {
+                fetch("/status")
+                    .then(response => response.json())
+                    .then(data => {
+                        run_status = data.status;
+                    })
+                    .catch(error => console.error('Error fetching error status:', error));
+            }
+
+            setInterval(fetchError, 1000);
+
+            function fetchEndTime() {
+                fetch("/end_time")
+                    .then(response => response.json())
+                    .then(data => {
+                        end_time = data.end_time;
+                    })
+                    .catch(error => console.error('Error fetching countdown end time:', error));
+            }
+
+            setInterval(fetchEndTime, 1000);
+
+            function fetchStatus() {
+                fetch("/status")
+                    .then(response => response.json())
+                    .then(data => {
+                        run_status = data.status;
+                    })
+                    .catch(error => console.error('Error fetching status:', error));
+            }
+
+            setInterval(fetchStatus, 1000);
+
+            function get_hms(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+                return {hours, minutes, seconds: secs};
+            }
+
+            function updateLastChecked() {
+                const now = Date.now();
+                const total_time_left = end_time - current_time;
+                const time_left = Math.max(0, total_time_left - (now - start) / 1000);
+
+                let last_checked_string = "";
+                if (typeof run_status === "number") {
+                    const age = current_time - run_status + (now - start) / 1000;
+                    const days = Math.floor(age / 86400);
+                    if (days < 7) {
+                        const {hours, minutes, seconds} = get_hms(age);
+                        const time_array = [days, hours, minutes, seconds];
+                        let time_index = 0;
+                        while (time_index < time_array.length-1 && time_array[time_index]===0) {
+                            time_index++;
+                        }
+                        last_checked_string = `Checked ${time_array[time_index] + time_labels[time_index]} ago`;
+                    }
+                }
+                document.getElementById('run_status').innerText = last_checked_string;
+
+                requestAnimationFrame(updateLastChecked);
+            }
+
+            setInterval(updateLastChecked, 500);
+
+            function updateCountdown() {
+                const now = Date.now();
+                const total_time_left = end_time - current_time;
+                const time_left = Math.max(0, total_time_left - (now - start) / 1000);
+
+                if (run_status == "error") {
+                    document.getElementById('countdown_title').innerText = `Error!`;
+                    document.getElementById('countdown_time').innerText = ``;
+                    document.getElementById('left_padding').innerText = ``;
+                    document.getElementById('right_padding').innerText = ``;
+                } else if (time_left > 0) {
+                    const {hours, minutes, seconds} = get_hms(time_left);
+                    const time_array = [hours, minutes, seconds];
+                    let time_index = 0;
+                    while (time_index < time_array.length-2 && time_array[time_index]===0) {
+                        time_index++;
+                    }
+                    const time_string = `${time_array[time_index] + time_labels[time_index+1]} ${time_array[time_index+1] + time_labels[time_index+2]}`;
+
+                    document.getElementById('countdown_title').innerText = `Paused:`;
+                    document.getElementById('countdown_time').innerText = ` ${time_string}`;
+                    document.getElementById('left_padding').innerText = ``;
+                    document.getElementById('right_padding').innerText = ``;
+                } else {
+                    const num_dots = Math.floor((now / 500) % 4);
+                    const dots = '.'.repeat(num_dots);
+                    const padding_dots = '.'.repeat(3 - num_dots);
+
+                    document.getElementById('countdown_title').innerText = `Running`;
+                    document.getElementById('countdown_time').innerText = dots;
+                    document.getElementById('left_padding').innerText = `...`;
+                    document.getElementById('right_padding').innerText = padding_dots;
+                }
+                requestAnimationFrame(updateCountdown);
+            }
+
+            setInterval(updateCountdown, 500);
+
+            document.querySelectorAll("form").forEach(form => {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                                        
+                    const submitter = e.submitter;
+
+                    const formData = new FormData(form);
+
+                    form.reset()
+
+                    if (submitter && submitter.name) {
+                        formData.append(submitter.name, submitter.value);
+                    }
+
+                    const response = await fetch("/end_time", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        end_time = data.end_time;
+                    } else {
+                        console.error("Error submitting form:", response.statusText);
+                    }
+                });
+            });
+        </script>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,291 @@
+:root {
+  --bg: rgb(245, 245, 245);
+  --text: rgb(0, 0, 0);
+  --text_inverted: rgb(245, 245, 245);
+  --notification_highlight: rgb(230, 230, 230);
+  --notif_background: rgb(198, 198, 198);
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: rgb(18, 18, 18);
+    --text: rgb(220, 220, 220);
+    --text_inverted: rgb(50, 50, 50);
+    --notification_highlight: rgb(220, 220, 220);
+    --notif_background: rgb(178, 178, 178);
+    --shadow: rgba(255, 255, 255, 0.2);
+  }
+}
+
+body {
+    background: var(--bg);
+    font-family: 'Rubik', sans-serif;
+    text-align: center;
+    padding: 30px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+h1 {
+    font-size: 5em;
+    margin: 10px;
+}
+
+.themed_text {
+    color: var(--text);
+}
+
+.themed_padding {
+    color: var(--bg);
+}
+
+p {
+    font-size: 3em;
+    margin: 10px;
+}
+
+header img {
+    width: min(30em, 50%);
+    height: min(30em, 50%);
+    object-fit: cover;
+    border-radius: 20%;
+    display: block;
+    margin: auto;
+    box-shadow: 0 8px 20px var(--shadow);
+}
+
+.container {
+    width: min(30em, 60%);
+    margin: 0 auto;
+}
+
+.stacked-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .stacked-buttons button {
+        width: 100%;
+        font-family: 'Rubik', sans-serif;
+        padding: 20px;
+        font-size: 4em;
+        font-weight: bold;
+        border: none;
+        border-radius: 25px;
+        background-color: rgb(250, 217, 56);
+        color: var(--text_inverted);
+        cursor: pointer;
+        box-shadow: 0 3px 20px var(--shadow);
+        transition: transform 0.2s ease-out, background-color 0.1s ease-out;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .stacked-buttons button:hover {
+        transform: scale(1.05);
+        background-color: rgb(120, 216, 230);
+        transition-duration: 0.2s;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .stacked-buttons button {
+        width: 100%;
+        font-family: 'Rubik', sans-serif;
+        padding: 20px;
+        font-size: 4em;
+        font-weight: bold;
+        border: none;
+        border-radius: 25px;
+        background-color: rgb(250, 217, 56);
+        color: var(--text_inverted);
+        cursor: pointer;
+        box-shadow: 0 3px 20px var(--shadow);
+        transition: transform 0.5s ease-out, background-color 0.5s ease-out;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .stacked-buttons button:active {
+        transform: scale(0.95);
+        background-color: rgb(120, 216, 230);
+        transition-duration: 0.2s;
+    }
+}
+
+.custom-input-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.custom-input-form input {
+    flex: 1;
+    font-family: 'Rubik', sans-serif;
+    padding: 20px;
+    font-size: 4em;
+    font-weight: bold;
+    width: 90px;
+    text-align: center;
+    border-width: 6px;
+    border-radius: 25px;
+    border-color: var(--text);
+    background-color: var(--bg);
+    color: var(--text);
+    cursor: text;
+    box-shadow: 0 3px 20px var(--shadow);
+    transition: background 0.3s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .custom-input-form button {
+        font-family: 'Rubik', sans-serif;
+        padding: 20px 0.5em;
+        font-size: 4em;
+        font-weight: bold;
+        border: none;
+        border-radius: 25px;
+        background-color: rgb(250, 217, 56);
+        color: var(--text_inverted);
+        cursor: pointer;
+        box-shadow: 0 3px 20px var(--shadow);
+        transition: transform 0.2s ease-out, background-color 0.1s ease-out;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .custom-input-form button:hover {
+        transform: scale(1.05);
+        background-color: rgb(120, 216, 230);
+        transition-duration: 0.2s;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .custom-input-form button {
+        font-family: 'Rubik', sans-serif;
+        padding: 20px 0.5em;
+        font-size: 4em;
+        font-weight: bold;
+        border: none;
+        border-radius: 25px;
+        background-color: rgb(250, 217, 56);
+        color: var(--text_inverted);
+        cursor: pointer;
+        box-shadow: 0 3px 20px var(--shadow);
+        transition: transform 0.5s ease-out, background-color 0.5s ease-out;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .custom-input-form button:active {
+        transform: scale(0.95);
+        background-color: rgb(120, 216, 230);
+        transition-duration: 0.2s;
+    }
+}
+
+.cancel-button {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .cancel-button button {
+        width: 100%;
+        font-family: 'Rubik', sans-serif;
+        padding: 20px;
+        font-size: 4em;
+        font-weight: bold;
+        border: none;
+        border-radius: 25px;
+        background-color: rgb(228, 98, 86);
+        color: var(--text_inverted);
+        cursor: pointer;
+        box-shadow: 0 3px 20px var(--shadow);
+        transition: transform 0.2s ease-out, background-color 0.1s ease-out;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .cancel-button button:hover {
+        transform: scale(1.05);
+        background-color: rgb(221, 48, 32);
+        transition-duration: 0.2s;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .cancel-button button {
+        width: 100%;
+        font-family: 'Rubik', sans-serif;
+        padding: 20px;
+        font-size: 4em;
+        font-weight: bold;
+        border: none;
+        border-radius: 25px;
+        background-color: rgb(228, 98, 86);
+        color: var(--text_inverted);
+        cursor: pointer;
+        box-shadow: 0 3px 20px var(--shadow);
+        transition: transform 0.5s ease-out, background-color 0.5s ease-out;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .cancel-button button:active {
+        transform: scale(0.95);
+        background-color: rgb(221, 48, 32);
+        transition-duration: 0.2s;
+    }
+}
+
+.notifications {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    background-color: var(--notification_highlight);
+    border: none;
+    border-radius: 25px;
+    box-shadow: 0 8px 20px var(--shadow);
+}
+
+.notifications h1 {
+    font-size: 2.25em;
+    margin: 10px;
+    padding: 20px;
+    background-color: rgb(59, 59, 59);
+    color: var(--notification_highlight);
+    border: none;
+    border-radius: 15px;
+}
+
+.notif {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    margin: 0 10px 10px 10px;
+    background-color: var(--notif_background);
+    border-radius: 15px;
+}
+
+.notif_data {
+    font-size: 1.75em;
+    text-align: left;
+    padding-right: 0;
+    color: rgb(59, 59, 59);
+}
+
+.notif_age {
+    width: 2em;
+    padding-left: 0;
+    font-size: 1.5em;
+    color: rgb(124, 124, 124);
+    text-align: right;
+}
