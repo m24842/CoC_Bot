@@ -100,7 +100,7 @@ class Attacker:
                     if x is not None and y is not None:
                         w = self.assets["clan_castle_deploy"].shape[1] / WINDOW_DIMS[0]
                         available_x = np.where((x_range < (x - w/2)) | (x_range > (x + w/2)), 1, 0)
-                    for i in range(1, n):
+                    for i in range(max(ATTACK_SLOT_RANGE[0] + 1, 1), min(ATTACK_SLOT_RANGE[1] + 1, 12)):
                         if available_x[i]:
                             click(self.device, x_range[i], 0.9)
                             swipe(self.device, 0.5, 0.8, 0.5, 0.8, 3000)

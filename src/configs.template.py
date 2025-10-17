@@ -15,6 +15,7 @@ DISABLE_SLEEP = True
 CHECK_INTERVAL = 5 * 60 # seconds
 MAX_UPGRADES_PER_CHECK = 10
 MAX_ATTACKS_PER_CHECK = 1
+ATTACK_SLOT_RANGE = (0, 11) # inclusive (min=0, max=11)
 MAX_ATTACK_DURATION = 3 * 60 # seconds
 
 ########################
