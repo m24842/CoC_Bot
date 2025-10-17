@@ -171,6 +171,10 @@
                         }
                         last_checked_string = `Checked ${time_array[time_index] + time_labels[time_index]} ago`;
                     }
+                } else if (run_status == "now") {
+                    last_checked_string = `Checking now`;
+                } else if (run_status == "error") {
+                    last_checked_string = ``;
                 }
                 document.getElementById('run_status').innerText = last_checked_string;
             }
