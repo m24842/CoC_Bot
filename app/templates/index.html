@@ -57,6 +57,57 @@
             let notifications = {{ notifications | tojson }};
             const time_labels = ['d', 'h', 'm', 's'];
 
+            function fetchNotifications() {
+                fetch("/notify")
+                    .then(response => response.json())
+                    .then(data => {
+                        notifications = data;
+                    })
+                    .catch(error => console.error('Error fetching notifications:', error));
+            }
+
+            function fetchError() {
+                fetch("/status")
+                    .then(response => response.json())
+                    .then(data => {
+                        run_status = data.status;
+                    })
+                    .catch(error => console.error('Error fetching error status:', error));
+            }
+
+            function fetchEndTime() {
+                fetch("/end_time")
+                    .then(response => response.json())
+                    .then(data => {
+                        end_time = data.end_time;
+                    })
+                    .catch(error => console.error('Error fetching countdown end time:', error));
+            }
+
+            function fetchStatus() {
+                fetch("/status")
+                    .then(response => response.json())
+                    .then(data => {
+                        run_status = data.status;
+                    })
+                    .catch(error => console.error('Error fetching status:', error));
+            }
+
+            function fetchAll() {
+                fetchEndTime();
+                fetchStatus();
+                fetchNotifications();
+            }
+
+            setInterval(fetchAll, 1000);
+
+            function get_hms(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+                return {hours, minutes, seconds: secs};
+            }
+
             function updateNotifications() {
                 let currentIndex = 0;
                 while (currentIndex < notifications.length) {
@@ -100,65 +151,8 @@
 
                     currentIndex++;
                 }
-                requestAnimationFrame(updateNotifications);
             }
             
-            setInterval(updateNotifications, 500);
-
-            async function fetchNotifications() {
-                try {
-                    const response = await fetch("/notify");
-                    if (response.ok) {
-                        notifications = await response.json();
-                        updateNotifications();
-                    }
-                } catch (error) {
-                    console.error("Error fetching notifications:", error);
-                }
-            }
-
-            setInterval(fetchNotifications, 1000);
-
-            function fetchError() {
-                fetch("/status")
-                    .then(response => response.json())
-                    .then(data => {
-                        run_status = data.status;
-                    })
-                    .catch(error => console.error('Error fetching error status:', error));
-            }
-
-            setInterval(fetchError, 1000);
-
-            function fetchEndTime() {
-                fetch("/end_time")
-                    .then(response => response.json())
-                    .then(data => {
-                        end_time = data.end_time;
-                    })
-                    .catch(error => console.error('Error fetching countdown end time:', error));
-            }
-
-            setInterval(fetchEndTime, 1000);
-
-            function fetchStatus() {
-                fetch("/status")
-                    .then(response => response.json())
-                    .then(data => {
-                        run_status = data.status;
-                    })
-                    .catch(error => console.error('Error fetching status:', error));
-            }
-
-            setInterval(fetchStatus, 1000);
-
-            function get_hms(seconds) {
-                const hours = Math.floor(seconds / 3600);
-                const minutes = Math.floor((seconds % 3600) / 60);
-                const secs = Math.floor(seconds % 60);
-                return {hours, minutes, seconds: secs};
-            }
-
             function updateLastChecked() {
                 const now = Date.now();
                 const total_time_left = end_time - current_time;
@@ -179,11 +173,7 @@
                     }
                 }
                 document.getElementById('run_status').innerText = last_checked_string;
-
-                requestAnimationFrame(updateLastChecked);
             }
-
-            setInterval(updateLastChecked, 500);
 
             function updateCountdown() {
                 const now = Date.now();
@@ -218,8 +208,15 @@
                     document.getElementById('left_padding').innerText = `...`;
                     document.getElementById('right_padding').innerText = padding_dots;
                 }
-                requestAnimationFrame(updateCountdown);
             }
+
+            function updateAll() {
+                updateCountdown();
+                updateLastChecked();
+                updateNotifications();
+                requestAnimationFrame(updateAll);
+            }
+            updateAll();
 
             setInterval(updateCountdown, 500);
 
