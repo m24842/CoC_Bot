@@ -47,3 +47,4 @@
 3. Start web app: ```python app/app.py```
     * __Note__: Open port 1234 and configure port forwarding as necessary
 4. Start the bot: ```python src/main.py```
+    * __Note__: On MacOS, if ```DISABLE_SLEEP = True``` in [configs.py](src/configs.py), the user password is required to toggle the ```disablesleep``` flag in power management settings
