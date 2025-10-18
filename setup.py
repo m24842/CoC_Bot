@@ -9,12 +9,10 @@ packages = [
     "numpy",
     "pure-python-adb",
     "pyminitouch",
+    "psutil",
     "flask",
     "waitress",
 ]
-
-if sys.platform == "darwin": packages.append("pyobjc")
-elif sys.platform == "win32": packages.append("psutil pywin32")
 
 os.system(f"{sys.executable} -m pip install " + " ".join(packages))
 
