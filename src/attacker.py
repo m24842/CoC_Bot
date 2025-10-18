@@ -173,6 +173,7 @@ class Attacker:
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
+                self.click_exit(5)
                 self.get_builders(1)
                 break
             except: pass
