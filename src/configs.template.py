@@ -9,6 +9,7 @@ EMAIL_ADDRESS, APP_PASSWORD = "", ""
 
 # OPTIONAL: Web app (enter empty string to disable)
 WEB_APP_IP = "73.54.141.189" # (e.g. 12.34.567.890)
+WEB_APP_PORT = 1234
 
 # REQUIRED: Upgrade settings
 DISABLE_SLEEP = True
@@ -22,6 +23,7 @@ TROOP_DEPLOY_TIME = 3 # seconds
 ########################
 # == System Configs == #
 ########################
+WINDOW_DIMS = (1920, 1080) # width, height
 UPGRADER_ASSETS_DIR = "assets/upgrader"
 ATTACKER_ASSETS_DIR = "assets/attacker"
-WINDOW_DIMS = (1920, 1080) # width, height
+NOTIFICATIONS_DB_PATH = "app/notifications.db"
