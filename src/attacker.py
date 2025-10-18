@@ -3,16 +3,14 @@ import cv2
 import time
 import atexit
 import numpy as np
-from pyminitouch import MNTDevice
 from utils import *
 from configs import *
 
 class Attacker:
-    def __init__(self, device, reader):
+    def __init__(self, device, mt_device, reader):
         self.device = device
         self.frame_handler = Frame_Handler(device)
-        self.mt_device = MNTDevice("127.0.0.1:5555")
-        atexit.register(self.mt_device.stop)
+        self.mt_device = mt_device
         self.reader = reader
         self.assets = self.load_assets()
 
