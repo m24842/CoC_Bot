@@ -131,12 +131,12 @@ class Upgrader:
             if x is None or y is None: return 0
             
             section = self.frame_handler.get_frame_section(x-0.13, y+0.02, x+0.03, y+0.08, high_contrast=True)
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower()).replace("new ", "")
+            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower())
             section = self.frame_handler.get_frame_section(x-0.13, y+0.02+0.055, x+0.03, y+0.08+0.055, high_contrast=True)
             alternative_upgrade = get_text(section, self.reader)
             
             if "town hall" in upgrade_name and len(alternative_upgrade) > 0:
-                upgrade_name = re.sub(r"\s*x\d+$", "", alternative_upgrade[0].lower().replace("new ", ""))
+                upgrade_name = re.sub(r"\s*x\d+$", "", alternative_upgrade[0].lower())
                 click(self.device, x, y+0.07+0.055)
             else:
                 click(self.device, x, y+0.07)
