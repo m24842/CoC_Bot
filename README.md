@@ -16,14 +16,26 @@
 * SMS and web app notifications 🔔
 
 ## Dependencies
-* Install python packages with [setup.py](setup.py)
-* [Android Debug Bridge](https://developer.android.com/tools/releases/platform-tools)
+1. Install python packages with [setup.py](setup.py)
+2. [Android Debug Bridge](https://developer.android.com/tools/releases/platform-tools)
     * Add to system path
-* [BlueStacks](https://www.bluestacks.com/)
+        * Verify with: ```adb --version```
+3. [BlueStacks](https://www.bluestacks.com/)
     * Device profile: Samsung Galaxy S22 Ultra
     * Display resolution: 1920 x 1080
-    * Install Clash of Clans from Google Play
     * Enable Android Debug Bridge
+    * Install Clash of Clans from Google Play
+4. [minitouch](https://app.unpkg.com/minitouch-prebuilt-support10@1.2.0/files/prebuilt)
+    * Download prebuilt binary
+        * Run ```adb shell getprop ro.product.cpu.abi``` to determine appropriate architecture
+    * Open BlueStacks
+    * Connect to Android Debug Bridge: ```adb connect 127.0.0.1:5555```
+    * Push the binary to BlueStacks:
+        ```bash
+        adb push <path-to-minitouch> /data/local/tmp/
+        adb shell chmod 755 /data/local/tmp/minitouch
+        ```
+        * Verify with: ```adb shell /data/local/tmp/minitouch```
 
 ## Setup Instructions
 1. Install and configure dependencies listed above
