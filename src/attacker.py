@@ -1,7 +1,9 @@
 import os
 import cv2
 import time
+import atexit
 import numpy as np
+from pyminitouch import MNTDevice
 from utils import *
 from configs import *
 
@@ -9,6 +11,8 @@ class Attacker:
     def __init__(self, device, reader):
         self.device = device
         self.frame_handler = Frame_Handler(device)
+        self.mt_device = MNTDevice("127.0.0.1:5555")
+        atexit.register(self.mt_device.stop)
         self.reader = reader
         self.assets = self.load_assets()
 
@@ -25,6 +29,11 @@ class Attacker:
     # ============================================================
     # 📱 Screen Interaction
     # ============================================================
+    
+    def multi_click(self, x1, y1, x2, y2, duration=0):
+        MAX_X = int(self.mt_device.connection.max_x)
+        MAX_Y = int(self.mt_device.connection.max_y)
+        self.mt_device.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
     
     def click_exit(self, n=1):
         click(self.device, 0.99, 0.01, n)
@@ -103,7 +112,8 @@ class Attacker:
                     for i in range(max(ATTACK_SLOT_RANGE[0] + 1, 1), min(ATTACK_SLOT_RANGE[1] + 1, 12)):
                         if available_x[i]:
                             click(self.device, x_range[i], 0.9)
-                            swipe(self.device, 0.5, 0.8, 0.5, 0.8, 3000)
+                            # swipe(self.device, 0.5, 0.8, 0.5, 0.8, TROOP_DEPLOY_TIME * 1000)
+                            self.multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
 
                     elapsed = time.time() - start_time
                     start_time = time.time()
