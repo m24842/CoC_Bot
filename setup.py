@@ -8,6 +8,7 @@ packages = [
     "requests",
     "numpy",
     "pure-python-adb",
+    "pyminitouch",
     "flask",
     "waitress",
 ]

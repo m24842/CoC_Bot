@@ -1,8 +1,11 @@
+import loguru
 import warnings
+
+loguru.logger.remove()
+warnings.filterwarnings("ignore", category=UserWarning, module='torch')
+
 from log import enable_logging
 from coc_bot import CoC_Bot
-
-warnings.filterwarnings("ignore", category=UserWarning, module='torch')
 
 enable_logging()
 
