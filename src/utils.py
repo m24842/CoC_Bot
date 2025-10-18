@@ -68,7 +68,7 @@ def swipe(device, x1, y1, x2, y2, duration=100):
 
 def send_notification(text):
     if WEB_APP_IP != "":
-        try: requests.post(f"http://{WEB_APP_IP}:1234/notify", json=text)
+        try: requests.post(f"http://{WEB_APP_IP}:{WEB_APP_PORT}/notify", json=text)
         except: pass
 
     if PHONE_NUMBER != "" and EMAIL_ADDRESS != "" and APP_PASSWORD != "":

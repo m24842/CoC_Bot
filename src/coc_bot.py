@@ -35,7 +35,7 @@ class CoC_Bot:
     def running(self):
         if WEB_APP_IP == "": return True
         try:
-            response = requests.get(f"http://{WEB_APP_IP}:1234/running", timeout=3)
+            response = requests.get(f"http://{WEB_APP_IP}:{WEB_APP_PORT}/running", timeout=3)
             if response.status_code == 200:
                 return response.json().get("running", False)
             return False
@@ -46,7 +46,7 @@ class CoC_Bot:
     def update_status(self, status):
         if WEB_APP_IP == "": return
         try:
-            requests.post(f"http://{WEB_APP_IP}:1234/status", json={"status": status}, timeout=3)
+            requests.post(f"http://{WEB_APP_IP}:{WEB_APP_PORT}/status", json={"status": status}, timeout=3)
         except Exception as e:
             if DEBUG: print("update_status", e)
     
