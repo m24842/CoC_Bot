@@ -1,9 +1,12 @@
+import sys
+
+sys.path.append("../src")
+
 import time
 import sqlite3
 from waitress import serve
-from flask import Flask, render_template, redirect, url_for, jsonify, request
-
-DB_PATH = "app/notifications.db"
+from flask import Flask, render_template, jsonify, request
+from configs import *
 
 app = Flask(__name__)
 
@@ -11,7 +14,7 @@ run_status = time.time()
 end_time = 0
 
 def init_db():
-    with sqlite3.connect(DB_PATH) as conn:
+    with sqlite3.connect(NOTIFICATIONS_DB_PATH) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS notifications (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,7 +24,7 @@ def init_db():
         """)
 
 def get_notifications(limit=3):
-    with sqlite3.connect(DB_PATH) as conn:
+    with sqlite3.connect(NOTIFICATIONS_DB_PATH) as conn:
         cursor = conn.execute("SELECT time_stamp, data FROM notifications ORDER BY time_stamp DESC LIMIT ?", (limit,))
         return [{"time_stamp": row[0], "data": row[1]} for row in cursor.fetchall()]
 
@@ -59,7 +62,7 @@ def handle_status():
 def handle_notify():
     if request.method == "POST":
         data = request.json
-        with sqlite3.connect(DB_PATH) as conn:
+        with sqlite3.connect(NOTIFICATIONS_DB_PATH) as conn:
             conn.execute("INSERT INTO notifications (time_stamp, data) VALUES (?, ?)",
                          (time.time(), str(data)))
         return jsonify({"status": "success", "received": data})
@@ -75,5 +78,5 @@ def add_no_cache_headers(response):
 
 if __name__ == "__main__":
     init_db()
-    # app.run(host="0.0.0.0", port=1234, debug=True)
-    serve(app, host="0.0.0.0", port=1234, threads=8)
+    if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
+    else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
