@@ -25,7 +25,8 @@
     * Display resolution: 1920 x 1080
     * Enable Android Debug Bridge
     * Install Clash of Clans from Google Play
-4. [minitouch](https://app.unpkg.com/minitouch-prebuilt-support10@1.2.0/files/prebuilt)
+4. [minitouch](https://app.unpkg.com/minitouch-prebuilt-support10@1.2.0/files/prebuilt) 
+(__OPTIONAL__: pyminitouch should automate this)
     * Download prebuilt binary
         * Run ```adb shell getprop ro.product.cpu.abi``` to determine appropriate architecture
     * Open BlueStacks
