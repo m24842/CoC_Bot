@@ -1,20 +1,17 @@
 import sys
 import time
+import psutil
 import atexit
 import easyocr
 import requests
 import adbutils
 import subprocess
 from datetime import datetime
+from pyminitouch import MNTDevice
 from utils import *
 from configs import *
 from upgrader import Upgrader
 from attacker import Attacker
-
-if sys.platform == "darwin":
-    from AppKit import NSWorkspace
-elif sys.platform == "win32":
-    import psutil
 
 class CoC_Bot:
     def __init__(self):
@@ -22,13 +19,13 @@ class CoC_Bot:
             disable_sleep()
             atexit.register(enable_sleep)
         
-        self.reader = easyocr.Reader(['en'])
+        self.device, self.mt_device = None, None
         self.start_bluestacks()
-        self.device = self.connect_adb()
+        self.reader = easyocr.Reader(['en'])
         self.frame_handler = Frame_Handler(self.device)
         self.upgrader = Upgrader(self.device, self.reader)
         self.assets = self.upgrader.assets.copy()
-        self.attacker = Attacker(self.device, self.reader)
+        self.attacker = Attacker(self.device, self.mt_device, self.reader)
 
     # ============================================================
     # 🖥️ System & Emulator Management
@@ -80,26 +77,36 @@ class CoC_Bot:
             subprocess.Popen([r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, startupinfo=startupinfo)
         
         for _ in range(120):
-            if self.check_bluestacks(): return
+            if self.check_bluestacks(): break
+            time.sleep(0.5)
+        
+        for _ in range(120):
+            try:
+                self.device, self.mt_device = self.connect_adb()
+                return
+            except: pass
             time.sleep(0.5)
         
         raise Exception("BlueStacks failed to start.")
     
     def check_bluestacks(self):
-        if sys.platform == "darwin":
-            apps = NSWorkspace.sharedWorkspace().runningApplications()
-            for app in apps:
-                if app.localizedName() == "BlueStacks":
-                    return True
-        elif sys.platform == "win32":
-            for proc in psutil.process_iter(['name']):
-                if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
-                    return True
+        for proc in psutil.process_iter(['name']):
+            if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
+                return True
         return False
     
     def connect_adb(self):
-        adbutils.adb.connect("127.0.0.1:5555")
-        return adbutils.adb.device("127.0.0.1:5555")
+        res = adbutils.adb.connect("127.0.0.1:5555")
+        if "connected" not in res:
+            raise Exception("Failed to connect to ADB.")
+        device, mt_device = None, None
+        try:
+            device = adbutils.adb.device("127.0.0.1:5555")
+            mt_device = MNTDevice("127.0.0.1:5555")
+            atexit.register(mt_device.stop)
+        except:
+            raise Exception("Failed to get ADB device.")
+        return device, mt_device
     
     def start(self, timeout=60):
         try:
