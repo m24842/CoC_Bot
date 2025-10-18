@@ -41,10 +41,9 @@
 ## Setup Instructions
 1. Install and configure dependencies listed above
 2. Enter user configurations in [configs.py](src/configs.py)
-    * __Note__: To configure SMS notifications, first enable 
-    Google 2-Step Verification before generating an 
-    [app password](https://myaccount.google.com/apppasswords)
+    * __Note__: To configure SMS notifications, first enable Google 2-Step Verification before generating an [app password](https://myaccount.google.com/apppasswords)
 3. Start web app: ```python app/app.py```
     * __Note__: Open port 1234 and configure port forwarding as necessary
 4. Start the bot: ```python src/main.py```
+    * __Note__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
     * __Note__: On MacOS, if ```DISABLE_SLEEP = True``` in [configs.py](src/configs.py), the user password is required to toggle the ```disablesleep``` flag in power management settings
