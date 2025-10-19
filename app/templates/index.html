@@ -193,10 +193,15 @@
                     const {hours, minutes, seconds} = get_hms(time_left);
                     const time_array = [hours, minutes, seconds];
                     let time_index = 0;
-                    while (time_index < time_array.length-2 && time_array[time_index]===0) {
+                    while (time_index < time_array.length-2 && time_array[time_index] === 0) {
                         time_index++;
                     }
-                    const time_string = `${time_array[time_index] + time_labels[time_index+1]} ${time_array[time_index+1] + time_labels[time_index+2]}`;
+                    let time_string = "";
+                    if time_array[time_index] !== 0 {
+                        time_string = `${time_array[time_index] + time_labels[time_index+1]} ${time_array[time_index+1] + time_labels[time_index+2]}`;
+                    } else {
+                        time_string = `${time_array[time_index+1] + time_labels[time_index+2]}`;
+                    }
 
                     document.getElementById('countdown_title').innerText = `Paused:`;
                     document.getElementById('countdown_time').innerText = ` ${time_string}`;
