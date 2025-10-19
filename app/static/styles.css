@@ -278,7 +278,7 @@ header img {
 .notif_data {
     font-size: 1.75em;
     text-align: left;
-    padding-right: 0;
+    padding-right: 1em;
     color: rgb(59, 59, 59);
 }
 
