@@ -135,11 +135,22 @@ class Upgrader:
             if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
             upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower())
             section = self.frame_handler.get_frame_section(x-0.13, y+0.02+0.055, x+0.03, y+0.08+0.055, high_contrast=True)
-            alternative_upgrade = get_text(section, self.reader)
+            if DEBUG: self.frame_handler.save_frame(section, "debug/alt_upgrade_name.png")
+            x_other, y_other = self.frame_handler.locate(self.assets["other_upgrades"], frame=section, thresh=0.75)
+            alt_upgrade = "none"
+            if x_other is not None and y_other is not None:
+                x_other, y_other = self.frame_handler.locate(self.assets["other_upgrades"], thresh=0.75)
+                alt_upgrade = "other"
+            elif len(get_text(section, self.reader)) > 0:
+                alt_upgrade = "suggested"
             
-            if "town hall" in upgrade_name and len(alternative_upgrade) > 0:
-                upgrade_name = re.sub(r"\s*x\d+$", "", alternative_upgrade[0].lower())
-                click(self.device, x, y+0.07+0.055)
+            if "town hall" in upgrade_name:
+                if alt_upgrade == "suggested":
+                    click(self.device, x, y+0.07+0.055)
+                elif alt_upgrade == "other":
+                    click(self.device, x_other, y_other+0.07+0.055)
+                elif alt_upgrade == "none":
+                    click(self.device, x, y+0.07)
             else:
                 click(self.device, x, y+0.07)
             time.sleep(1)
