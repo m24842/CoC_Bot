@@ -104,7 +104,7 @@ class Frame_Handler:
     def save_frame(self, frame, filename="frame.png"):
         cv2.imwrite(filename, frame)
     
-    def locate(self, template, frame=None, grayscale=True, thresh=0):
+    def locate(self, template, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False):
         if grayscale: template = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
         h, w = template.shape[:2]
         frame = self.get_frame(grayscale) if frame is None else frame
@@ -112,5 +112,15 @@ class Frame_Handler:
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
         if DEBUG: print(max_val)
         if max_val > thresh:
-            return (max_loc[0] + w/2) / WINDOW_DIMS[0], (max_loc[1] + h/2) / WINDOW_DIMS[1]
+            x_loc, y_loc = max_loc
+            if ref[0] == 'c': x_loc += w / 2
+            elif ref[0] == 'r': x_loc += w
+            if ref[1] == 'c': y_loc += h / 2
+            elif ref[1] == 'b': y_loc += h
+            if return_confidence:
+                return x_loc / WINDOW_DIMS[0], y_loc / WINDOW_DIMS[1], max_val
+            else:
+                return x_loc / WINDOW_DIMS[0], y_loc / WINDOW_DIMS[1]
+        if return_confidence:
+            return None, None, max_val
         return None, None

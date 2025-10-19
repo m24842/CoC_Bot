@@ -127,9 +127,10 @@ class Upgrader:
             self.click_builders()
             time.sleep(1)
             
-            x, y = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.8)
+            x, y = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.75)
             if x is None or y is None: return 0
             
+            # Get suggested upgrade
             section = self.frame_handler.get_frame_section(x-0.13, y+0.02, x+0.03, y+0.08, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
             upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower())
@@ -143,14 +144,28 @@ class Upgrader:
                 click(self.device, x, y+0.07)
             time.sleep(1)
             
-            self.click_builders()
+            try:
+                self.get_builders(1)
+                self.click_builders()
+            except: pass
             time.sleep(1)
             
-            x, y = self.frame_handler.locate(self.assets["upgrade"], thresh=0.9)
+            # Find upgrade button
+            x, y, c = self.frame_handler.locate(self.assets["upgrade"], thresh=0.9, return_confidence=True)
+            x_hero, y_hero, c_hero = self.frame_handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_confidence=True)
+            if c_hero > c:
+                x, y = x_hero, y_hero
             if x is None or y is None: return 0
             click(self.device, x, y)
             time.sleep(1)
             
+            # Get upgrade name
+            x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
+            section = self.frame_handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
+            if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
+            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower().replace(" to", ""))
+            
+            # Complete upgrade
             x, y = self.frame_handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
             if x is None or y is None: return 0
             
@@ -176,9 +191,10 @@ class Upgrader:
             self.click_lab()
             time.sleep(1)
             
-            x, y = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.8)
+            x, y = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.75)
             if x is None or y is None: return 0
             
+            # Get suggested upgrade
             section = self.frame_handler.get_frame_section(x-0.13, y+0.02, x+0.03, y+0.08, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_name.png")
             upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower())
@@ -186,9 +202,13 @@ class Upgrader:
             click(self.device, x, y+0.07)
             time.sleep(1)
             
-            self.click_lab()
-            time.sleep(1)
+            # Get upgrade name
+            x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
+            section = self.frame_handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
+            if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_name.png")
+            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower().replace(" to", ""))
             
+            # Complete upgrade
             x, y = self.frame_handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
             if x is None or y is None: return 0
             
