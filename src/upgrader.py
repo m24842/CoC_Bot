@@ -163,7 +163,7 @@ class Upgrader:
             x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = self.frame_handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower().replace(" to", ""))
+            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower()[:-3])
             
             # Complete upgrade
             x, y = self.frame_handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
@@ -206,7 +206,7 @@ class Upgrader:
             x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = self.frame_handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower().replace(" to", ""))
+            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower()[:-3])
             
             # Complete upgrade
             x, y = self.frame_handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
