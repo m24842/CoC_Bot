@@ -1,7 +1,6 @@
 import os
 import cv2
 import time
-import atexit
 import numpy as np
 from utils import *
 from configs import *

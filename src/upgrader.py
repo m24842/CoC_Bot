@@ -131,6 +131,7 @@ class Upgrader:
             if x is None or y is None: return 0
             
             section = self.frame_handler.get_frame_section(x-0.13, y+0.02, x+0.03, y+0.08, high_contrast=True)
+            if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
             upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower())
             section = self.frame_handler.get_frame_section(x-0.13, y+0.02+0.055, x+0.03, y+0.08+0.055, high_contrast=True)
             alternative_upgrade = get_text(section, self.reader)
@@ -179,6 +180,7 @@ class Upgrader:
             if x is None or y is None: return 0
             
             section = self.frame_handler.get_frame_section(x-0.13, y+0.02, x+0.03, y+0.08, high_contrast=True)
+            if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_name.png")
             upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower())
             
             click(self.device, x, y+0.07)
@@ -224,6 +226,7 @@ class Upgrader:
                 initial_builders = self.get_builders(1)
                 if initial_builders == 0: break
                 upgraded = self.upgrade()
+                time.sleep(1)
                 final_builders = self.get_builders(1)
                 if upgraded is not None and final_builders < initial_builders: upgrades_started.append(upgraded)
             except:
@@ -234,12 +237,11 @@ class Upgrader:
         try:
             if self.lab_available(1):
                 upgraded = self.lab_upgrade()
+                time.sleep(1)
                 final_lab_avail = self.lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
         except:
             pass
         
-        for upgrade in upgrades_started:
+        for upgrade in upgrades_started + lab_upgrades_started:
             send_notification(f"Started upgrading {upgrade}")
-        for upgrade in lab_upgrades_started:
-            send_notification(f"Started lab upgrade for {upgrade}")
