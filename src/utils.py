@@ -7,7 +7,6 @@ import ctypes
 import requests
 import subprocess
 import numpy as np
-from email.mime.text import MIMEText
 from configs import *
 
 if sys.platform == "win32":
