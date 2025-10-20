@@ -41,7 +41,7 @@
 ## Setup Instructions
 1. Install and configure dependencies listed above
 2. Enter user configurations in [configs.py](src/configs.py)
-    * __Note__: To configure SMS notifications, first enable Google 2-Step Verification before generating an [app password](https://myaccount.google.com/apppasswords)
+    * __Note__: To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send ```/start```. Enter the API token generated during the setup process.
 3. Start web app: ```python app/app.py```
     * __Note__: Open port 1234 (or whatever port ```WEB_APP_PORT``` is set to in [configs.py](src/configs.py)) and configure port forwarding as necessary
 4. Start the bot: ```python src/main.py```

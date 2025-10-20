@@ -1,8 +1,9 @@
+import os
 import re
 import sys
 import cv2
+import json
 import ctypes
-import smtplib
 import requests
 import subprocess
 import numpy as np
@@ -66,20 +67,33 @@ def swipe(device, x1, y1, x2, y2, duration=100):
     command = f"input swipe {int(x1*WINDOW_DIMS[0])} {int(y1*WINDOW_DIMS[1])} {int(x2*WINDOW_DIMS[0])} {int(y2*WINDOW_DIMS[1])} {duration};"
     device.shell(command)
 
+def get_telegram_chat_id():
+    data = {}
+    cache_path = "src/cache.json"
+    if os.path.exists(cache_path):
+        with open(cache_path, "r") as f:
+            data = json.load(f)
+            if "telegram_chat_id" in data: return data["telegram_chat_id"]
+    
+    res = requests.get(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates").json()
+    if res["ok"] and len(res["result"]) > 0:
+        chat_id = res["result"][-1]["message"]["chat"]["id"]
+        data["telegram_chat_id"] = chat_id
+        with open(cache_path, "w") as f:
+            json.dump(data, f, indent=4)
+        return chat_id
+
+    raise Exception("Failed to get Telegram chat ID")
+
 def send_notification(text):
     if WEB_APP_IP != "":
         try: requests.post(f"http://{WEB_APP_IP}:{WEB_APP_PORT}/notify", json=text)
         except: pass
 
-    if PHONE_NUMBER != "" and EMAIL_ADDRESS != "" and APP_PASSWORD != "":
-        msg = MIMEText(text)
-        msg["From"] = EMAIL_ADDRESS
-        msg["To"] = f"{PHONE_NUMBER}@vtext.com"
-        msg["Subject"] = ""
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(EMAIL_ADDRESS, APP_PASSWORD)
-            server.sendmail(EMAIL_ADDRESS, msg["To"], msg.as_string())
+    if TELEGRAM_BOT_TOKEN != "":
+        try:
+            requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data={"chat_id": get_telegram_chat_id(), "text": text})
+        except: pass
 
 class Frame_Handler:
     def __init__(self, device):

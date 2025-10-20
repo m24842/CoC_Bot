@@ -6,6 +6,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module='torch')
 
 import configs
 configs.DEBUG = True
+from utils import *
 from coc_bot import CoC_Bot
 
 if __name__ == "__main__":
