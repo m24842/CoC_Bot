@@ -3,7 +3,7 @@
 <head>
     <title>CoC Bot</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='coc_bot_logo_round.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -45,6 +45,12 @@
         
         <script>
             document.addEventListener("touchstart", () => {}, true);
+
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) {
+                    document.querySelector('link[rel="icon"]').href="{{ url_for('static', filename='favicon.png') }}";
+                }
+            });
         </script>
 
         {% if end_time is number and current_time is number %}
@@ -61,7 +67,11 @@
                 fetch("/notify")
                     .then(response => response.json())
                     .then(data => {
+                        const latest_notif = (notifications.length > 0) ? notifications[0].time_stamp : 0;
                         notifications = data;
+                        if (data.length > 0 && data[0].time_stamp > latest_notif) {
+                            document.querySelector('link[rel="icon"]').href="{{ url_for('static', filename='favicon_alert.png') }}";
+                        }
                     })
                     .catch(error => console.error('Error fetching notifications:', error));
             }
