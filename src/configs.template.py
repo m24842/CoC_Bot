@@ -3,9 +3,8 @@
 ######################
 DEBUG = False
 
-# OPTIONAL: SMS notifications (enter empty strings to disable)
-PHONE_NUMBER = "" # only digits (e.g. 1234567890)
-EMAIL_ADDRESS, APP_PASSWORD = "", ""
+# OPTIONAL: Telegram notifications (enter empty strings to disable)
+TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 
 # OPTIONAL: Web app (enter empty string to disable)
 WEB_APP_IP = "73.54.141.189" # (e.g. 12.34.567.890)

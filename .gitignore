@@ -3,5 +3,6 @@
 debug
 *.pyc
 *.log
+src/cache.json
 src/configs.py
 app/notifications.db
