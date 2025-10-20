@@ -10,7 +10,7 @@ from configs import *
 
 app = Flask(__name__)
 
-run_status = time.time()
+run_status = ""
 end_time = 0
 
 def init_db():
