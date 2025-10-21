@@ -2,6 +2,7 @@ import sys
 
 sys.path.append("src")
 
+import os
 import time
 import sqlite3
 from waitress import serve
@@ -12,9 +13,10 @@ app = Flask(__name__)
 
 run_status = ""
 end_time = 0
+db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), NOTIFICATIONS_DB_PATH)
 
 def init_db():
-    with sqlite3.connect(NOTIFICATIONS_DB_PATH) as conn:
+    with sqlite3.connect(db_path) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS notifications (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +26,7 @@ def init_db():
         """)
 
 def get_notifications(limit=3):
-    with sqlite3.connect(NOTIFICATIONS_DB_PATH) as conn:
+    with sqlite3.connect(db_path) as conn:
         cursor = conn.execute("SELECT time_stamp, data FROM notifications ORDER BY time_stamp DESC LIMIT ?", (limit,))
         return [{"time_stamp": row[0], "data": row[1]} for row in cursor.fetchall()]
 
@@ -66,7 +68,7 @@ def handle_status():
 def handle_notify():
     if request.method == "POST":
         data = request.json
-        with sqlite3.connect(NOTIFICATIONS_DB_PATH) as conn:
+        with sqlite3.connect(db_path) as conn:
             conn.execute("INSERT INTO notifications (time_stamp, data) VALUES (?, ?)",
                          (time.time(), str(data)))
         return jsonify({"status": "success", "received": data})

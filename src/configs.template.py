@@ -25,4 +25,4 @@ TROOP_DEPLOY_TIME = 3 # seconds
 WINDOW_DIMS = (1920, 1080) # width, height
 UPGRADER_ASSETS_DIR = "assets/upgrader"
 ATTACKER_ASSETS_DIR = "assets/attacker"
-NOTIFICATIONS_DB_PATH = "app/notifications.db"
+NOTIFICATIONS_DB_PATH = "notifications.db"
