@@ -6,6 +6,7 @@ After=network.target
 Type=simple
 ExecStart=/home/<user>/CoC_Bot/app/start.sh
 Restart=always
+RestartSec=5s
 User=<user>
 Group=<user>
 WorkingDirectory=/home/<user>/CoC_Bot/app
