@@ -56,7 +56,7 @@
         {% if end_time is number and current_time is number %}
         <script>
             const start = Date.now();
-            const current_time = {{ current_time }};
+            let current_time = {{ current_time }};
             let end_time = {{ end_time }};
             let run_status = {{ run_status | tojson }};
 
@@ -83,6 +83,15 @@
                         run_status = data.status;
                     })
                     .catch(error => console.error('Error fetching error status:', error));
+            }
+
+            function fetchCurrentTime() {
+                fetch("/current_time")
+                    .then(response => response.json())
+                    .then(data => {
+                        current_time = data.current_time;
+                    })
+                    .catch(error => console.error('Error fetching current time:', error));
             }
 
             function fetchEndTime() {
