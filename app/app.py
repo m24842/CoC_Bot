@@ -32,6 +32,10 @@ def get_notifications(limit=3):
 def home():
     return render_template("index.html", end_time=end_time, current_time=time.time(), notifications=get_notifications(), run_status=run_status)
 
+@app.route("/current_time", methods=["GET"])
+def handle_current_time():
+    return {"current_time": time.time()}
+
 @app.route("/end_time", methods=["GET", "POST"])
 def handle_end_time():
     global end_time
@@ -71,7 +75,12 @@ def handle_notify():
 
 @app.after_request
 def add_no_cache_headers(response):
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    cache_control = "no-store, no-cache, must-revalidate, max-age=0"
+    
+    if request.path.startswith("/static/"):
+        cache_control = "public, max-age=2592000"
+    
+    response.headers["Cache-Control"] = cache_control
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
