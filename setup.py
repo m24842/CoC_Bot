@@ -25,8 +25,7 @@ if bot_setup: packages += bot_packages
 if web_app_setup: packages += web_app_packages
 
 if not os.path.exists(".venv"): os.system(f"{sys.executable} -m venv .venv")
-os.system("source .venv/bin/activate")
-if len(packages): os.system(f"python -m pip install " + " ".join(packages))
+if len(packages): os.system(f"{sys.executable} -m pip install " + " ".join(packages))
 
 if not os.path.exists("src/configs.py"):
     shutil.copy("src/configs.template.py", "src/configs.py")
