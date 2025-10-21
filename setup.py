@@ -17,8 +17,8 @@ web_app_packages = [
     "waitress",
 ]
 
-bot_setup = input("Set up CoC Bot? (y/n): ").lower() == 'y'
-web_app_setup = input("Set up Web App? (y/n): ").lower() == 'y'
+bot_setup = input("Install bot dependencies? (y/n): ").lower() == 'y'
+web_app_setup = input("Install web app dependencies? (y/n): ").lower() == 'y'
 
 packages = []
 if bot_setup: packages += bot_packages
