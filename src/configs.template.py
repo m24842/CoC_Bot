@@ -7,7 +7,7 @@ DEBUG = False
 TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 
 # OPTIONAL: Web app (enter empty string to disable)
-WEB_APP_IP = "73.54.141.189" # (e.g. 12.34.567.890)
+WEB_APP_URL = "" # (e.g. 12.34.567.890:1234)
 WEB_APP_PORT = 1234
 
 # REQUIRED: Upgrade settings
