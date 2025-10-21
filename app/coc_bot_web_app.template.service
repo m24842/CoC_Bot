@@ -4,12 +4,12 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=start.sh
+ExecStart=app/start.sh
 Restart=always
 RestartSec=5s
 User=<user>
 Group=<user>
-WorkingDirectory=/home/<user>/CoC_Bot/app
+WorkingDirectory=/home/<user>/CoC_Bot
 Environment="PATH=/home/<user>/CoC_Bot/app/.venv/bin"
 
 [Install]
