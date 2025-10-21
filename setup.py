@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 
-packages = [
+bot_packages = [
     "opencv-python",
     "easyocr",
     "requests",
@@ -10,9 +10,19 @@ packages = [
     "pure-python-adb",
     "pyminitouch",
     "psutil",
+]
+
+web_app_packages = [
     "flask",
     "waitress",
 ]
+
+bot_setup = input("Set up CoC Bot? (y/n): ").lower() == 'y'
+web_app_setup = input("Set up Web App? (y/n): ").lower() == 'y'
+
+packages = []
+if bot_setup: packages += bot_packages
+if web_app_setup: packages += web_app_packages
 
 os.system(f"{sys.executable} -m pip install " + " ".join(packages))
 
