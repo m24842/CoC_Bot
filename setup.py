@@ -34,6 +34,7 @@ else:
     print(f"src/configs.py already exists, skipping creation.")
 
 if web_app_setup and not os.path.exists("/etc/systemd/system/coc_bot_web_app.service"):
+    print("Setting up web app systemd service...")
     user = os.environ['USER']
     with open("app/coc_bot_web_app.template.service", "r") as f: content = f.read()
     content = content.replace("<user>", user)
