@@ -24,6 +24,7 @@ def init_db():
                 data TEXT
             )
         """)
+        conn.commit()
 
 def get_notifications(limit=3):
     with sqlite3.connect(db_path) as conn:
@@ -89,8 +90,7 @@ def add_cache_headers(response):
         response.headers["Expires"] = "0"
     return response
 
+init_db()
 if __name__ == "__main__":
-    init_db()
-    DEBUG = True
     if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
