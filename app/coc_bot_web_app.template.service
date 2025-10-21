@@ -1,0 +1,15 @@
+[Unit]
+Description=CoC Bot Web App Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/<user>/CoC_Bot/app/start.sh
+Restart=always
+User=<user>
+Group=<user>
+WorkingDirectory=/home/<user>/CoC_Bot/app
+Environment="PATH=/home/<user>/CoC_Bot/app/.venv/bin"
+
+[Install]
+WantedBy=multi-user.target
