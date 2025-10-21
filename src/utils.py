@@ -85,8 +85,8 @@ def get_telegram_chat_id():
     raise Exception("Failed to get Telegram chat ID")
 
 def send_notification(text):
-    if WEB_APP_IP != "":
-        try: requests.post(f"http://{WEB_APP_IP}:{WEB_APP_PORT}/notify", json=text)
+    if WEB_APP_URL != "":
+        try: requests.post(f"{WEB_APP_URL}/notify", json=text)
         except: pass
 
     if TELEGRAM_BOT_TOKEN != "":

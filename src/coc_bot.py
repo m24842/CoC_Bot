@@ -39,9 +39,9 @@ class CoC_Bot:
 
     @property
     def running(self):
-        if WEB_APP_IP == "": return True
+        if WEB_APP_URL == "": return True
         try:
-            response = requests.get(f"http://{WEB_APP_IP}:{WEB_APP_PORT}/running", timeout=3)
+            response = requests.get(f"{WEB_APP_URL}/running", timeout=3)
             if response.status_code == 200:
                 return response.json().get("running", False)
             return False
@@ -50,9 +50,9 @@ class CoC_Bot:
             return False
     
     def update_status(self, status):
-        if WEB_APP_IP == "": return
+        if WEB_APP_URL == "": return
         try:
-            requests.post(f"http://{WEB_APP_IP}:{WEB_APP_PORT}/status", json={"status": status}, timeout=3)
+            requests.post(f"{WEB_APP_URL}/status", json={"status": status}, timeout=3)
         except Exception as e:
             if DEBUG: print("update_status", e)
     
