@@ -74,15 +74,17 @@ def handle_notify():
     return jsonify(get_notifications())
 
 @app.after_request
-def add_no_cache_headers(response):
-    cache_control = "no-store, no-cache, must-revalidate, max-age=0"
-    
+def add_cache_headers(response):
     if request.path.startswith("/static/"):
-        cache_control = "public, max-age=2592000"
-    
-    response.headers["Cache-Control"] = cache_control
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+        # Cache static files for 30 days
+        response.headers["Cache-Control"] = "public, max-age=2592000"
+        response.headers.pop("Pragma", None)
+        response.headers.pop("Expires", None)
+    else:
+        # No caching for dynamic routes
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
     return response
 
 if __name__ == "__main__":
