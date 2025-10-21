@@ -10,7 +10,7 @@ RestartSec=5s
 User=<user>
 Group=<user>
 WorkingDirectory=/home/<user>/CoC_Bot
-Environment="PATH=/home/<user>/CoC_Bot/app/.venv/bin"
+Environment="PATH=/home/<user>/CoC_Bot/.venv/bin"
 
 [Install]
 WantedBy=multi-user.target
