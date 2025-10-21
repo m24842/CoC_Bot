@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=app/start.sh
+ExecStart=/home/<user>/CoC_Bot/app/start.sh
 Restart=always
 RestartSec=5s
 User=<user>
