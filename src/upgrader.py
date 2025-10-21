@@ -146,13 +146,14 @@ class Upgrader:
             
             if "town hall" in upgrade_name:
                 if alt_upgrade == "suggested":
-                    click(self.device, x, y+0.07+0.055)
+                    click(self.device, x, y+0.055+0.055)
                 elif alt_upgrade == "other":
-                    click(self.device, x_other, y_other+0.07+0.055)
+                    click(self.device, x_other, y_other+0.055)
+                    exit()
                 elif alt_upgrade == "none":
-                    click(self.device, x, y+0.07)
+                    click(self.device, x, y+0.055)
             else:
-                click(self.device, x, y+0.07)
+                click(self.device, x, y+0.055)
             time.sleep(1)
             
             try:
