@@ -89,5 +89,6 @@ def add_cache_headers(response):
 
 if __name__ == "__main__":
     init_db()
+    DEBUG = True
     if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
