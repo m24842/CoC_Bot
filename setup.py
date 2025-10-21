@@ -42,6 +42,7 @@ if web_app_setup and not os.path.exists("/etc/systemd/system/coc_bot_web_app.ser
     os.system("sudo cp app/coc_bot_web_app.service /etc/systemd/system/coc_bot_web_app.service")
     os.system("sudo systemctl daemon-reload")
     os.system("sudo systemctl enable coc_bot_web_app.service")
+    
     start_web_app = input("Start web app systemd service? (y/n): ").lower() == 'y'
     if start_web_app:
         os.system("sudo systemctl start coc_bot_web_app")
