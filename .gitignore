@@ -7,3 +7,4 @@ debug
 src/cache.json
 src/configs.py
 app/notifications.db
+app/coc_bot_web_app.service
