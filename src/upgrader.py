@@ -149,7 +149,6 @@ class Upgrader:
                     click(self.device, x, y+0.055+0.055)
                 elif alt_upgrade == "other":
                     click(self.device, x_other, y_other+0.055)
-                    exit()
                 elif alt_upgrade == "none":
                     click(self.device, x, y+0.055)
             else:
