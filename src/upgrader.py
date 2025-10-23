@@ -144,6 +144,7 @@ class Upgrader:
             elif len(get_text(section, self.reader)) > 0:
                 alt_upgrade = "suggested"
             
+            print(alt_upgrade)
             if "town hall" in upgrade_name:
                 if alt_upgrade == "suggested":
                     click(self.device, x, y+0.055+0.055)
