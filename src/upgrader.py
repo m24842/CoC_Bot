@@ -143,8 +143,8 @@ class Upgrader:
                 alt_upgrade = "other"
             elif len(get_text(section, self.reader)) > 0:
                 alt_upgrade = "suggested"
+            if DEBUG: print(f"alt_upgrade: {alt_upgrade}")
             
-            print(alt_upgrade)
             if "town hall" in upgrade_name:
                 if alt_upgrade == "suggested":
                     click(self.device, x, y+0.055+0.055)
@@ -155,6 +155,13 @@ class Upgrader:
             else:
                 click(self.device, x, y+0.055)
             time.sleep(1)
+            
+            # If suggested upgrades disappears, then there was a misclick
+            x_sug, y_sug = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
+            if x_sug is None or y_sug is None:
+                self.click_builders()
+                alt_upgrade = "none"
+                click(self.device, x, y+0.055)
             
             try:
                 self.get_builders(1)
@@ -185,6 +192,7 @@ class Upgrader:
             if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
                 click(self.device, x, y+0.05)
+                time.sleep(1)
                 self.click_exit(5)
                 return upgrade_name
             else:
@@ -228,6 +236,7 @@ class Upgrader:
             if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
                 click(self.device, x, y+0.05)
+                time.sleep(1)
                 self.click_exit(5)
                 return upgrade_name
             else:
