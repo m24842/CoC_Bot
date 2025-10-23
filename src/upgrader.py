@@ -127,33 +127,51 @@ class Upgrader:
             self.click_builders()
             time.sleep(1)
             
-            x, y = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
-            if x is None or y is None: return 0
+            # Find suggested upgrades label
+            x_sug, y_sug = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
+            if x_sug is None or y_sug is None: return None
             
-            # Get suggested upgrade
-            section = self.frame_handler.get_frame_section(x-0.13, y+0.02, x+0.03, y+0.08, high_contrast=True)
-            if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower())
-            section = self.frame_handler.get_frame_section(x-0.13, y+0.02+0.055, x+0.03, y+0.08+0.055, high_contrast=True)
-            if DEBUG: self.frame_handler.save_frame(section, "debug/alt_upgrade_name.png")
-            x_other, y_other = self.frame_handler.locate(self.assets["other_upgrades"], frame=section, thresh=0.70)
-            alt_upgrade = "none"
-            if x_other is not None and y_other is not None:
-                x_other, y_other = self.frame_handler.locate(self.assets["other_upgrades"], thresh=0.70)
-                alt_upgrade = "other"
-            elif len(get_text(section, self.reader)) > 0:
-                alt_upgrade = "suggested"
+            # Find other upgrades label
+            other_upgrades_avail = True
+            x_other, y_other = self.frame_handler.locate(self.assets["other_upgrades"], thresh=0.70)
+            if x_other is None or y_other is None: other_upgrades_avail = False
+            
+            n_sug = 1
+            idx = 0
+            alt_idx = 1
+            if other_upgrades_avail:
+                y_diff = abs(y_sug - y_other)
+                label_height = 0.055
+                n_sug = int(y_diff / label_height) - 1
+                idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
+            y_pot = y_sug + label_height * (idx + 1)
+            y_alt = y_sug + label_height * (alt_idx + 1)
+            
+            # Get potential upgrade names
+            pot_section = self.frame_handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
+            if DEBUG: self.frame_handler.save_frame(pot_section, "debug/upgrade_name.png")
+            pot_upgrade_name = re.sub(r"\s*x\d+$", "", get_text(pot_section, self.reader)[0].lower())
+            
+            alt_section = self.frame_handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
+            if DEBUG: self.frame_handler.save_frame(alt_section, "debug/upgrade_name.png")
+            alt_upgrade_text = re.sub(r"\s*x\d+$", "", get_text(alt_section, self.reader))
+            
+            alt_upgrade_options = ["none"]
+            if len(alt_upgrade_text) > 0: alt_upgrade_options.append("suggested")
+            if other_upgrades_avail: alt_upgrade_options.append("other")
+            if "town hall" in pot_upgrade_name:
+                if len(alt_upgrade_options) > 1: alt_upgrade = np.random.choice(alt_upgrade_options)
+                else: alt_upgrade = "none"
+            else:
+                alt_upgrade = np.random.choice(alt_upgrade_options)
             if DEBUG: print(f"alt_upgrade: {alt_upgrade}")
             
-            if "town hall" in upgrade_name:
-                if alt_upgrade == "suggested":
-                    click(self.device, x, y+0.055+0.055)
-                elif alt_upgrade == "other":
-                    click(self.device, x_other, y_other+0.055)
-                elif alt_upgrade == "none":
-                    click(self.device, x, y+0.055)
-            else:
-                click(self.device, x, y+0.055)
+            if alt_upgrade == "none":
+                click(self.device, x_sug, y_pot)
+            elif alt_upgrade == "suggested":
+                click(self.device, x_sug, y_alt)
+            elif alt_upgrade == "other":
+                click(self.device, x_sug, y_other+0.055)
             time.sleep(1)
             
             # If suggested upgrades disappears, then there was a misclick
@@ -161,7 +179,7 @@ class Upgrader:
             if x_sug is None or y_sug is None:
                 self.click_builders()
                 alt_upgrade = "none"
-                click(self.device, x, y+0.055)
+                click(self.device, x_sug, y_pot)
             
             try:
                 self.get_builders(1)
@@ -174,7 +192,7 @@ class Upgrader:
             x_hero, y_hero, c_hero = self.frame_handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_confidence=True)
             if c_hero > c:
                 x, y = x_hero, y_hero
-            if x is None or y is None: return 0
+            if x is None or y is None: return None
             click(self.device, x, y)
             time.sleep(1)
             
@@ -186,7 +204,7 @@ class Upgrader:
             
             # Complete upgrade
             x, y = self.frame_handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
-            if x is None or y is None: return 0
+            if x is None or y is None: return None
             
             section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False)
             if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
@@ -211,15 +229,26 @@ class Upgrader:
             self.click_lab()
             time.sleep(1)
             
-            x, y = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
-            if x is None or y is None: return 0
+            # Find suggested upgrades label
+            x_sug, y_sug = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
+            if x_sug is None or y_sug is None: return None
             
-            # Get suggested upgrade
-            section = self.frame_handler.get_frame_section(x-0.13, y+0.02, x+0.03, y+0.08, high_contrast=True)
-            if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower())
+            # Find other upgrades label
+            other_upgrades_avail = True
+            x_other, y_other = self.frame_handler.locate(self.assets["other_upgrades"], thresh=0.70)
+            if x_other is None or y_other is None: other_upgrades_avail = False
             
-            click(self.device, x, y+0.07)
+            if other_upgrades_avail:
+                y_diff = abs(y_sug - y_other)
+                label_height = 0.055
+                n_sug = round(y_diff / label_height) - 1
+                idx = np.random.randint(0, n_sug)
+                if DEBUG: print(f"lab_upgrade: n_sug={n_sug}, idx={idx}")
+                y_pot = y_sug + label_height * (idx + 1)
+            else:
+                y_pot = y_sug + 0.055
+
+            click(self.device, x_sug, y_pot)
             time.sleep(1)
             
             # Get upgrade name
@@ -230,7 +259,7 @@ class Upgrader:
             
             # Complete upgrade
             x, y = self.frame_handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
-            if x is None or y is None: return 0
+            if x is None or y is None: return None
             
             section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False)
             if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
