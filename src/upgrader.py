@@ -142,8 +142,10 @@ class Upgrader:
             if other_upgrades_avail:
                 y_diff = abs(y_sug - y_other)
                 label_height = 0.055
-                n_sug = int(y_diff / label_height) - 1
-                idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
+                n_sug = round(y_diff / label_height) - 1
+                if n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
+                else: alt_idx = 0
+            if DEBUG: print(f"upgrade: n_sug={n_sug}, idx={idx}, alt_idx={alt_idx}")
             y_pot = y_sug + label_height * (idx + 1)
             y_alt = y_sug + label_height * (alt_idx + 1)
             
@@ -154,7 +156,7 @@ class Upgrader:
             
             alt_section = self.frame_handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(alt_section, "debug/upgrade_name.png")
-            alt_upgrade_text = re.sub(r"\s*x\d+$", "", get_text(alt_section, self.reader))
+            alt_upgrade_text = get_text(alt_section, self.reader)
             
             alt_upgrade_options = ["none"]
             if len(alt_upgrade_text) > 0: alt_upgrade_options.append("suggested")
@@ -297,6 +299,7 @@ class Upgrader:
                 initial_builders = self.get_builders(1)
                 if initial_builders == 0: break
                 upgraded = self.upgrade()
+                self.click_exit(5)
                 time.sleep(1)
                 final_builders = self.get_builders(1)
                 if upgraded is not None and final_builders < initial_builders: upgrades_started.append(upgraded)
