@@ -260,7 +260,7 @@ class Upgrader:
                 upgraded = self.upgrade()
                 time.sleep(1)
                 final_builders = self.get_builders(1)
-                if upgraded is not None and final_builders < initial_builders: upgrades_started.append(upgraded)
+                if upgraded is not None and (upgraded == "wall" or final_builders < initial_builders): upgrades_started.append(upgraded)
             except:
                 pass
         
