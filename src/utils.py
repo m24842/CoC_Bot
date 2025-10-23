@@ -32,7 +32,7 @@ def check_color(color, frame, tol=10):
 
 def get_text(frame, reader):
     result = reader.readtext(frame)
-    return [text for _, text, _ in result]
+    return [text for _, text, _ in result if text.strip()]
 
 def fix_digits(text):
     if type(text) is list:
