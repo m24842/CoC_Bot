@@ -288,7 +288,7 @@ class Upgrader:
     def run(self):
         # Collect resources
         self.collect_resources()
-        time.sleep(3)
+        time.sleep(5)
         
         # Building upgrades
         upgrades_started = []
