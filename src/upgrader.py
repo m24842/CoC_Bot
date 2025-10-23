@@ -261,6 +261,7 @@ class Upgrader:
                 time.sleep(1)
                 final_builders = self.get_builders(1)
                 if upgraded is not None and final_builders < initial_builders: upgrades_started.append(upgraded)
+                elif upgraded != "wall": break
             except:
                 pass
         
