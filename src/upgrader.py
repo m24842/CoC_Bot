@@ -312,6 +312,7 @@ class Upgrader:
         try:
             if self.lab_available(1):
                 upgraded = self.lab_upgrade()
+                self.click_exit(5)
                 time.sleep(1)
                 final_lab_avail = self.lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
