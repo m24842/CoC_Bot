@@ -176,9 +176,10 @@ class Upgrader:
                 click(self.device, x_sug, y_other+0.055)
             time.sleep(1)
             
-            # If suggested upgrades disappears, then there was a misclick
+            # If suggested upgrades disappears, then there was a misclick, unless hero hall is found
             x_sug, y_sug = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
-            if x_sug is None or y_sug is None:
+            x_hero, y_hero = self.frame_handler.locate(self.assets["hero_hall"], thresh=0.8)
+            if (x_sug is None or y_sug is None) and (x_hero is None or y_hero is None):
                 self.click_builders()
                 alt_upgrade = "none"
                 click(self.device, x_sug, y_pot)

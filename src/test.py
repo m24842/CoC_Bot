@@ -12,4 +12,4 @@ from coc_bot import CoC_Bot
 if __name__ == "__main__":
     bot = CoC_Bot()
     bot.start()
-    bot.upgrader.lab_upgrade()
+    bot.upgrader.upgrade()
