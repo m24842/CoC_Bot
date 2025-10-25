@@ -121,7 +121,7 @@ class CoC_Bot:
             while time.time() - start < timeout:
                 try:
                     self.device.shell("am start -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
-                    self.click_exit(5, 0.25)
+                    self.click_exit(5, 0.1)
                     self.get_builders(1)
                     break
                 except:
