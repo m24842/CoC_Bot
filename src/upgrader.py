@@ -27,8 +27,8 @@ class Upgrader:
     # 📱 Screen Interaction
     # ============================================================
     
-    def click_exit(self, n=1):
-        click(self.device, 0.99, 0.01, n)
+    def click_exit(self, n=1, delay=0):
+        click(self.device, 0.99, 0.01, n, delay=delay)
     
     def click_builders(self):
         click(self.device, 0.5, 0.05)
@@ -214,14 +214,14 @@ class Upgrader:
             if not check_color([255, 136, 127], section, tol=10):
                 click(self.device, x, y+0.05)
                 time.sleep(1)
-                self.click_exit(5)
+                self.click_exit(5, 0.25)
                 return upgrade_name
             else:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
                 if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
                 resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
                 send_notification(f"Insufficient {resource_type}!")
-                self.click_exit(5)
+                self.click_exit(5, 0.25)
                 return None
         except Exception as e:
             if DEBUG: print("upgrade", e)
@@ -269,14 +269,14 @@ class Upgrader:
             if not check_color([255, 136, 127], section, tol=10):
                 click(self.device, x, y+0.05)
                 time.sleep(1)
-                self.click_exit(5)
+                self.click_exit(5, 0.25)
                 return upgrade_name
             else:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
                 if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
                 resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
                 send_notification(f"Insufficient {resource_type}!")
-                self.click_exit(5)
+                self.click_exit(5, 0.25)
                 return None
         except Exception as e:
             if DEBUG: print("lab_upgrade", e)
@@ -300,7 +300,7 @@ class Upgrader:
                 initial_builders = self.get_builders(1)
                 if initial_builders == 0: break
                 upgraded = self.upgrade()
-                self.click_exit(5)
+                self.click_exit(5, 0.25)
                 time.sleep(1)
                 final_builders = self.get_builders(1)
                 if upgraded is not None and final_builders < initial_builders: upgrades_started.append(upgraded)
@@ -313,7 +313,7 @@ class Upgrader:
         try:
             if self.lab_available(1):
                 upgraded = self.lab_upgrade()
-                self.click_exit(5)
+                self.click_exit(5, 0.25)
                 time.sleep(1)
                 final_lab_avail = self.lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)

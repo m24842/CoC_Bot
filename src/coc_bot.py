@@ -121,7 +121,7 @@ class CoC_Bot:
             while time.time() - start < timeout:
                 try:
                     self.device.shell("am start -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
-                    self.click_exit(5)
+                    self.click_exit(5, 0.25)
                     self.get_builders(1)
                     break
                 except:
@@ -156,8 +156,8 @@ class CoC_Bot:
                 self.device.shell(c)
                 time.sleep(delay)
     
-    def click_exit(self, n=1):
-        self.click(0.99, 0.01, n, delay=0.1)
+    def click_exit(self, n=1, delay=0):
+        self.click(0.99, 0.01, n, delay=delay)
     
     def get_builders(self, timeout=60):
         start = time.time()

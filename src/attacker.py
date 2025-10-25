@@ -32,8 +32,8 @@ class Attacker:
         MAX_Y = int(self.mt_device.connection.max_y)
         self.mt_device.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
     
-    def click_exit(self, n=1):
-        click(self.device, 0.99, 0.01, n)
+    def click_exit(self, n=1, delay=0):
+        click(self.device, 0.99, 0.01, n, delay=delay)
     
     def click_attack(self):
         click(self.device, 0.07, 0.9)
@@ -170,7 +170,7 @@ class Attacker:
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
-                self.click_exit(5)
+                self.click_exit(5, 0.25)
                 self.get_builders(1)
                 break
             except: pass
