@@ -145,7 +145,7 @@ class CoC_Bot:
     # ============================================================
     
     def click_exit(self, n=1, delay=0):
-        click(0.99, 0.01, n, delay=delay)
+        click(self.device, 0.99, 0.01, n, delay=delay)
     
     def get_builders(self, timeout=60):
         start = time.time()
