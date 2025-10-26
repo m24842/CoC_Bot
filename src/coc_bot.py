@@ -143,21 +143,9 @@ class CoC_Bot:
     # ============================================================
     # 📱 Screen Interaction
     # ============================================================
-
-    def click(self, x, y, n=1, delay=0):
-        if x < 0: x = 1 + x
-        if y < 0: y = 1 + y
-        command = [f"input tap {int(x*WINDOW_DIMS[0])} {int(y*WINDOW_DIMS[1])}"] * n
-        if delay == 0:
-            command = " && ".join(command) + ";"
-            self.device.shell(command)
-        else:
-            for c in command:
-                self.device.shell(c)
-                time.sleep(delay)
     
     def click_exit(self, n=1, delay=0):
-        self.click(0.99, 0.01, n, delay=delay)
+        click(0.99, 0.01, n, delay=delay)
     
     def get_builders(self, timeout=60):
         start = time.time()

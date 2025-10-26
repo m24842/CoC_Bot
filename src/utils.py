@@ -3,6 +3,7 @@ import re
 import sys
 import cv2
 import json
+import time
 import ctypes
 import requests
 import subprocess
@@ -51,12 +52,17 @@ def parse_time(text):
     except:
         return 0
 
-def click(device, x, y, n=1):
-    if x < 0: x = 1 + x
-    if y < 0: y = 1 + y
-    command = [f"input tap {int(x*WINDOW_DIMS[0])} {int(y*WINDOW_DIMS[1])}"] * n
-    command = " && ".join(command) + ";"
-    device.shell(command)
+def click(self, x, y, n=1, delay=0):
+        if x < 0: x = 1 + x
+        if y < 0: y = 1 + y
+        command = [f"input tap {int(x*WINDOW_DIMS[0])} {int(y*WINDOW_DIMS[1])}"] * n
+        if delay == 0:
+            command = " && ".join(command) + ";"
+            self.device.shell(command)
+        else:
+            for c in command:
+                self.device.shell(c)
+                time.sleep(delay)
 
 def swipe(device, x1, y1, x2, y2, duration=100):
     if x1 < 0: x1 = 1 + x1
