@@ -173,4 +173,5 @@ class Attacker:
                 self.click_exit(5, 0.1)
                 self.get_builders(1)
                 break
-            except: pass
+            except Exception as e:
+                if DEBUG: print("end_attack", e)
