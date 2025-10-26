@@ -220,7 +220,7 @@ class Upgrader:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
                 if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
                 resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
-                send_notification(f"Insufficient {resource_type}!")
+                # send_notification(f"Insufficient {resource_type}!")
                 self.click_exit(5, 0.1)
                 return None
         except Exception as e:
@@ -275,7 +275,7 @@ class Upgrader:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
                 if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
                 resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
-                send_notification(f"Insufficient {resource_type}!")
+                # send_notification(f"Insufficient {resource_type}!")
                 self.click_exit(5, 0.1)
                 return None
         except Exception as e:
