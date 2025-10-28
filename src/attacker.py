@@ -102,11 +102,14 @@ class Attacker:
                     n = 13
                     available_x = np.ones(n)
                     x_range = np.linspace(0, 1, num=n)
-                    x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
-                    if x is not None and y is not None:
-                        w = self.assets["clan_castle_deploy"].shape[1] / WINDOW_DIMS[0]
-                        available_x = np.where((x_range < (x - w/2)) | (x_range > (x + w/2)), 1, 0)
-                    for i in range(max(ATTACK_SLOT_RANGE[0] + 1, 1), min(ATTACK_SLOT_RANGE[1] + 1, 12)):
+                    if EXCLUDE_CLAN_TROOPS:
+                        x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
+                        if x is not None and y is not None:
+                            w = self.assets["clan_castle_deploy"].shape[1] / WINDOW_DIMS[0]
+                            available_x = np.where((x_range < (x - w/2)) | (x_range > (x + w/2)), 1, 0)
+                    available_x, x_range = available_x[1:-1], x_range[1:-1]
+                    available_x[EXCLUDE_ATTACK_SLOTS] = 0
+                    for i in range(max(ATTACK_SLOT_RANGE[0], 0), min(ATTACK_SLOT_RANGE[1] + 1, 11)):
                         if available_x[i]:
                             click(self.device, x_range[i], 0.9)
                             # swipe(self.device, 0.5, 0.8, 0.5, 0.8, TROOP_DEPLOY_TIME * 1000)
