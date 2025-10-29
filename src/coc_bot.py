@@ -8,12 +8,10 @@ import sys
 import time
 import psutil
 import atexit
-import easyocr
 import requests
-import adbutils
 import subprocess
 from datetime import datetime
-from pyminitouch import MNTDevice
+import utils
 from utils import *
 from configs import *
 from upgrader import Upgrader
@@ -25,13 +23,11 @@ class CoC_Bot:
             disable_sleep()
             atexit.register(enable_sleep)
         
-        self.device, self.mt_device = None, None
         self.start_bluestacks()
-        self.reader = easyocr.Reader(['en'])
-        self.frame_handler = Frame_Handler(self.device)
-        self.upgrader = Upgrader(self.device, self.reader)
+        self.frame_handler = Frame_Handler()
+        self.upgrader = Upgrader()
         self.assets = self.upgrader.assets.copy()
-        self.attacker = Attacker(self.device, self.mt_device, self.reader)
+        self.attacker = Attacker()
 
     # ============================================================
     # 🖥️ System & Emulator Management
@@ -88,7 +84,7 @@ class CoC_Bot:
         
         for _ in range(120):
             try:
-                self.device, self.mt_device = self.connect_adb()
+                connect_adb()
                 return
             except: pass
             time.sleep(0.5)
@@ -101,27 +97,14 @@ class CoC_Bot:
                 return True
         return False
     
-    def connect_adb(self):
-        res = adbutils.adb.connect("127.0.0.1:5555")
-        if "connected" not in res:
-            raise Exception("Failed to connect to ADB.")
-        device, mt_device = None, None
-        try:
-            device = adbutils.adb.device("127.0.0.1:5555")
-            mt_device = MNTDevice("127.0.0.1:5555")
-            atexit.register(mt_device.stop)
-        except:
-            raise Exception("Failed to get ADB device.")
-        return device, mt_device
-    
     def start(self, timeout=60):
         try:
             print("Starting CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
             start = time.time()
             while time.time() - start < timeout:
                 try:
-                    self.device.shell("am start -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
-                    self.click_exit(5, 0.1)
+                    utils.ADB_DEVICE.shell("am start -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
+                    click_exit(5, 0.1)
                     self.get_builders(1)
                     break
                 except:
@@ -137,15 +120,12 @@ class CoC_Bot:
     
     def stop(self):
         print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
-        self.device.shell("am force-stop com.supercell.clashofclans")
+        utils.ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
         print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
     # ============================================================
     # 📱 Screen Interaction
     # ============================================================
-    
-    def click_exit(self, n=1, delay=0):
-        click(self.device, 0.99, 0.01, n, delay=delay)
     
     def get_builders(self, timeout=60):
         start = time.time()
@@ -159,7 +139,7 @@ class CoC_Bot:
                 _, max_val, _, _ = cv2.minMaxLoc(res)
                 if max_val < 0.9: continue
                 
-                text = fix_digits(''.join(get_text(section, self.reader)).replace(' ', '').replace('/', ''))
+                text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
                 available = int(text[0])
                 return available
             except Exception as e:

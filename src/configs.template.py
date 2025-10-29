@@ -24,6 +24,7 @@ TROOP_DEPLOY_TIME = 3 # seconds
 ########################
 # == System Configs == #
 ########################
+ADB_ADDRESS = "127.0.0.1:5555"
 WINDOW_DIMS = (1920, 1080) # width, height
 UPGRADER_ASSETS_DIR = "assets/upgrader"
 ATTACKER_ASSETS_DIR = "assets/attacker"

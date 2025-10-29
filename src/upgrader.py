@@ -3,14 +3,13 @@ import re
 import cv2
 import time
 import numpy as np
+import utils
 from utils import *
 from configs import *
 
 class Upgrader:
-    def __init__(self, device, reader):
-        self.device = device
-        self.frame_handler = Frame_Handler(device)
-        self.reader = reader
+    def __init__(self):
+        self.frame_handler = Frame_Handler()
         self.assets = self.load_assets()
 
     # ============================================================
@@ -27,14 +26,11 @@ class Upgrader:
     # 📱 Screen Interaction
     # ============================================================
     
-    def click_exit(self, n=1, delay=0):
-        click(self.device, 0.99, 0.01, n, delay=delay)
-    
     def click_builders(self):
-        click(self.device, 0.5, 0.05)
+        click(0.5, 0.05)
     
     def click_lab(self):
-        click(self.device, 0.4, 0.05)
+        click(0.4, 0.05)
 
     # ============================================================
     # 💰 Resource & Builder Tracking
@@ -46,7 +42,7 @@ class Upgrader:
             try:
                 section = self.frame_handler.get_frame_section(0.8, 0, 0.96, 0.30, high_contrast=True, thresh=240)
                 if DEBUG: self.frame_handler.save_frame(section, "debug/resources.png")
-                text = get_text(section, self.reader)
+                text = get_text(section)
                 if DEBUG: print(text)
                 gold, elixir, dark_elixir = [int(fix_digits(s.replace(' ', ''))) for s in text]
                 return {"gold": gold, "elixir": elixir, "dark_elixir": dark_elixir}
@@ -67,7 +63,7 @@ class Upgrader:
                 _, max_val, _, _ = cv2.minMaxLoc(res)
                 if max_val < 0.9: continue
                 
-                text = fix_digits(''.join(get_text(section, self.reader)).replace(' ', '').replace('/', ''))
+                text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
                 available = int(text[0])
                 return available
             except Exception as e:
@@ -87,7 +83,7 @@ class Upgrader:
                 _, max_val, _, _ = cv2.minMaxLoc(res)
                 if max_val < 0.9: continue
                 
-                text = fix_digits(''.join(get_text(section, self.reader)).replace(' ', '').replace('/', ''))
+                text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
                 available = int(text[0])
                 return available > 0
             except Exception as e:
@@ -114,7 +110,7 @@ class Upgrader:
                 for y in y_range:
                     commands.append(f"input tap {int(x*WINDOW_DIMS[0])} {int(y*WINDOW_DIMS[1])}")
                     commands.append(f"input tap {int(0.99*WINDOW_DIMS[0])} {int(0.01*WINDOW_DIMS[1])}")
-            self.device.shell(" && ".join(commands) + ";")
+            utils.ADB_DEVICE.shell(" && ".join(commands) + ";")
         except Exception as e:
             if DEBUG: print("collect_resources", e)
 
@@ -152,11 +148,11 @@ class Upgrader:
             # Get potential upgrade names
             pot_section = self.frame_handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(pot_section, "debug/upgrade_name.png")
-            pot_upgrade_name = re.sub(r"\s*x\d+$", "", get_text(pot_section, self.reader)[0].lower())
+            pot_upgrade_name = re.sub(r"\s*x\d+$", "", get_text(pot_section)[0].lower())
             
             alt_section = self.frame_handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(alt_section, "debug/upgrade_name.png")
-            alt_upgrade_text = get_text(alt_section, self.reader)
+            alt_upgrade_text = get_text(alt_section)
             
             alt_upgrade_options = ["none"]
             if len(alt_upgrade_text) > 0: alt_upgrade_options.append("suggested")
@@ -169,11 +165,11 @@ class Upgrader:
             if DEBUG: print(f"alt_upgrade: {alt_upgrade}")
             
             if alt_upgrade == "none":
-                click(self.device, x_sug, y_pot)
+                click(x_sug, y_pot)
             elif alt_upgrade == "suggested":
-                click(self.device, x_sug, y_alt)
+                click(x_sug, y_alt)
             elif alt_upgrade == "other":
-                click(self.device, x_sug, y_other+0.055)
+                click(x_sug, y_other+0.055)
             time.sleep(1)
             
             # If suggested upgrades disappears, then there was a misclick, unless hero hall is found
@@ -182,7 +178,7 @@ class Upgrader:
             if (x_sug is None or y_sug is None) and (x_hero is None or y_hero is None):
                 self.click_builders()
                 alt_upgrade = "none"
-                click(self.device, x_sug, y_pot)
+                click(x_sug, y_pot)
             
             try:
                 self.get_builders(1)
@@ -196,14 +192,14 @@ class Upgrader:
             if c_hero > c:
                 x, y = x_hero, y_hero
             if x is None or y is None: return None
-            click(self.device, x, y)
+            click(x, y)
             time.sleep(1)
             
             # Get upgrade name
             x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = self.frame_handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower()[:-3])
+            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3])
             
             # Complete upgrade
             x, y = self.frame_handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
@@ -212,16 +208,16 @@ class Upgrader:
             section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False)
             if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
-                click(self.device, x, y+0.05)
+                click(x, y+0.05)
                 time.sleep(1)
-                self.click_exit(5, 0.1)
+                click_exit(5, 0.1)
                 return upgrade_name
             else:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
                 if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
                 resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
                 # send_notification(f"Insufficient {resource_type}!")
-                self.click_exit(5, 0.1)
+                click_exit(5, 0.1)
                 return None
         except Exception as e:
             if DEBUG: print("upgrade", e)
@@ -251,14 +247,14 @@ class Upgrader:
             else:
                 y_pot = y_sug + 0.055
 
-            click(self.device, x_sug, y_pot)
+            click(x_sug, y_pot)
             time.sleep(1)
             
             # Get upgrade name
             x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = self.frame_handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
             if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section, self.reader)[0].lower()[:-3])
+            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3])
             
             # Complete upgrade
             x, y = self.frame_handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
@@ -267,16 +263,16 @@ class Upgrader:
             section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False)
             if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
-                click(self.device, x, y+0.05)
+                click(x, y+0.05)
                 time.sleep(1)
-                self.click_exit(5, 0.1)
+                click_exit(5, 0.1)
                 return upgrade_name
             else:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
                 if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
                 resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
                 # send_notification(f"Insufficient {resource_type}!")
-                self.click_exit(5, 0.1)
+                click_exit(5, 0.1)
                 return None
         except Exception as e:
             if DEBUG: print("lab_upgrade", e)
@@ -287,6 +283,9 @@ class Upgrader:
     # ============================================================
     
     def run(self):
+        zoom(dir="out")
+        swipe_down()
+        
         # Collect resources
         self.collect_resources()
         time.sleep(5)
@@ -300,7 +299,7 @@ class Upgrader:
                 initial_builders = self.get_builders(1)
                 if initial_builders == 0: break
                 upgraded = self.upgrade()
-                self.click_exit(5, 0.1)
+                click_exit(5, 0.1)
                 time.sleep(1)
                 final_builders = self.get_builders(1)
                 if upgraded is not None and final_builders < initial_builders: upgrades_started.append(upgraded)
@@ -313,7 +312,7 @@ class Upgrader:
         try:
             if self.lab_available(1):
                 upgraded = self.lab_upgrade()
-                self.click_exit(5, 0.1)
+                click_exit(5, 0.1)
                 time.sleep(1)
                 final_lab_avail = self.lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)

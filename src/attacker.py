@@ -2,15 +2,13 @@ import os
 import cv2
 import time
 import numpy as np
+import utils
 from utils import *
 from configs import *
 
 class Attacker:
-    def __init__(self, device, mt_device, reader):
-        self.device = device
-        self.frame_handler = Frame_Handler(device)
-        self.mt_device = mt_device
-        self.reader = reader
+    def __init__(self):
+        self.frame_handler = Frame_Handler()
         self.assets = self.load_assets()
 
     # ============================================================
@@ -28,18 +26,12 @@ class Attacker:
     # ============================================================
     
     def multi_click(self, x1, y1, x2, y2, duration=0):
-        MAX_X = int(self.mt_device.connection.max_x)
-        MAX_Y = int(self.mt_device.connection.max_y)
-        self.mt_device.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
-    
-    def click_exit(self, n=1, delay=0):
-        click(self.device, 0.99, 0.01, n, delay=delay)
+        MAX_X = int(utils.MINITOUCH_DEVICE.connection.max_x)
+        MAX_Y = int(utils.MINITOUCH_DEVICE.connection.max_y)
+        utils.MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
     
     def click_attack(self):
-        click(self.device, 0.07, 0.9)
-    
-    def swipe_up(self):
-        swipe(self.device, 0.5, 0.5, 0.5, 0.0, duration=100)
+        click(0.07, 0.9)
     
     def get_builders(self, timeout=60):
         start = time.time()
@@ -53,7 +45,7 @@ class Attacker:
                 _, max_val, _, _ = cv2.minMaxLoc(res)
                 if max_val < 0.9: continue
                 
-                text = fix_digits(''.join(get_text(section, self.reader)).replace(' ', '').replace('/', ''))
+                text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
                 available = int(text[0])
                 return available
             except Exception as e:
@@ -66,6 +58,8 @@ class Attacker:
     # ============================================================
 
     def run(self, timeout=MAX_ATTACK_DURATION):
+        zoom("out")
+        
         for _ in range(MAX_ATTACKS_PER_CHECK):
             try:
                 start_time = time.time()
@@ -84,7 +78,7 @@ class Attacker:
                     x, y = self.frame_handler.locate(self.assets["find_a_match"], thresh=0.9)
                     if x is not None and y is not None: break
                 if x is None or y is None: return False
-                click(self.device, x, y)
+                click(x, y)
                 
                 found_match = False
                 start_time = time.time()
@@ -97,7 +91,7 @@ class Attacker:
                 
                 if found_match:
                     start_time = time.time()
-                    self.swipe_up()
+                    swipe_up()
                     
                     n = 13
                     available_x = np.ones(n)
@@ -111,8 +105,8 @@ class Attacker:
                     available_x[EXCLUDE_ATTACK_SLOTS] = 0
                     for i in range(max(ATTACK_SLOT_RANGE[0], 0), min(ATTACK_SLOT_RANGE[1] + 1, 11)):
                         if available_x[i]:
-                            click(self.device, x_range[i], 0.9)
-                            # swipe(self.device, 0.5, 0.8, 0.5, 0.8, TROOP_DEPLOY_TIME * 1000)
+                            click(x_range[i], 0.9)
+                            # swipe(0.5, 0.8, 0.5, 0.8, TROOP_DEPLOY_TIME * 1000)
                             self.multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
 
                     elapsed = time.time() - start_time
@@ -122,7 +116,7 @@ class Attacker:
                         time.sleep(1)
                         x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
                         if x is not None and y is not None:
-                            click(self.device, x, y)
+                            click(x, y)
                             return_home_found = True
                             break
                     if return_home_found: continue
@@ -132,15 +126,15 @@ class Attacker:
                         time.sleep(0.5)
                         x, y = self.frame_handler.locate(self.assets["surrender"], thresh=0.9)
                         if x is not None and y is not None:
-                            click(self.device, x, y)
+                            click(x, y)
                             break
                         x, y = self.frame_handler.locate(self.assets["end_battle"], thresh=0.9)
                         if x is not None and y is not None:
-                            click(self.device, x, y)
+                            click(x, y)
                             break
                         x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
                         if x is not None and y is not None:
-                            click(self.device, x, y)
+                            click(x, y)
                             return_home_found = True
                             break
                     if return_home_found: continue
@@ -150,11 +144,11 @@ class Attacker:
                         time.sleep(0.5)
                         x, y = self.frame_handler.locate(self.assets["okay"], thresh=0.9)
                         if x is not None and y is not None:
-                            click(self.device, x, y)
+                            click(x, y)
                             break
                         x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
                         if x is not None and y is not None:
-                            click(self.device, x, y)
+                            click(x, y)
                             return_home_found = True
                             break
                     if return_home_found: continue
@@ -164,7 +158,7 @@ class Attacker:
                         time.sleep(0.5)
                         x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
                         if x is not None and y is not None:
-                            click(self.device, x, y)
+                            click(x, y)
                             break
             
             except Exception as e:
@@ -173,7 +167,7 @@ class Attacker:
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
-                self.click_exit(5, 0.1)
+                click_exit(5, 0.1)
                 self.get_builders(1)
                 break
             except Exception as e:
