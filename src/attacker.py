@@ -102,7 +102,7 @@ class Attacker:
                         if available_x[i]:
                             click(x_range[i], 0.9)
                             # swipe(0.5, 0.8, 0.5, 0.8, TROOP_DEPLOY_TIME * 1000)
-                            self.multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
+                            multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
 
                     elapsed = time.time() - start_time
                     start_time = time.time()
