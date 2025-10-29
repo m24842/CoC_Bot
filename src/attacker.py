@@ -25,11 +25,6 @@ class Attacker:
     # 📱 Screen Interaction
     # ============================================================
     
-    def multi_click(self, x1, y1, x2, y2, duration=0):
-        MAX_X = int(utils.MINITOUCH_DEVICE.connection.max_x)
-        MAX_Y = int(utils.MINITOUCH_DEVICE.connection.max_y)
-        utils.MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
-    
     def click_attack(self):
         click(0.07, 0.9)
     
