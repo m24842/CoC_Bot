@@ -12,6 +12,6 @@ from coc_bot import CoC_Bot
 if __name__ == "__main__":
     bot = CoC_Bot()
     bot.start()
-    bot.run()
-    # bot.upgrader.run()
+    # bot.run()
+    bot.upgrader.run()
     # bot.attacker.run()
