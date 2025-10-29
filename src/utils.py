@@ -35,7 +35,7 @@ def enable_sleep():
 
 def connect_adb():
     global ADB_DEVICE, MINITOUCH_DEVICE
-    res = adbutils.connect(ADB_ADDRESS)
+    res = adbutils.adb.connect(ADB_ADDRESS)
     if "connected" not in res:
         raise Exception("Failed to connect to ADB.")
     device, mt_device = None, None
