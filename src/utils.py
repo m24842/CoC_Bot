@@ -4,15 +4,22 @@ import sys
 import cv2
 import json
 import time
+import atexit
 import ctypes
+import easyocr
+import adbutils
 import requests
 import subprocess
 import numpy as np
+from pyminitouch import MNTDevice, CommandBuilder
 from configs import *
 
 if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
+
+ADB_DEVICE, MINITOUCH_DEVICE = None, None
+READER = easyocr.Reader(['en'])
 
 def disable_sleep():
     if sys.platform == "darwin":
@@ -26,13 +33,27 @@ def enable_sleep():
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
 
+def connect_adb():
+    global ADB_DEVICE, MINITOUCH_DEVICE
+    res = adbutils.adb.connect(ADB_ADDRESS)
+    if "connected" not in res:
+        raise Exception("Failed to connect to ADB.")
+    device, mt_device = None, None
+    try:
+        device = adbutils.adb.device(ADB_ADDRESS)
+        mt_device = MNTDevice(ADB_ADDRESS)
+        atexit.register(mt_device.stop)
+    except:
+        raise Exception("Failed to get ADB device.")
+    ADB_DEVICE, MINITOUCH_DEVICE = device, mt_device
+
 def check_color(color, frame, tol=10):
     assert len(frame.shape) == 3 and frame.shape[2] == 3, "Frame must be a color image"
     diff = np.abs(frame - np.array(color).reshape((1, 1, 3))).sum(2) <= tol
     return np.any(diff)
 
-def get_text(frame, reader):
-    result = reader.readtext(frame)
+def get_text(frame):
+    result = READER.readtext(frame)
     return [text for _, text, _ in result if text.strip()]
 
 def fix_digits(text):
@@ -52,25 +73,68 @@ def parse_time(text):
     except:
         return 0
 
-def click(device, x, y, n=1, delay=0):
+def click(x, y, n=1, delay=0):
     if x < 0: x = 1 + x
     if y < 0: y = 1 + y
     command = [f"input tap {int(x*WINDOW_DIMS[0])} {int(y*WINDOW_DIMS[1])}"] * n
     if delay == 0:
         command = " && ".join(command) + ";"
-        device.shell(command)
+        ADB_DEVICE.shell(command)
     else:
         for c in command:
-            device.shell(c)
+            ADB_DEVICE.shell(c)
             time.sleep(delay)
 
-def swipe(device, x1, y1, x2, y2, duration=100):
+def click_exit(n=1, delay=0):
+    click(0.99, 0.01, n, delay=delay)
+
+def swipe(x1, y1, x2, y2, duration=100):
     if x1 < 0: x1 = 1 + x1
     if y1 < 0: y1 = 1 + y1
     if x2 < 0: x2 = 1 + x2
     if y2 < 0: y2 = 1 + y2
     command = f"input swipe {int(x1*WINDOW_DIMS[0])} {int(y1*WINDOW_DIMS[1])} {int(x2*WINDOW_DIMS[0])} {int(y2*WINDOW_DIMS[1])} {duration};"
-    device.shell(command)
+    ADB_DEVICE.shell(command)
+
+def swipe_up():
+    swipe(0.5, 0.5, 0.5, 0.0, duration=100)
+
+def swipe_down():
+    swipe(0.5, 0.5, 0.5, 1.0, duration=100)
+
+def swipe_left():
+    swipe(0.5, 0.5, 0.0, 0.5, duration=100)
+
+def swipe_right():
+    swipe(0.5, 0.5, 1.0, 0.5, duration=100)
+
+def to_int_tuple(*args):
+    return tuple(map(int, args))
+
+def zoom(dir="out"):
+    builder = CommandBuilder()
+    
+    MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+    MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+    
+    left_in = to_int_tuple(0.45*MAX_X, 0.5*MAX_Y)
+    left_out = to_int_tuple(0.15*MAX_X, 0.5*MAX_Y)
+    right_in = to_int_tuple(0.55*MAX_X, 0.5*MAX_Y)
+    right_out = to_int_tuple(0.85*MAX_X, 0.5*MAX_Y)
+    
+    start = [left_in, right_in] if dir=="in" else [left_out, right_out]
+    end = [left_out, right_out] if dir=="in" else [left_in, right_in]
+    
+    builder.down(0, *start[0], pressure=100)
+    builder.down(1, *start[1], pressure=100)
+    builder.publish(MINITOUCH_DEVICE.connection)
+    builder.move(0, *end[0], pressure=100)
+    builder.move(1, *end[1], pressure=100)
+    builder.commit()
+    builder.publish(MINITOUCH_DEVICE.connection)
+    builder.up(0)
+    builder.up(1)
+    builder.publish(MINITOUCH_DEVICE.connection)
 
 def get_telegram_chat_id():
     data = {}
@@ -101,11 +165,8 @@ def send_notification(text):
         except: pass
 
 class Frame_Handler:
-    def __init__(self, device):
-        self.device = device
-
     def get_frame(self, grayscale=True):
-        frame = np.array(self.device.screenshot())
+        frame = np.array(ADB_DEVICE.screenshot())
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         if DEBUG: self.save_frame(frame, "debug/frame.png")
         if grayscale: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
