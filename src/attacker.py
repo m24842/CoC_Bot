@@ -2,7 +2,6 @@ import os
 import cv2
 import time
 import numpy as np
-import utils
 from utils import *
 from configs import *
 
