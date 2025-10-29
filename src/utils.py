@@ -35,12 +35,12 @@ def enable_sleep():
 
 def connect_adb():
     global ADB_DEVICE, MINITOUCH_DEVICE
-    res = adbutils.adb.connect(ADB_ADDRESS)
+    res = adbutils.connect(ADB_ADDRESS)
     if "connected" not in res:
         raise Exception("Failed to connect to ADB.")
     device, mt_device = None, None
     try:
-        device = adbutils.adb.device(ADB_ADDRESS)
+        device = adbutils.device(ADB_ADDRESS)
         mt_device = MNTDevice(ADB_ADDRESS)
         atexit.register(mt_device.stop)
     except:
@@ -87,6 +87,11 @@ def click(x, y, n=1, delay=0):
 
 def click_exit(n=1, delay=0):
     click(0.99, 0.01, n, delay=delay)
+
+def multi_click(x1, y1, x2, y2, duration=0):
+    MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+    MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+    MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
 
 def swipe(x1, y1, x2, y2, duration=100):
     if x1 < 0: x1 = 1 + x1
