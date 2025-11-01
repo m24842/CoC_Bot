@@ -3,9 +3,6 @@
 SESSION_NAME="CoC_Bot"
 
 if tmux has-session -t $SESSION_NAME 2>/dev/null; then
-    PID=$(tmux list-panes -t $SESSION_NAME -F '#{pane_pid}')
-    kill -TERM $PID
-    sleep 1
     tmux kill-session -t $SESSION_NAME
     echo "$SESSION_NAME session stopped."
 else
