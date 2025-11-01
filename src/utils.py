@@ -21,7 +21,7 @@ if sys.platform == "win32":
 ADB_DEVICE, MINITOUCH_DEVICE = None, None
 READER = easyocr.Reader(['en'])
 
-def disable_sleep():
+def DISABLE_DEEVICE_SLEEP():
     if sys.platform == "darwin":
         subprocess.run(["sudo", "pmset", "-a", "disablesleep", "1"], check=True)
     elif sys.platform == "win32":
