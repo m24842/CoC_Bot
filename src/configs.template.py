@@ -10,16 +10,20 @@ TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 WEB_APP_URL = "" # (e.g. 12.34.567.890:1234)
 WEB_APP_PORT = 1234
 
-# REQUIRED: Upgrade settings
-DISABLE_SLEEP = True
+# REQUIRED: General Settings
+DISABLE_DEEVICE_SLEEP = True
 CHECK_INTERVAL = 5 * 60 # seconds
+
+# REQUIRED: Upgrade settings
 MAX_UPGRADES_PER_CHECK = 10
+
+# REQUIRED: Attack Settings
 MAX_ATTACKS_PER_CHECK = 1
+MAX_ATTACK_DURATION = 3 * 60 # seconds
+TROOP_DEPLOY_TIME = 3 # seconds
 ATTACK_SLOT_RANGE = (0, 11) # inclusive (min=0, max=11)
 EXCLUDE_ATTACK_SLOTS = [] # (min=0, max=11) e.g. [2, 5, 7]
 EXCLUDE_CLAN_TROOPS = True
-MAX_ATTACK_DURATION = 3 * 60 # seconds
-TROOP_DEPLOY_TIME = 3 # seconds
 
 ########################
 # == System Configs == #

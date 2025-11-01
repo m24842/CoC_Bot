@@ -46,4 +46,4 @@
     * __Note__: Open port 1234 (or whatever port ```WEB_APP_PORT``` is set to in [configs.py](src/configs.py)) and configure port forwarding as necessary
 4. Start the bot: ```python src/main.py```
     * __Note__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
-    * __Note__: On MacOS, if ```DISABLE_SLEEP = True``` in [configs.py](src/configs.py), the user password is required to toggle the ```disablesleep``` flag in power management settings
+    * __Note__: On MacOS, if ```DISABLE_DEEVICE_SLEEP = True``` in [configs.py](src/configs.py), the user password is required to toggle the ```disablesleep``` flag in power management settings

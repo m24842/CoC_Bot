@@ -19,8 +19,8 @@ from attacker import Attacker
 
 class CoC_Bot:
     def __init__(self):
-        if DISABLE_SLEEP:
-            disable_sleep()
+        if DISABLE_DEEVICE_SLEEP:
+            DISABLE_DEEVICE_SLEEP()
             atexit.register(enable_sleep)
         
         self.start_bluestacks()
