@@ -2,7 +2,7 @@
 # == User Configs == #
 ######################
 
-# OPTIONAL: Telegram notifications (enter empty strings to disable)
+# OPTIONAL: Telegram notifications (enter empty string to disable)
 TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 
 # OPTIONAL: Web app (enter empty string to disable)
