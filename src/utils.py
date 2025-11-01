@@ -4,6 +4,7 @@ import sys
 import cv2
 import json
 import time
+import signal
 import atexit
 import ctypes
 import easyocr
@@ -20,6 +21,23 @@ if sys.platform == "win32":
 
 ADB_DEVICE, MINITOUCH_DEVICE = None, None
 READER = easyocr.Reader(['en'])
+
+RUN_AT_EXIT = []
+
+def register_exit(func):
+    atexit.register(func)
+    RUN_AT_EXIT.append(func)
+    return func
+
+def handle_sig(sig, frame):
+    for func in RUN_AT_EXIT:
+        try: func()
+        except: pass
+    sys.exit(0)
+
+def setup_signal_handlers():
+    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(sig, handle_sig)
 
 def disable_sleep():
     if sys.platform == "darwin":
@@ -42,7 +60,7 @@ def connect_adb():
     try:
         device = adbutils.device(ADB_ADDRESS)
         mt_device = MNTDevice(ADB_ADDRESS)
-        atexit.register(mt_device.stop)
+        register_exit(mt_device.stop)
     except:
         raise Exception("Failed to get ADB device.")
     ADB_DEVICE, MINITOUCH_DEVICE = device, mt_device

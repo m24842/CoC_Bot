@@ -7,7 +7,6 @@ warnings.filterwarnings("ignore", category=UserWarning, module='torch')
 import sys
 import time
 import psutil
-import atexit
 import requests
 import subprocess
 from datetime import datetime
@@ -21,7 +20,7 @@ class CoC_Bot:
     def __init__(self):
         if DISABLE_DEEVICE_SLEEP:
             disable_sleep()
-            atexit.register(enable_sleep)
+            register_exit(enable_sleep)
         
         self.start_bluestacks()
         self.frame_handler = Frame_Handler()
@@ -63,7 +62,7 @@ class CoC_Bot:
                 proc.terminate()
             except Exception:
                 pass
-        atexit.register(cleanup)
+        register_exit(cleanup)
     
     def start_bluestacks(self):
         if sys.platform == "darwin":
