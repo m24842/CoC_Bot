@@ -13,7 +13,7 @@
 ## Quality of Life Features
 * View status on web app 🚦
 * Resume / pause execution through web app ⏯️
-* SMS and web app notifications 🔔
+* Telegram and web app notifications 🔔
 
 ## Dependencies
 1. Install python packages with [setup.py](setup.py)
