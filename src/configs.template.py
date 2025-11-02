@@ -21,7 +21,7 @@ MAX_ATTACK_DURATION = 3 * 60 # seconds
 TROOP_DEPLOY_TIME = 3 # seconds
 ATTACK_SLOT_RANGE = (0, 11) # inclusive (min=0, max=11)
 EXCLUDE_ATTACK_SLOTS = [] # (min=0, max=11) e.g. [2, 5, 7]
-EXCLUDE_CLAN_TROOPS = True
+EXCLUDE_CLAN_TROOPS = True # doesn't work for seige machines
 
 ########################
 # == System Configs == #
