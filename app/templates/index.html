@@ -32,7 +32,7 @@
 
         <form method="POST" class="custom-input-form">
             <input type="number" name="custom_input" placeholder="Custom" min="1"  required title="Minutes">
-            <button type="submit" ><i class="fas fa-arrow-right"></i></button>
+            <button type="submit"><i class="fas fa-arrow-right"></i></button>
         </form>
 
         <form method="POST" class="cancel-button">
@@ -266,13 +266,14 @@
                         method: "POST",
                         body: formData
                     });
-
                     if (response.ok) {
                         const data = await response.json();
                         end_time = data.end_time;
                     } else {
                         console.error("Error submitting form:", response.statusText);
                     }
+
+                    fetchCurrentTime();
                 });
             });
         </script>
