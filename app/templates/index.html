@@ -256,31 +256,46 @@
             setInterval(updateCountdown, 500);
 
             document.querySelectorAll("form").forEach(form => {
+                let isSubmitting = false;
+
                 form.addEventListener("submit", async (e) => {
                     e.preventDefault();
-                                        
-                    const submitter = e.submitter;
 
+                    // Ignore taps if already submitting (avoids double requests)
+                    if (isSubmitting) return;
+                    isSubmitting = true;
+
+                    const submitter = e.submitter;
                     const formData = new FormData(form);
 
-                    form.reset()
-
+                    // Add button data (Flask expects these)
                     if (submitter && submitter.name) {
                         formData.append(submitter.name, submitter.value);
                     }
 
-                    const response = await fetch("/end_time", {
-                        method: "POST",
-                        body: formData
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        end_time = data.end_time;
-                    } else {
-                        console.error("Error submitting form:", response.statusText);
-                    }
+                    // Reset form if needed
+                    form.reset();
 
-                    fetchCurrentTime();
+                    try {
+                        const response = await fetch("/end_time", {
+                            method: "POST",
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            end_time = data.end_time;
+                        } else {
+                            console.error("Error submitting form:", response.statusText);
+                        }
+
+                        fetchCurrentTime();
+                    } catch (err) {
+                        console.error("Network error:", err);
+                    } finally {
+                        // Allow tapping again very quickly
+                        isSubmitting = false;
+                    }
                 });
             });
         </script>
