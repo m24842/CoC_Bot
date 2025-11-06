@@ -37,6 +37,7 @@ h1 {
 
 button, input {
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .themed_text {
@@ -88,7 +89,6 @@ header img {
         cursor: pointer;
         box-shadow: 0 3px 20px var(--shadow);
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
-        -webkit-tap-highlight-color: transparent;
     }
 
     .stacked-buttons button:hover {
@@ -112,7 +112,6 @@ header img {
         cursor: pointer;
         box-shadow: 0 3px 20px var(--shadow);
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
-        -webkit-tap-highlight-color: transparent;
     }
 
     .stacked-buttons button:active {
@@ -159,7 +158,6 @@ header img {
         cursor: pointer;
         box-shadow: 0 3px 20px var(--shadow);
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
-        -webkit-tap-highlight-color: transparent;
     }
 
     .custom-input-form button:hover {
@@ -182,7 +180,6 @@ header img {
         cursor: pointer;
         box-shadow: 0 3px 20px var(--shadow);
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
-        -webkit-tap-highlight-color: transparent;
     }
 
     .custom-input-form button:active {
@@ -213,7 +210,6 @@ header img {
         cursor: pointer;
         box-shadow: 0 3px 20px var(--shadow);
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
-        -webkit-tap-highlight-color: transparent;
     }
 
     .cancel-button button:hover {
@@ -237,7 +233,6 @@ header img {
         cursor: pointer;
         box-shadow: 0 3px 20px var(--shadow);
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
-        -webkit-tap-highlight-color: transparent;
     }
 
     .cancel-button button:active {
