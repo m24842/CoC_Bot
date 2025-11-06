@@ -63,54 +63,60 @@
             let notifications = {{ notifications | tojson }};
             const time_labels = ['d', 'h', 'm', 's'];
 
-            function fetchNotifications() {
-                fetch("/notify")
-                    .then(response => response.json())
-                    .then(data => {
-                        const latest_notif = (notifications.length > 0) ? notifications[0].time_stamp : 0;
-                        notifications = data;
-                        if (data.length > 0 && data[0].time_stamp > latest_notif) {
-                            document.querySelector('link[rel="icon"]').href="{{ url_for('static', filename='favicon_alert.png') }}";
-                        }
-                    })
-                    .catch(error => console.error('Error fetching notifications:', error));
+            async function fetchNotifications() {
+                try {
+                    const response = await fetch("/notify");
+                    const data = await response.json();
+                    const latest_notif = (notifications.length > 0) ? notifications[0].time_stamp : 0;
+                    notifications = data;
+
+                    if (data.length > 0 && data[0].time_stamp > latest_notif) {
+                        document.querySelector('link[rel="icon"]').href = "{{ url_for('static', filename='favicon_alert.png') }}";
+                    }
+                } catch (error) {
+                    console.error('Error fetching notifications:', error);
+                }
             }
 
-            function fetchError() {
-                fetch("/status")
-                    .then(response => response.json())
-                    .then(data => {
-                        run_status = data.status;
-                    })
-                    .catch(error => console.error('Error fetching error status:', error));
+            async function fetchError() {
+                try {
+                    const response = await fetch("/status");
+                    const data = await response.json();
+                    run_status = data.status;
+                } catch (error) {
+                    console.error('Error fetching error status:', error);
+                }
             }
 
-            function fetchCurrentTime() {
-                fetch("/current_time")
-                    .then(response => response.json())
-                    .then(data => {
-                        current_time = data.current_time;
-                    })
-                    .catch(error => console.error('Error fetching current time:', error));
-                start = Date.now();
+            async function fetchCurrentTime() {
+                try {
+                    const response = await fetch("/current_time");
+                    const data = await response.json();
+                    current_time = data.current_time;
+                    start = Date.now();
+                } catch (error) {
+                    console.error('Error fetching current time:', error);
+                }
             }
 
-            function fetchEndTime() {
-                fetch("/end_time")
-                    .then(response => response.json())
-                    .then(data => {
-                        end_time = data.end_time;
-                    })
-                    .catch(error => console.error('Error fetching countdown end time:', error));
+            async function fetchEndTime() {
+                try {
+                    const response = await fetch("/end_time");
+                    const data = await response.json();
+                    end_time = data.end_time;
+                } catch (error) {
+                    console.error('Error fetching countdown end time:', error);
+                }
             }
 
-            function fetchStatus() {
-                fetch("/status")
-                    .then(response => response.json())
-                    .then(data => {
-                        run_status = data.status;
-                    })
-                    .catch(error => console.error('Error fetching status:', error));
+            async function fetchStatus() {
+                try {
+                    const response = await fetch("/status");
+                    const data = await response.json();
+                    run_status = data.status;
+                } catch (error) {
+                    console.error('Error fetching status:', error);
+                }
             }
 
             function fetchAll() {
