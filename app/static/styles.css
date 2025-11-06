@@ -35,6 +35,10 @@ h1 {
     margin: 10px;
 }
 
+button, input {
+  touch-action: manipulation;
+}
+
 .themed_text {
     color: var(--text);
 }
