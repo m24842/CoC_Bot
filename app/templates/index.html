@@ -44,7 +44,7 @@
         </div>
         
         <script>
-            document.addEventListener("touchstart", () => {}, true);
+            document.body.addEventListener("touchstart", () => {}, false);
 
             document.addEventListener("visibilitychange", () => {
                 if (!document.hidden) {
@@ -258,27 +258,26 @@
             document.querySelectorAll("form").forEach(form => {
                 form.addEventListener("submit", async (e) => {
                     e.preventDefault();
+                                        
                     const submitter = e.submitter;
-                    submitter.disabled = true;
 
                     const formData = new FormData(form);
+
+                    form.reset()
+
                     if (submitter && submitter.name) {
                         formData.append(submitter.name, submitter.value);
                     }
 
-                    try {
-                        const response = await fetch("/end_time", {
-                            method: "POST",
-                            body: formData
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            end_time = data.end_time;
-                        } else {
-                            console.error("Error:", response.statusText);
-                        }
-                    } finally {
-                        submitter.disabled = false;
+                    const response = await fetch("/end_time", {
+                        method: "POST",
+                        body: formData
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        end_time = data.end_time;
+                    } else {
+                        console.error("Error submitting form:", response.statusText);
                     }
 
                     fetchCurrentTime();
