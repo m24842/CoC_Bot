@@ -110,8 +110,14 @@ class Attacker:
                     if EXCLUDE_CLAN_TROOPS:
                         x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
                         if x is not None and y is not None:
-                            closest_idx = np.argmin(np.abs(card_centers - (x / frame.shape[1])))
+                            closest_idx = np.argmin(np.abs(card_centers - x))
                             available_x[closest_idx] = 0
+                        locs = self.frame_handler.locate(self.assets["clan_castle_icon"], thresh=0.9, return_all=True, return_confidence=True)
+                        for (x, y, c) in locs:
+                            closest_idx = np.argmin(np.abs(card_centers - x))
+                            available_x[closest_idx] = 0
+                            print(closest_idx, c, x, y)
+                    
                     available_x[EXCLUDE_ATTACK_SLOTS] = 0
                     available_x[:ATTACK_SLOT_RANGE[0]] = 0
                     available_x[ATTACK_SLOT_RANGE[1]+1:] = 0
