@@ -49,7 +49,7 @@ class CoC_Bot:
         for _ in range(5):
             try:
                 requests.post(f"{WEB_APP_URL}/status", json={"status": status}, timeout=3)
-                break
+                return
             except Exception as e:
                 if DEBUG: print("update_status", e)
     
