@@ -1,6 +1,7 @@
 import os
 import cv2
 import time
+import scipy
 import numpy as np
 from utils import *
 from configs import *
@@ -47,6 +48,20 @@ class Attacker:
             time.sleep(1)
         raise Exception("Failed to get builders")
     
+    def detect_troop_positions(self, frame):
+        sobelx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=3)
+        abs_sobelx = np.abs(sobelx)
+        edges = cv2.convertScaleAbs(abs_sobelx)
+        profile = np.sum(edges, axis=0)
+        profile = (profile - profile.min()) / (profile.max() - profile.min())
+        peaks, _ = scipy.signal.find_peaks(profile, height=0.8, distance=10)
+        if len(peaks) % 2 != 0: peaks = peaks[:-1]
+        
+        card_centers = np.zeros(len(peaks) // 2)
+        for i in range(0, len(peaks), 2):
+            card_centers[i//2] = ((peaks[i] + peaks[i+1]) // 2) / frame.shape[1]
+        return card_centers
+    
     # ============================================================
     # ⚔️ Attack Management
     # ============================================================
@@ -87,19 +102,24 @@ class Attacker:
                     start_time = time.time()
                     swipe_up()
                     
-                    n = 13
-                    available_x = np.ones(n)
-                    x_range = np.linspace(0, 1, num=n)
+                    frame = self.frame_handler.get_frame_section(0, 0.8, 1, 1, grayscale=True)
+                    card_centers = self.detect_troop_positions(frame)
+                    
+                    # Determine troops to use
+                    available_x = np.ones_like(card_centers)
                     if EXCLUDE_CLAN_TROOPS:
                         x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
                         if x is not None and y is not None:
-                            w = self.assets["clan_castle_deploy"].shape[1] / WINDOW_DIMS[0]
-                            available_x = np.where((x_range < (x - w/2)) | (x_range > (x + w/2)), 1, 0)
-                    available_x, x_range = available_x[1:-1], x_range[1:-1]
+                            closest_idx = np.argmin(np.abs(card_centers - (x / frame.shape[1])))
+                            available_x[closest_idx] = 0
                     available_x[EXCLUDE_ATTACK_SLOTS] = 0
-                    for i in range(max(ATTACK_SLOT_RANGE[0], 0), min(ATTACK_SLOT_RANGE[1] + 1, 11)):
+                    available_x[:ATTACK_SLOT_RANGE[0]] = 0
+                    available_x[ATTACK_SLOT_RANGE[1]+1:] = 0
+                    
+                    # Deploy troops
+                    for i in range(len(card_centers)):
                         if available_x[i]:
-                            click(x_range[i], 0.9)
+                            click(card_centers[i], 0.9)
                             # swipe(0.5, 0.8, 0.5, 0.8, TROOP_DEPLOY_TIME * 1000)
                             multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
 
