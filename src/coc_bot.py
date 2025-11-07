@@ -46,10 +46,12 @@ class CoC_Bot:
     
     def update_status(self, status):
         if WEB_APP_URL == "": return
-        try:
-            requests.post(f"{WEB_APP_URL}/status", json={"status": status}, timeout=3)
-        except Exception as e:
-            if DEBUG: print("update_status", e)
+        for _ in range(5):
+            try:
+                requests.post(f"{WEB_APP_URL}/status", json={"status": status}, timeout=3)
+                break
+            except Exception as e:
+                if DEBUG: print("update_status", e)
     
     def start_web_app(self):
         proc = subprocess.Popen(
