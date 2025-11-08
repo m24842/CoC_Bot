@@ -65,16 +65,18 @@ def handle_status():
 
     return {"status": run_status}
 
-@app.route("/notify", methods=["GET", "POST"])
+@app.route("/notify", methods=["POST"])
 def handle_notify():
-    if request.method == "POST":
-        data = request.json
-        with sqlite3.connect(db_path) as conn:
-            conn.execute("INSERT INTO notifications (time_stamp, data) VALUES (?, ?)",
-                         (time.time(), str(data)))
-        return jsonify({"status": "success", "received": data})
-    
-    return jsonify(get_notifications())
+    data = request.json
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("INSERT INTO notifications (time_stamp, data) VALUES (?, ?)",
+                        (time.time(), str(data)))
+    return jsonify({"status": "success", "received": data})
+
+@app.route("/notifications", methods=["POST"])
+def handle_notifications():
+    n = request.json
+    return jsonify(get_notifications(n))
 
 @app.after_request
 def add_cache_headers(response):
@@ -92,5 +94,5 @@ def add_cache_headers(response):
 
 init_db()
 if __name__ == "__main__":
-    if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
+    if True: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)

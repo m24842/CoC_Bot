@@ -65,7 +65,13 @@
 
             async function fetchNotifications() {
                 try {
-                    const response = await fetch("/notify");
+                    const response = await fetch("/notifications", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(3),
+                    });
                     const data = await response.json();
                     const latest_notif = (notifications.length > 0) ? notifications[0].time_stamp : 0;
                     notifications = data;
@@ -143,7 +149,10 @@
 
                     const age = current_time - notif.time_stamp + (now - start) / 1000;
                     const days = Math.floor(age / 86400);
-                    if (days > 7) continue;
+                    if (days > 7) {
+                        currentIndex++;
+                        continue;
+                    }
                     const hours = Math.floor((age % 86400) / 3600);
                     const minutes = Math.floor((age % 3600) / 60);
                     const seconds = Math.floor(age % 60);
