@@ -111,25 +111,42 @@ def multi_click(x1, y1, x2, y2, duration=0):
     MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
     MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
 
-def swipe(x1, y1, x2, y2, duration=100):
+def swipe(x1, y1, x2, y2, duration=100, hold_end_time=0.0):
     if x1 < 0: x1 = 1 + x1
     if y1 < 0: y1 = 1 + y1
     if x2 < 0: x2 = 1 + x2
     if y2 < 0: y2 = 1 + y2
-    command = f"input swipe {int(x1*WINDOW_DIMS[0])} {int(y1*WINDOW_DIMS[1])} {int(x2*WINDOW_DIMS[0])} {int(y2*WINDOW_DIMS[1])} {duration};"
-    ADB_DEVICE.shell(command)
+    builder = CommandBuilder()
+    
+    MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+    MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+    
+    x1 = int(x1 * MAX_X)
+    y1 = int(y1 * MAX_Y)
+    x2 = int(x2 * MAX_X)
+    y2 = int(y2 * MAX_Y)
+    
+    builder.down(0, x1, y1, pressure=100)
+    builder.publish(MINITOUCH_DEVICE.connection)
+    builder.move(0, x2, y2, pressure=100)
+    builder.wait(duration)
+    builder.commit()
+    builder.publish(MINITOUCH_DEVICE.connection)
+    time.sleep(hold_end_time)
+    builder.up(0)
+    builder.publish(MINITOUCH_DEVICE.connection)
 
-def swipe_up():
-    swipe(0.5, 0.5, 0.5, 0.0, duration=100)
+def swipe_up(y1=0.5, y2=0.0, x=0.5, hold_end_time=0.0):
+    swipe(x, y1, x, y2, duration=100, hold_end_time=hold_end_time)
 
-def swipe_down():
-    swipe(0.5, 0.5, 0.5, 1.0, duration=100)
+def swipe_down(y1=0.5, y2=1.0, x=0.5, hold_end_time=0.0):
+    swipe(x, y1, x, y2, duration=100, hold_end_time=hold_end_time)
 
-def swipe_left():
-    swipe(0.5, 0.5, 0.0, 0.5, duration=100)
+def swipe_left(x1=0.5, x2=0.0, y=0.5, hold_end_time=0.0):
+    swipe(x1, y, x2, y, duration=100, hold_end_time=hold_end_time)
 
-def swipe_right():
-    swipe(0.5, 0.5, 1.0, 0.5, duration=100)
+def swipe_right(x1=0.5, x2=1.0, y=0.5, hold_end_time=0.0):
+    swipe(x1, y, x2, y, duration=100, hold_end_time=hold_end_time)
 
 def to_int_tuple(*args):
     return tuple(map(int, args))
@@ -208,7 +225,8 @@ class Frame_Handler:
         cv2.imwrite(filename, frame)
     
     def locate(self, template, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
-        if grayscale: template = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
+        if grayscale and len(template.shape) == 3:
+            template = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
         h, w = template.shape[:2]
         frame = self.get_frame(grayscale) if frame is None else frame
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)

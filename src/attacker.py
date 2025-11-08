@@ -48,19 +48,60 @@ class Attacker:
             time.sleep(1)
         raise Exception("Failed to get builders")
     
-    def detect_troop_positions(self, frame):
+    def detect_troop_positions(self, frame, clip_left=0.0, clip_right=1.0, return_boundaries=False):
+        if len(frame.shape) == 3: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        frame = cv2.equalizeHist(frame)
         sobelx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=3)
         abs_sobelx = np.abs(sobelx)
         edges = cv2.convertScaleAbs(abs_sobelx)
         profile = np.sum(edges, axis=0)
         profile = (profile - profile.min()) / (profile.max() - profile.min())
-        peaks, _ = scipy.signal.find_peaks(profile, height=0.8, distance=10)
-        if len(peaks) % 2 != 0: peaks = peaks[:-1]
+        peaks = scipy.signal.find_peaks(profile, height=0.8, distance=10)[0] / frame.shape[1]
         
-        card_centers = np.zeros(len(peaks) // 2)
+        if DEBUG:
+            debug_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+            for x in (peaks * frame.shape[1]).astype(int):
+                cv2.line(debug_frame, (x, 0), (x, frame.shape[0]), (0, 255, 0), 2)
+            self.frame_handler.save_frame(debug_frame, "debug/troop_detection.png")
+        
+        dists = np.diff(peaks)
+        min_dist = dists.min()
+        max_dist = dists.max()
+        
+        if abs(dists[0] - min_dist) < abs(dists[0] - max_dist): peaks = peaks[1:]
+        if abs(dists[-1] - min_dist) < abs(dists[-1] - max_dist): peaks = peaks[:-1]
+        
+        assert len(peaks) % 2 == 0, "Uneven number of troop slot edges detected"
+        
+        card_centers = []
+        card_boundaries = []
         for i in range(0, len(peaks), 2):
-            card_centers[i//2] = ((peaks[i] + peaks[i+1]) // 2) / frame.shape[1]
+            x = (peaks[i] + peaks[i+1]) / 2
+            if x >= clip_left and x <= clip_right:
+                card_centers.append(x)
+                card_boundaries.extend([peaks[i], peaks[i+1]])
+        
+        card_centers = np.array(card_centers)
+        
+        if return_boundaries:
+            return card_centers, card_boundaries
         return card_centers
+    
+    def deploy_troops(self, card_centers, available_slots):
+        for i in range(len(card_centers)):
+            if available_slots[i]:
+                # Select troop
+                click(card_centers[i], 0.9)
+                
+                # Random deployment for spells
+                n = 10
+                rxs = np.random.uniform(0.35, 0.65, n)
+                rys = np.random.uniform(0.45, 0.55, n)
+                for coord in zip(rxs, rys): click(*coord)
+                
+                # Deploy troop
+                multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
+        click(0.01, 0.99)
     
     # ============================================================
     # ⚔️ Attack Management
@@ -99,36 +140,54 @@ class Attacker:
                         break
                 
                 if found_match:
-                    start_time = time.time()
                     swipe_up()
                     
-                    frame = self.frame_handler.get_frame_section(0, 0.8, 1, 1, grayscale=True)
-                    card_centers = self.detect_troop_positions(frame)
+                    start_time = time.time()
+                    total_slots_seen = 0
+                    no_more_slots = False
+                    last_card_left = 0.0
                     
-                    # Determine troops to use
-                    available_x = np.ones_like(card_centers)
-                    if EXCLUDE_CLAN_TROOPS:
-                        x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
-                        if x is not None and y is not None:
-                            closest_idx = np.argmin(np.abs(card_centers - x))
-                            available_x[closest_idx] = 0
-                        locs = self.frame_handler.locate(self.assets["clan_castle_icon"], thresh=0.9, return_all=True, return_confidence=True)
-                        for (x, y, c) in locs:
-                            closest_idx = np.argmin(np.abs(card_centers - x))
-                            available_x[closest_idx] = 0
-                            print(closest_idx, c, x, y)
-                    
-                    available_x[EXCLUDE_ATTACK_SLOTS] = 0
-                    available_x[:ATTACK_SLOT_RANGE[0]] = 0
-                    available_x[ATTACK_SLOT_RANGE[1]+1:] = 0
-                    
-                    # Deploy troops
-                    for i in range(len(card_centers)):
-                        if available_x[i]:
-                            click(card_centers[i], 0.9)
-                            # swipe(0.5, 0.8, 0.5, 0.8, TROOP_DEPLOY_TIME * 1000)
-                            multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
+                    while total_slots_seen < ATTACK_SLOT_RANGE[1] + 1 and not no_more_slots:
+                        frame = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
+                        card_centers, card_boundaries = self.detect_troop_positions(frame, clip_left=last_card_left, return_boundaries=True)
 
+                        # Determine troops to use
+                        available_slots = np.ones_like(card_centers)
+                        if EXCLUDE_CLAN_TROOPS:
+                            x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
+                            if x is not None and y is not None:
+                                diffs = np.abs(card_centers - x)
+                                if min(diffs) < 0.01:
+                                    closest_idx = np.argmin(diffs)
+                                    available_slots[closest_idx] = 0
+                            locs = self.frame_handler.locate(self.assets["clan_castle_icon"], thresh=0.9, return_all=True)
+                            for x, y in locs:
+                                diffs = np.abs(card_centers - (x + 0.03))
+                                if min(diffs) < 0.01:
+                                    closest_idx = np.argmin(diffs)
+                                    available_slots[closest_idx] = 0
+                        
+                        if len(EXCLUDE_ATTACK_SLOTS) and min(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) >= 0 and max(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) < len(available_slots):
+                            available_slots[np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen] = 0
+                        available_slots[:ATTACK_SLOT_RANGE[0] - total_slots_seen] = 0
+                        available_slots[ATTACK_SLOT_RANGE[1] + 1 - total_slots_seen:] = 0
+                        
+                        # Deploy troops
+                        if len(card_centers) < 12:
+                            no_more_slots = True
+                            total_slots_seen += len(card_centers)
+                            self.deploy_troops(card_centers, available_slots)
+                        else:
+                            total_slots_seen += len(card_centers) - 1
+                            self.deploy_troops(card_centers[:-1], available_slots[:-1])
+                            last_card_frame = frame[:, int(card_boundaries[-2] * frame.shape[1]):int(card_boundaries[-1] * frame.shape[1])]
+                            swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=0.5)
+                            time.sleep(0.5)
+                            frame = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
+                            last_card_left = self.frame_handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
+                            if abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
+
+                    # Wait for specified attack duration or until battle ends
                     elapsed = time.time() - start_time
                     start_time = time.time()
                     return_home_found = False
@@ -182,6 +241,7 @@ class Attacker:
                             break
             
             except Exception as e:
+                raise e
                 if DEBUG: print("start_attack", e)
         
         start_time = time.time()
