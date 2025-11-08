@@ -162,7 +162,7 @@ class Attacker:
                                     available_slots[closest_idx] = 0
                             locs = self.frame_handler.locate(self.assets["clan_castle_icon"], thresh=0.9, return_all=True)
                             for x, y in locs:
-                                diffs = np.abs(card_centers - (x + 0.03))
+                                diffs = np.abs(card_centers - (x + 0.01))
                                 if min(diffs) < 0.01:
                                     closest_idx = np.argmin(diffs)
                                     available_slots[closest_idx] = 0
