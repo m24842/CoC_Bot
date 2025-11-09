@@ -25,8 +25,55 @@ class Attacker:
     # 📱 Screen Interaction
     # ============================================================
     
-    def click_attack(self):
+    def click_okay(self):
+        x, y = self.frame_handler.locate(self.assets["okay"], thresh=0.9)
+        if x is not None and y is not None:
+            click(x, y)
+            return True
+        return False
+    
+    def click_surrender(self):
+        x, y = self.frame_handler.locate(self.assets["surrender"], thresh=0.9)
+        if x is not None and y is not None:
+            click(x, y)
+            return True
+        return False
+    
+    def click_end_battle(self):
+        x, y = self.frame_handler.locate(self.assets["end_battle"], thresh=0.9)
+        if x is not None and y is not None:
+            click(x, y)
+            return True
+        return False
+    
+    def click_return_home(self):
+        x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
+        if x is not None and y is not None:
+            click(x, y)
+            return True
+        return False
+    
+    def start_normal_attack(self, timeout=MAX_ATTACK_DURATION):
+        # Click attack
         click(0.07, 0.9)
+        
+        # Find a match
+        for _ in range(20):
+            time.sleep(0.5)
+            x, y = self.frame_handler.locate(self.assets["find_a_match"], thresh=0.9)
+            if x is not None and y is not None: break
+        if x is None or y is None: return False
+        click(x, y)
+        
+        found_match = False
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            time.sleep(0.5)
+            x, y = self.frame_handler.locate(self.assets["end_battle"], thresh=0.9)
+            if x is not None and y is not None:
+                found_match = True
+                break
+        return found_match
     
     def get_builders(self, timeout=60):
         start = time.time()
@@ -103,6 +150,79 @@ class Attacker:
                 multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
         click(0.01, 0.99)
     
+    def complete_attack(self):
+        swipe_up()
+        
+        start_time = time.time()
+        total_slots_seen = 0
+        no_more_slots = False
+        last_card_left = 0.0
+        
+        while total_slots_seen < ATTACK_SLOT_RANGE[1] + 1 and not no_more_slots:
+            frame = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
+            card_centers, card_boundaries = self.detect_troop_positions(frame, clip_left=last_card_left, return_boundaries=True)
+
+            # Determine troops to use
+            available_slots = np.ones_like(card_centers)
+            if EXCLUDE_CLAN_TROOPS:
+                x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
+                if x is not None and y is not None:
+                    diffs = np.abs(card_centers - x)
+                    if min(diffs) < 0.01:
+                        closest_idx = np.argmin(diffs)
+                        available_slots[closest_idx] = 0
+                locs = self.frame_handler.locate(self.assets["clan_castle_icon"], thresh=0.9, return_all=True)
+                for x, y in locs:
+                    diffs = np.abs(card_centers - (x + 0.01))
+                    if min(diffs) < 0.01:
+                        closest_idx = np.argmin(diffs)
+                        available_slots[closest_idx] = 0
+            
+            if len(EXCLUDE_ATTACK_SLOTS) and min(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) >= 0 and max(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) < len(available_slots):
+                available_slots[np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen] = 0
+            available_slots[:ATTACK_SLOT_RANGE[0] - total_slots_seen] = 0
+            available_slots[ATTACK_SLOT_RANGE[1] + 1 - total_slots_seen:] = 0
+            
+            # Deploy troops
+            if len(card_centers) < 12:
+                no_more_slots = True
+                total_slots_seen += len(card_centers)
+                self.deploy_troops(card_centers, available_slots)
+            else:
+                total_slots_seen += len(card_centers) - 1
+                self.deploy_troops(card_centers[:-1], available_slots[:-1])
+                last_card_frame = frame[:, int(card_boundaries[-2] * frame.shape[1]):int(card_boundaries[-1] * frame.shape[1])]
+                swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=0.5)
+                time.sleep(0.5)
+                frame = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
+                last_card_left = self.frame_handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
+                if abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
+
+        # Wait for specified attack duration or until battle ends
+        elapsed = time.time() - start_time
+        start_time = time.time()
+        while time.time() - start_time + elapsed < MAX_ATTACK_DURATION:
+            time.sleep(1)
+            if self.click_return_home(): return
+        
+        # Surrender / End battle
+        for _ in range(5):
+            time.sleep(0.5)
+            if self.click_surrender(): break
+            if self.click_end_battle(): break
+            if self.click_return_home(): return
+        
+        # Press okay
+        for _ in range(5):
+            time.sleep(0.5)
+            if self.click_okay(): continue
+            if self.click_return_home(): return
+        
+        # Return home
+        for _ in range(10):
+            time.sleep(0.5)
+            if self.click_return_home(): return
+    
     # ============================================================
     # ⚔️ Attack Management
     # ============================================================
@@ -120,128 +240,11 @@ class Attacker:
                     except: pass
                 if time.time() - start_time >= timeout: break
                 
-                self.click_attack()
+                found_match = self.start_normal_attack(timeout=timeout)
                 
-                # Find a match
-                for _ in range(20):
-                    time.sleep(0.5)
-                    x, y = self.frame_handler.locate(self.assets["find_a_match"], thresh=0.9)
-                    if x is not None and y is not None: break
-                if x is None or y is None: return False
-                click(x, y)
-                
-                found_match = False
-                start_time = time.time()
-                while time.time() - start_time < timeout:
-                    time.sleep(0.5)
-                    x, y = self.frame_handler.locate(self.assets["end_battle"], thresh=0.9)
-                    if x is not None and y is not None:
-                        found_match = True
-                        break
-                
-                if found_match:
-                    swipe_up()
-                    
-                    start_time = time.time()
-                    total_slots_seen = 0
-                    no_more_slots = False
-                    last_card_left = 0.0
-                    
-                    while total_slots_seen < ATTACK_SLOT_RANGE[1] + 1 and not no_more_slots:
-                        frame = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
-                        card_centers, card_boundaries = self.detect_troop_positions(frame, clip_left=last_card_left, return_boundaries=True)
-
-                        # Determine troops to use
-                        available_slots = np.ones_like(card_centers)
-                        if EXCLUDE_CLAN_TROOPS:
-                            x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
-                            if x is not None and y is not None:
-                                diffs = np.abs(card_centers - x)
-                                if min(diffs) < 0.01:
-                                    closest_idx = np.argmin(diffs)
-                                    available_slots[closest_idx] = 0
-                            locs = self.frame_handler.locate(self.assets["clan_castle_icon"], thresh=0.9, return_all=True)
-                            for x, y in locs:
-                                diffs = np.abs(card_centers - (x + 0.01))
-                                if min(diffs) < 0.01:
-                                    closest_idx = np.argmin(diffs)
-                                    available_slots[closest_idx] = 0
-                        
-                        if len(EXCLUDE_ATTACK_SLOTS) and min(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) >= 0 and max(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) < len(available_slots):
-                            available_slots[np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen] = 0
-                        available_slots[:ATTACK_SLOT_RANGE[0] - total_slots_seen] = 0
-                        available_slots[ATTACK_SLOT_RANGE[1] + 1 - total_slots_seen:] = 0
-                        
-                        # Deploy troops
-                        if len(card_centers) < 12:
-                            no_more_slots = True
-                            total_slots_seen += len(card_centers)
-                            self.deploy_troops(card_centers, available_slots)
-                        else:
-                            total_slots_seen += len(card_centers) - 1
-                            self.deploy_troops(card_centers[:-1], available_slots[:-1])
-                            last_card_frame = frame[:, int(card_boundaries[-2] * frame.shape[1]):int(card_boundaries[-1] * frame.shape[1])]
-                            swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=0.5)
-                            time.sleep(0.5)
-                            frame = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
-                            last_card_left = self.frame_handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
-                            if abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
-
-                    # Wait for specified attack duration or until battle ends
-                    elapsed = time.time() - start_time
-                    start_time = time.time()
-                    return_home_found = False
-                    while time.time() - start_time + elapsed < MAX_ATTACK_DURATION:
-                        time.sleep(1)
-                        x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
-                        if x is not None and y is not None:
-                            click(x, y)
-                            return_home_found = True
-                            break
-                    if return_home_found: continue
-                    
-                    # Surrender / End battle
-                    for _ in range(5):
-                        time.sleep(0.5)
-                        x, y = self.frame_handler.locate(self.assets["surrender"], thresh=0.9)
-                        if x is not None and y is not None:
-                            click(x, y)
-                            break
-                        x, y = self.frame_handler.locate(self.assets["end_battle"], thresh=0.9)
-                        if x is not None and y is not None:
-                            click(x, y)
-                            break
-                        x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
-                        if x is not None and y is not None:
-                            click(x, y)
-                            return_home_found = True
-                            break
-                    if return_home_found: continue
-                    
-                    # Press okay
-                    for _ in range(5):
-                        time.sleep(0.5)
-                        x, y = self.frame_handler.locate(self.assets["okay"], thresh=0.9)
-                        if x is not None and y is not None:
-                            click(x, y)
-                            break
-                        x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
-                        if x is not None and y is not None:
-                            click(x, y)
-                            return_home_found = True
-                            break
-                    if return_home_found: continue
-                    
-                    # Return home
-                    for _ in range(10):
-                        time.sleep(0.5)
-                        x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
-                        if x is not None and y is not None:
-                            click(x, y)
-                            break
+                if found_match: self.complete_attack()
             
             except Exception as e:
-                raise e
                 if DEBUG: print("start_attack", e)
         
         start_time = time.time()
