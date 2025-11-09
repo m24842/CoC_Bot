@@ -188,9 +188,10 @@ class Upgrader:
             
             # Find upgrade button
             x, y, c = self.frame_handler.locate(self.assets["upgrade"], thresh=0.9, return_confidence=True)
-            x_hero, y_hero, c_hero = self.frame_handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_confidence=True)
-            if c_hero > c:
-                x, y = x_hero, y_hero
+            xyc_hero = self.frame_handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_confidence=True, return_all=True)
+            if len(xyc_hero) > 0:
+                idx = np.random.randint(0, len(xyc_hero)-1)
+                x, y = xyc_hero[idx][:2]
             if x is None or y is None: return None
             click(x, y)
             time.sleep(1)
