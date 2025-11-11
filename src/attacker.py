@@ -148,7 +148,7 @@ class Attacker:
                 
                 # Deploy troop
                 multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
-        click(0.01, 0.99)
+        click(0.01, 0.9)
     
     def complete_attack(self):
         swipe_up()
