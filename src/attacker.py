@@ -228,7 +228,8 @@ class Attacker:
     # ============================================================
 
     def run(self, timeout=MAX_ATTACK_DURATION):
-        zoom("out")
+        zoom(dir="out")
+        swipe_down()
         
         for _ in range(MAX_ATTACKS_PER_CHECK):
             try:
