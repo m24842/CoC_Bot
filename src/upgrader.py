@@ -48,7 +48,7 @@ class Upgrader:
                 return {"gold": gold, "elixir": elixir, "dark_elixir": dark_elixir}
             except Exception as e:
                 if DEBUG: print("get_resources", e)
-            time.sleep(1)
+            time.sleep(0.5)
         raise Exception("Failed to get resources")
     
     def get_builders(self, timeout=60):
@@ -68,7 +68,7 @@ class Upgrader:
                 return available
             except Exception as e:
                 if DEBUG: print("get_builders", e)
-            time.sleep(1)
+            time.sleep(0.5)
         raise Exception("Failed to get builders")
 
     def lab_available(self, timeout=60):
@@ -88,7 +88,7 @@ class Upgrader:
                 return available > 0
             except Exception as e:
                 if DEBUG: print("lab_available", e)
-            time.sleep(1)
+            time.sleep(0.5)
         raise Exception("Failed to get lab availability")
 
     def get_resource_type(self, frame):
@@ -121,7 +121,7 @@ class Upgrader:
     def upgrade(self):
         try:
             self.click_builders()
-            time.sleep(1)
+            time.sleep(0.5)
             
             # Find suggested upgrades label
             x_sug, y_sug = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
@@ -170,7 +170,7 @@ class Upgrader:
                 click(x_sug, y_alt)
             elif alt_upgrade == "other":
                 click(x_sug, y_other+0.055)
-            time.sleep(1)
+            time.sleep(0.5)
             
             # If suggested upgrades disappears, then there was a misclick, unless hero hall is found
             x_sug, y_sug = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
@@ -184,7 +184,7 @@ class Upgrader:
                 self.get_builders(1)
                 self.click_builders()
             except: pass
-            time.sleep(1)
+            time.sleep(0.5)
             
             # Find upgrade button
             x, y, c = self.frame_handler.locate(self.assets["upgrade"], thresh=0.9, return_confidence=True)
@@ -194,7 +194,7 @@ class Upgrader:
                 x, y = xyc_hero[idx][:2]
             if x is None or y is None: return None
             click(x, y)
-            time.sleep(1)
+            time.sleep(0.5)
             
             # Get upgrade name
             x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
@@ -210,7 +210,7 @@ class Upgrader:
             if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
                 click(x, y+0.05)
-                time.sleep(1)
+                time.sleep(0.5)
                 click_exit(5, 0.1)
                 return upgrade_name
             else:
@@ -227,7 +227,7 @@ class Upgrader:
     def lab_upgrade(self):
         try:
             self.click_lab()
-            time.sleep(1)
+            time.sleep(0.5)
             
             # Find suggested upgrades label
             x_sug, y_sug = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
@@ -249,7 +249,7 @@ class Upgrader:
                 y_pot = y_sug + 0.055
 
             click(x_sug, y_pot)
-            time.sleep(1)
+            time.sleep(0.5)
             
             # Get upgrade name
             x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
@@ -265,7 +265,7 @@ class Upgrader:
             if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
                 click(x, y+0.05)
-                time.sleep(1)
+                time.sleep(0.5)
                 click_exit(5, 0.1)
                 return upgrade_name
             else:
@@ -301,7 +301,7 @@ class Upgrader:
                 if initial_builders == 0: break
                 upgraded = self.upgrade()
                 click_exit(5, 0.1)
-                time.sleep(1)
+                time.sleep(0.5)
                 final_builders = self.get_builders(1)
                 if upgraded is not None:
                     if final_builders < initial_builders: upgrades_started.append(upgraded)
@@ -315,7 +315,7 @@ class Upgrader:
             if self.lab_available(1):
                 upgraded = self.lab_upgrade()
                 click_exit(5, 0.1)
-                time.sleep(1)
+                time.sleep(0.5)
                 final_lab_avail = self.lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
         except:
