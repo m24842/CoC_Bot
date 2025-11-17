@@ -224,6 +224,10 @@ class Frame_Handler:
     def save_frame(self, frame, filename="frame.png"):
         cv2.imwrite(filename, frame)
     
+    def screenshot(self, filename="debug/screenshot.png", grayscale=False):
+        frame = self.get_frame(grayscale)
+        self.save_frame(frame, filename)
+    
     def locate(self, template, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
         if grayscale and len(template.shape) == 3:
             template = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
