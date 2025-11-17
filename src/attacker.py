@@ -65,15 +65,20 @@ class Attacker:
         if x is None or y is None: return False
         click(x, y)
         
-        found_match = False
+        # Confirm attack
+        for _ in range(20):
+            time.sleep(0.5)
+            x, y = self.frame_handler.locate(self.assets["confirm_attack"], thresh=0.9)
+            if x is not None and y is not None: break
+        if x is None or y is None: return False
+        click(x, y)
+        
         start_time = time.time()
         while time.time() - start_time < timeout:
             time.sleep(0.5)
             x, y = self.frame_handler.locate(self.assets["end_battle"], thresh=0.9)
-            if x is not None and y is not None:
-                found_match = True
-                break
-        return found_match
+            if x is not None and y is not None: return True
+        return False
     
     def get_builders(self, timeout=60):
         start = time.time()
