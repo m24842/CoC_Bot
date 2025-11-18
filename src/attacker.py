@@ -170,13 +170,14 @@ class Attacker:
             # Determine troops to use
             available_slots = np.ones_like(card_centers)
             if EXCLUDE_CLAN_TROOPS:
-                x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], thresh=0.9)
+                frame_gray = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=True)
+                x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], frame=frame_gray, thresh=0.9)
                 if x is not None and y is not None:
                     diffs = np.abs(card_centers - x)
                     if min(diffs) < 0.01:
                         closest_idx = np.argmin(diffs)
                         available_slots[closest_idx] = 0
-                locs = self.frame_handler.locate(self.assets["clan_castle_icon"], thresh=0.9, return_all=True)
+                locs = self.frame_handler.locate(self.assets["clan_castle_icon"], frame=frame_gray, thresh=0.9, return_all=True)
                 for x, y in locs:
                     diffs = np.abs(card_centers - (x + 0.01))
                     if min(diffs) < 0.01:
