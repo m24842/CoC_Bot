@@ -288,8 +288,9 @@ class Upgrader:
         swipe_down()
         
         # Collect resources
-        self.collect_resources()
-        time.sleep(5)
+        if COLLECT_RESOURCES:
+            self.collect_resources()
+            time.sleep(5)
         
         # Building upgrades
         upgrades_started = []
