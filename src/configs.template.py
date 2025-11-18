@@ -14,6 +14,7 @@ CHECK_INTERVAL = 5 * 60 # seconds
 
 # REQUIRED: Upgrade settings
 MAX_UPGRADES_PER_CHECK = 10
+COLLECT_RESOURCES = False
 
 # REQUIRED: Attack Settings
 MAX_ATTACKS_PER_CHECK = 1
