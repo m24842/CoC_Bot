@@ -39,7 +39,7 @@
                 while (i < ids.length) {                    
                     if (document.getElementById(`id_${i}`)) {
                         document.getElementById(`id_${i}`).innerHTML = `
-                            <button type="submit" name="instance_id" value="5">${ids[i]}</button>
+                            <button type="submit" name="instance_id" value=${ids[i]}>${ids[i]}</button>
                         `;
                     } else {
                         const idButton = document.createElement("div");
