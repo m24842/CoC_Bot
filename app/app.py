@@ -4,6 +4,7 @@ sys.path.append("src")
 
 import os
 import time
+import json
 import sqlite3
 from waitress import serve
 from flask import Flask, render_template, jsonify, abort, request
@@ -17,8 +18,23 @@ run_statuses = {}
 end_times = {}
 ids = set()
 
+def get_known_ids():
+    global ids
+    data = {}
+    cache_path = os.path.join(PATH, "data/cache.json")
+    if os.path.exists(cache_path):
+        with open(cache_path, "r") as f:
+            data = json.load(f)
+    ids = set(data.get("known_ids", []))
+
+def update_known_ids():
+    global ids
+    data = {"known_ids": list(ids)}
+    cache_path = os.path.join(PATH, "data/cache.json")
+    with open(cache_path, "w") as f:
+        json.dump(data, f)
+
 def init_db(id):
-    ids.add(id)
     db_path = os.path.join(PATH, f"data/notifications_{id}.db")
     if not os.path.exists(db_path):
         with sqlite3.connect(db_path) as conn:
@@ -101,6 +117,8 @@ def instances():
         id = data.get("id", "").strip()
         if id == "":
             return jsonify({"status": "error", "message": "Invalid ID"}), 400
+        ids.add(id)
+        update_known_ids()
         init_db(id)
         return jsonify({"status": "success", "id": id})
 
