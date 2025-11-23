@@ -18,16 +18,18 @@ end_times = {}
 ids = set()
 
 def init_db(id):
+    ids.add(id)
     db_path = os.path.join(PATH, f"data/notifications_{id}.db")
-    with sqlite3.connect(db_path) as conn:
-        conn.execute(f"""
-            CREATE TABLE IF NOT EXISTS notifications_{id} (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                time_stamp REAL,
-                data TEXT
-            )
-        """)
-        conn.commit()
+    if not os.path.exists(db_path):
+        with sqlite3.connect(db_path) as conn:
+            conn.execute(f"""
+                CREATE TABLE IF NOT EXISTS notifications_{id} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    time_stamp REAL,
+                    data TEXT
+                )
+            """)
+            conn.commit()
 
 def get_notifications(id, limit=3):
     db_path = os.path.join(PATH, f"data/notifications_{id}.db")
@@ -99,7 +101,6 @@ def instances():
         id = data.get("id", "").strip()
         if id == "":
             return jsonify({"status": "error", "message": "Invalid ID"}), 400
-        ids.add(id)
         init_db(id)
         return jsonify({"status": "success", "id": id})
 
