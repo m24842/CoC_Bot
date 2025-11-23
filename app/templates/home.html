@@ -22,7 +22,7 @@
         <form method="POST" class="stacked-buttons"></form>
         
         <script>
-            let ids = {{ ids|default([])|tojson }};
+            let ids = [];
 
             async function fetchInstances() {
                 try {
@@ -60,6 +60,7 @@
                     updateInstances();
                 });
             }
+            fetchInstances();
             setInterval(update, 1000);
 
             document.querySelectorAll("form").forEach(form => {
