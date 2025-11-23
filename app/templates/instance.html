@@ -53,8 +53,9 @@
             });
         </script>
 
-        {% if end_time is number and current_time is number %}
+        {% if id and end_time is number and current_time is number %}
         <script>
+            const id = "{{ id }}";
             let start = Date.now();
             let current_time = {{ current_time }};
             let end_time = {{ end_time }};
@@ -65,7 +66,7 @@
 
             async function fetchNotifications() {
                 try {
-                    const response = await fetch("/notifications", {
+                    const response = await fetch(`/${id}/notifications`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -86,7 +87,7 @@
 
             async function fetchError() {
                 try {
-                    const response = await fetch("/status");
+                    const response = await fetch(`/${id}/status`);
                     const data = await response.json();
                     run_status = data.status;
                 } catch (error) {
@@ -96,7 +97,7 @@
 
             async function fetchCurrentTime() {
                 try {
-                    const response = await fetch("/current_time");
+                    const response = await fetch(`/${id}/current_time`);
                     const data = await response.json();
                     current_time = data.current_time;
                     start = Date.now();
@@ -107,7 +108,7 @@
 
             async function fetchEndTime() {
                 try {
-                    const response = await fetch("/end_time");
+                    const response = await fetch(`/${id}/end_time`);
                     const data = await response.json();
                     end_time = data.end_time;
                 } catch (error) {
@@ -117,7 +118,7 @@
 
             async function fetchStatus() {
                 try {
-                    const response = await fetch("/status");
+                    const response = await fetch(`/${id}/status`);
                     const data = await response.json();
                     run_status = data.status;
                 } catch (error) {
@@ -278,7 +279,7 @@
                         formData.append(submitter.name, submitter.value);
                     }
 
-                    const response = await fetch("/end_time", {
+                    const response = await fetch(`/${id}/end_time`, {
                         method: "POST",
                         body: formData
                     });

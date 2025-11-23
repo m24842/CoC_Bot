@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CoC Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='coc_bot_logo.png') }}" alt="CoC Bot">
+        <h1 class="themed_text">CoC Bot</h1>
+    </header>
+
+    <div class="container">
+
+        <div style="margin-bottom:25px;">
+            <strong class="themed_text" style="font-size:4em; padding:0;">Instances</strong>
+        </div>
+
+        <form method="POST" class="stacked-buttons"></form>
+        
+        <script>
+            let ids = [];
+
+            async function fetchInstances() {
+                try {
+                    const response = await fetch("/instances");
+                    const data = await response.json();
+                    ids = data.ids;
+                } catch (error) {
+                    console.error('Error fetching instances:', error);
+                }
+            }
+
+            function updateInstances() {
+                let i = 0;
+                while (i < ids.length) {                    
+                    if (document.getElementById(`id_${i}`)) {
+                        document.getElementById(`id_${i}`).innerHTML = `
+                            <button type="submit" name="instance_id" value="5">${ids[i]}</button>
+                        `;
+                    } else {
+                        const idButton = document.createElement("div");
+                        idButton.id = `id_${i}`;
+                        idButton.innerHTML = `
+                            <button type="submit" name="instance_id" value=${ids[i]}>${ids[i]}</button>
+                        `;
+
+                        document.querySelector(".stacked-buttons").appendChild(idButton);
+                    }
+
+                    i++;
+                }
+            }
+
+            function update() {
+                fetchInstances().then(() => {
+                    updateInstances();
+                });
+            }
+            setInterval(update, 1000);
+
+            document.querySelectorAll("form").forEach(form => {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                                        
+                    const submitter = e.submitter;
+
+                    const formData = new FormData(form);
+
+                    form.reset()
+
+                    window.location.href = `/${submitter.value}`;
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

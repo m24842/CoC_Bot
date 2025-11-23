@@ -10,19 +10,23 @@ import ctypes
 import easyocr
 import adbutils
 import requests
+import argparse
 import subprocess
 import numpy as np
 from pyminitouch import MNTDevice, CommandBuilder
+import configs
 from configs import *
 
 if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
 
-ADB_DEVICE, MINITOUCH_DEVICE = None, None
+ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 READER = easyocr.Reader(['en'])
 
 RUN_AT_EXIT = []
+
+INSTANCE_ID = None
 
 def register_exit(func):
     atexit.register(func)
@@ -38,6 +42,18 @@ def handle_sig(sig, frame):
 def setup_signal_handlers():
     for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         signal.signal(sig, handle_sig)
+
+def parse_args():
+    global INSTANCE_ID, ADB_ADDRESS
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument("--id", type=str, default=INSTANCE_IDS[0], help="Instance ID")
+    args = parser.parse_args()
+    configs.DEBUG = args.debug
+    assert args.id in INSTANCE_IDS, f"Invalid instance ID. Must be one of: {INSTANCE_IDS}"
+    INSTANCE_ID = args.id
+    if WEB_APP_URL != "": requests.post(f"{WEB_APP_URL}/add_instance", json={"id": INSTANCE_ID})
+    ADB_ADDRESS = ADB_ADDRESSES[INSTANCE_IDS.index(INSTANCE_ID)]
 
 def disable_sleep():
     if sys.platform == "darwin":
@@ -196,7 +212,7 @@ def get_telegram_chat_id():
 
 def send_notification(text):
     if WEB_APP_URL != "":
-        try: requests.post(f"{WEB_APP_URL}/notify", json=text)
+        try: requests.post(f"{WEB_APP_URL}/{INSTANCE_ID}/notify", json=text)
         except: pass
 
     if TELEGRAM_BOT_TOKEN != "":
@@ -208,7 +224,7 @@ class Frame_Handler:
     def get_frame(self, grayscale=True):
         frame = np.array(ADB_DEVICE.screenshot())
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        if DEBUG: self.save_frame(frame, "debug/frame.png")
+        if configs.DEBUG: self.save_frame(frame, "debug/frame.png")
         if grayscale: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         return frame
 
@@ -235,7 +251,7 @@ class Frame_Handler:
         frame = self.get_frame(grayscale) if frame is None else frame
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
-        if DEBUG: print(max_val)
+        if configs.DEBUG: print(max_val)
         
         if return_all:
             ys, xs = np.where(res >= thresh)

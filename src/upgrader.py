@@ -5,6 +5,7 @@ import time
 import numpy as np
 import utils
 from utils import *
+import configs
 from configs import *
 
 class Upgrader:
@@ -41,13 +42,13 @@ class Upgrader:
         while time.time() < start + timeout:
             try:
                 section = self.frame_handler.get_frame_section(0.8, 0, 0.96, 0.30, high_contrast=True, thresh=240)
-                if DEBUG: self.frame_handler.save_frame(section, "debug/resources.png")
+                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/resources.png")
                 text = get_text(section)
-                if DEBUG: print(text)
+                if configs.DEBUG: print(text)
                 gold, elixir, dark_elixir = [int(fix_digits(s.replace(' ', ''))) for s in text]
                 return {"gold": gold, "elixir": elixir, "dark_elixir": dark_elixir}
             except Exception as e:
-                if DEBUG: print("get_resources", e)
+                if configs.DEBUG: print("get_resources", e)
             time.sleep(0.5)
         raise Exception("Failed to get resources")
     
@@ -56,7 +57,7 @@ class Upgrader:
         while time.time() < start + timeout:
             try:
                 section = self.frame_handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
-                if DEBUG: self.frame_handler.save_frame(section, "debug/builders.png")
+                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/builders.png")
                 
                 slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
                 res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
@@ -67,7 +68,7 @@ class Upgrader:
                 available = int(text[0])
                 return available
             except Exception as e:
-                if DEBUG: print("get_builders", e)
+                if configs.DEBUG: print("get_builders", e)
             time.sleep(0.5)
         raise Exception("Failed to get builders")
 
@@ -76,7 +77,7 @@ class Upgrader:
         while time.time() < start + timeout:
             try:
                 section = self.frame_handler.get_frame_section(0.368, 0.04, -0.59, 0.08, high_contrast=True)
-                if DEBUG: self.frame_handler.save_frame(section, "debug/lab.png")
+                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/lab.png")
                 
                 slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
                 res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
@@ -87,7 +88,7 @@ class Upgrader:
                 available = int(text[0])
                 return available > 0
             except Exception as e:
-                if DEBUG: print("lab_available", e)
+                if configs.DEBUG: print("lab_available", e)
             time.sleep(0.5)
         raise Exception("Failed to get lab availability")
 
@@ -98,7 +99,7 @@ class Upgrader:
         gold_score = cv2.minMaxLoc(cv2.matchTemplate(frame, gold_template, cv2.TM_CCOEFF_NORMED))[1]
         elixir_score = cv2.minMaxLoc(cv2.matchTemplate(frame, elixir_template, cv2.TM_CCOEFF_NORMED))[1]
         dark_elixir_score = cv2.minMaxLoc(cv2.matchTemplate(frame, dark_elixir_template, cv2.TM_CCOEFF_NORMED))[1]
-        if DEBUG: print(f"gold={gold_score}, elixir={elixir_score}, dark_elixir={dark_elixir_score}")
+        if configs.DEBUG: print(f"gold={gold_score}, elixir={elixir_score}, dark_elixir={dark_elixir_score}")
         return ["gold", "elixir", "dark_elixir"][np.argmax([gold_score, elixir_score, dark_elixir_score])]
 
     def collect_resources(self):
@@ -112,7 +113,7 @@ class Upgrader:
                     commands.append(f"input tap {int(0.99*WINDOW_DIMS[0])} {int(0.01*WINDOW_DIMS[1])}")
             utils.ADB_DEVICE.shell(" && ".join(commands) + ";")
         except Exception as e:
-            if DEBUG: print("collect_resources", e)
+            if configs.DEBUG: print("collect_resources", e)
 
     # ============================================================
     # 🧱 Upgrade Management
@@ -141,17 +142,17 @@ class Upgrader:
                 n_sug = round(y_diff / label_height) - 1
                 if n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
                 else: alt_idx = 0
-            if DEBUG: print(f"upgrade: n_sug={n_sug}, idx={idx}, alt_idx={alt_idx}")
+            if configs.DEBUG: print(f"upgrade: n_sug={n_sug}, idx={idx}, alt_idx={alt_idx}")
             y_pot = y_sug + label_height * (idx + 1)
             y_alt = y_sug + label_height * (alt_idx + 1)
             
             # Get potential upgrade names
             pot_section = self.frame_handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
-            if DEBUG: self.frame_handler.save_frame(pot_section, "debug/upgrade_name.png")
+            if configs.DEBUG: self.frame_handler.save_frame(pot_section, "debug/upgrade_name.png")
             pot_upgrade_name = re.sub(r"\s*x\d+$", "", get_text(pot_section)[0].lower())
             
             alt_section = self.frame_handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
-            if DEBUG: self.frame_handler.save_frame(alt_section, "debug/upgrade_name.png")
+            if configs.DEBUG: self.frame_handler.save_frame(alt_section, "debug/upgrade_name.png")
             alt_upgrade_text = get_text(alt_section)
             
             alt_upgrade_options = ["none"]
@@ -162,7 +163,7 @@ class Upgrader:
                 else: alt_upgrade = "none"
             else:
                 alt_upgrade = np.random.choice(alt_upgrade_options)
-            if DEBUG: print(f"alt_upgrade: {alt_upgrade}")
+            if configs.DEBUG: print(f"alt_upgrade: {alt_upgrade}")
             
             if alt_upgrade == "none":
                 click(x_sug, y_pot)
@@ -199,7 +200,7 @@ class Upgrader:
             # Get upgrade name
             x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = self.frame_handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
-            if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
+            if configs.DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_name.png")
             upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3])
             
             # Complete upgrade
@@ -207,7 +208,7 @@ class Upgrader:
             if x is None or y is None: return None
             
             section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False)
-            if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
+            if configs.DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
                 click(x, y+0.05)
                 time.sleep(0.5)
@@ -215,13 +216,13 @@ class Upgrader:
                 return upgrade_name
             else:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
-                if DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
+                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
                 resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
                 # send_notification(f"Insufficient {resource_type}!")
                 click_exit(5, 0.1)
                 return None
         except Exception as e:
-            if DEBUG: print("upgrade", e)
+            if configs.DEBUG: print("upgrade", e)
             return None
     
     def lab_upgrade(self):
@@ -243,7 +244,7 @@ class Upgrader:
                 label_height = 0.055
                 n_sug = round(y_diff / label_height) - 1
                 idx = np.random.randint(0, n_sug)
-                if DEBUG: print(f"lab_upgrade: n_sug={n_sug}, idx={idx}")
+                if configs.DEBUG: print(f"lab_upgrade: n_sug={n_sug}, idx={idx}")
                 y_pot = y_sug + label_height * (idx + 1)
             else:
                 y_pot = y_sug + 0.055
@@ -254,7 +255,7 @@ class Upgrader:
             # Get upgrade name
             x, y = self.frame_handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = self.frame_handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
-            if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_name.png")
+            if configs.DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_name.png")
             upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3])
             
             # Complete upgrade
@@ -262,7 +263,7 @@ class Upgrader:
             if x is None or y is None: return None
             
             section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False)
-            if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
+            if configs.DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
                 click(x, y+0.05)
                 time.sleep(0.5)
@@ -270,13 +271,13 @@ class Upgrader:
                 return upgrade_name
             else:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
-                if DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
+                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
                 resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
                 # send_notification(f"Insufficient {resource_type}!")
                 click_exit(5, 0.1)
                 return None
         except Exception as e:
-            if DEBUG: print("lab_upgrade", e)
+            if configs.DEBUG: print("lab_upgrade", e)
             return None
 
     # ============================================================

@@ -18,6 +18,8 @@ from attacker import Attacker
 
 class CoC_Bot:
     def __init__(self):
+        parse_args()
+        
         if DISABLE_DEEVICE_SLEEP:
             disable_sleep()
             register_exit(enable_sleep)
@@ -36,22 +38,22 @@ class CoC_Bot:
     def running(self):
         if WEB_APP_URL == "": return True
         try:
-            response = requests.get(f"{WEB_APP_URL}/running", timeout=3)
+            response = requests.get(f"{WEB_APP_URL}/{utils.INSTANCE_ID}/running", timeout=3)
             if response.status_code == 200:
                 return response.json().get("running", False)
             return False
         except Exception as e:
-            if DEBUG: print("running", e)
+            if configs.DEBUG: print("running", e)
             return False
     
     def update_status(self, status):
         if WEB_APP_URL == "": return
         for _ in range(5):
             try:
-                requests.post(f"{WEB_APP_URL}/status", json={"status": status}, timeout=3)
+                requests.post(f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status", json={"status": status}, timeout=3)
                 return
             except Exception as e:
-                if DEBUG: print("update_status", e)
+                if configs.DEBUG: print("update_status", e)
     
     def start_web_app(self):
         proc = subprocess.Popen(
@@ -133,7 +135,7 @@ class CoC_Bot:
         while time.time() < start + timeout:
             try:
                 section = self.frame_handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
-                if DEBUG: self.frame_handler.save_frame(section, "debug/builders.png")
+                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/builders.png")
                 
                 slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
                 res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
@@ -144,7 +146,7 @@ class CoC_Bot:
                 available = int(text[0])
                 return available
             except Exception as e:
-                if DEBUG: print("get_builders", e)
+                if configs.DEBUG: print("get_builders", e)
             time.sleep(1)
         raise Exception("Failed to get builders")
     
