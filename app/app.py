@@ -133,7 +133,7 @@ def handle_notify(id):
 @app.route("/<id>/notifications", methods=["POST"])
 def handle_notifications(id):
     n = request.json
-    return jsonify(instances[id].get_notifications(limit=n.get("limit", 3)))
+    return jsonify(instances[id].get_notifications(n))
 
 @app.route("/instances", methods=["GET", "POST"])
 def handle_instances():
