@@ -22,7 +22,7 @@
         <form method="POST" class="stacked-buttons"></form>
         
         <script>
-            let ids = [];
+            let ids = {{ ids|default([])|tojson }};
 
             async function fetchInstances() {
                 try {
