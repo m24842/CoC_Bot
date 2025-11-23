@@ -14,55 +14,78 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 
-run_statuses = {}
-end_times = {}
-ids = set()
+class Instance:
+    def __init__(self, id):
+        self.id = id
+        self.run_status = ""
+        self.end_time = 0
+        self.db_path = os.path.join(PATH, f"data/notifications_{id}.db")
+        self.init_db(id)
+    
+    def __eq__(self, other):
+        return self.id == other.id
+    
+    def __hash__(self):
+        return hash(self.id)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "run_status": self.run_status,
+            "end_time": self.end_time
+        }
+    
+    def init_db(self, id):
+        if not os.path.exists(self.db_path):
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute(f"""
+                    CREATE TABLE IF NOT EXISTS notifications_{id} (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        time_stamp REAL,
+                        data TEXT
+                    )
+                """)
+                conn.commit()
+    
+    def get_notifications(self, limit=3):
+        if not os.path.exists(self.db_path): return []
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(f"SELECT time_stamp, data FROM notifications_{self.id} ORDER BY time_stamp DESC LIMIT ?", (limit,))
+            return [{"time_stamp": row[0], "data": row[1]} for row in cursor.fetchall()]
 
-def get_known_ids():
-    global ids
+    def add_notification(self, data):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(f"INSERT INTO notifications_{self.id} (time_stamp, data) VALUES (?, ?)",
+                            (time.time(), str(data)))
+            conn.commit()
+
+instances = {}
+
+def get_known_instances():
+    global instances
     data = {}
     cache_path = os.path.join(PATH, "data/cache.json")
     if os.path.exists(cache_path):
         with open(cache_path, "r") as f:
             data = json.load(f)
-    ids = set(data.get("known_ids", []))
+    instances = data.get("known_instances", {})
 
-def update_known_ids():
-    global ids
-    data = {"known_ids": sorted(list(ids))}
+def update_known_instances():
+    global instances
+    data = {id: instances[id].to_dict() for id in instances}
     cache_path = os.path.join(PATH, "data/cache.json")
     with open(cache_path, "w") as f:
-        json.dump(data, f)
-
-def init_db(id):
-    db_path = os.path.join(PATH, f"data/notifications_{id}.db")
-    if not os.path.exists(db_path):
-        with sqlite3.connect(db_path) as conn:
-            conn.execute(f"""
-                CREATE TABLE IF NOT EXISTS notifications_{id} (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    time_stamp REAL,
-                    data TEXT
-                )
-            """)
-            conn.commit()
-
-def get_notifications(id, limit=3):
-    db_path = os.path.join(PATH, f"data/notifications_{id}.db")
-    if not os.path.exists(db_path): return []
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.execute(f"SELECT time_stamp, data FROM notifications_{id} ORDER BY time_stamp DESC LIMIT ?", (limit,))
-        return [{"time_stamp": row[0], "data": row[1]} for row in cursor.fetchall()]
+        json.dump({"known_instances": data}, f)
 
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("home.html", ids=list(ids))
+    return render_template("home.html", ids=sorted(instances.keys()))
 
 @app.route("/<id>", methods=["GET"])
-def instance(id):
-    init_db(id)
-    if id not in ids: abort(404)
-    return render_template("instance.html", id=id, end_time=end_times.get(id, 0), current_time=time.time(), notifications=get_notifications(id), run_status=run_statuses.get(id, ""))
+def handle_instance(id):
+    instance = instances[id]
+    if id not in instances: abort(404)
+    return render_template("instance.html", id=id, end_time=instance.end_time, current_time=time.time(), notifications=instance.get_notifications(), run_status=instance.run_status)
 
 @app.route("/<id>/current_time", methods=["GET"])
 def handle_current_time(id):
@@ -70,59 +93,58 @@ def handle_current_time(id):
 
 @app.route("/<id>/end_time", methods=["GET", "POST"])
 def handle_end_time(id):
-    global end_times
+    global instances
+    instance = instances[id]
     if request.method == "POST":
         if "preset" in request.form:
-            end_times[id] = int(request.form["preset"]) * 60 + time.time()
+            instance.end_time = int(request.form["preset"]) * 60 + time.time()
         elif "cancel" in request.form:
-            end_times[id] = 0
+            instance.end_time = 0
         else:
-            end_times[id] = int(request.form["custom_input"]) * 60 + time.time()
+            instance.end_time = int(request.form["custom_input"]) * 60 + time.time()
     
-    return {"end_time": end_times.get(id, 0)}
+    return {"end_time": instance.end_time}
 
 @app.route("/<id>/running", methods=["GET"])
 def handle_running(id):
-    return {"running": end_times.get(id, 0) == 0 or end_times.get(id, 0) < time.time()}
+    instance = instances[id]
+    return {"running": instance.end_time == 0 or instance.end_time < time.time()}
 
 @app.route("/<id>/status", methods=["GET", "POST"])
 def handle_status(id):
-    global run_statuses
+    global instances
+    instance = instances[id]
     if request.method == "POST":
         data = request.json
-        run_statuses[id] = data["status"]
+        instance.run_status = data.get("status", "")
 
-    return {"status": run_statuses.get(id, "")}
+    return {"status": instance.run_status}
 
 @app.route("/<id>/notify", methods=["POST"])
 def handle_notify(id):
+    global instances
     data = request.json
-    db_path = os.path.join(PATH, f"data/notifications_{id}.db")
-    if os.path.exists(db_path):
-        with sqlite3.connect(db_path) as conn:
-            conn.execute(f"INSERT INTO notifications_{id} (time_stamp, data) VALUES (?, ?)",
-                            (time.time(), str(data)))
+    instances[id].add_notification(data)
     return jsonify({"status": "success", "received": data})
 
 @app.route("/<id>/notifications", methods=["POST"])
 def handle_notifications(id):
     n = request.json
-    return jsonify(get_notifications(id, n))
+    return jsonify(instances[id].get_notifications(limit=n.get("limit", 3)))
 
 @app.route("/instances", methods=["GET", "POST"])
-def instances():
-    global ids
+def handle_instances():
+    global instances
     if request.method == "POST":
         data = request.json
         id = data.get("id", "").strip()
         if id == "":
             return jsonify({"status": "error", "message": "Invalid ID"}), 400
-        ids.add(id)
-        update_known_ids()
-        init_db(id)
+        instances[id] = Instance(id)
+        update_known_instances()
         return jsonify({"status": "success", "id": id})
 
-    return jsonify({"ids": list(ids)})
+    return jsonify({"ids": sorted(instances.keys())})
 
 @app.after_request
 def add_cache_headers(response):
@@ -138,7 +160,7 @@ def add_cache_headers(response):
         response.headers["Expires"] = "0"
     return response
 
-get_known_ids()
+get_known_instances()
 if __name__ == "__main__":
     if True: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
