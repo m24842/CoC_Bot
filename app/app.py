@@ -29,7 +29,7 @@ def get_known_ids():
 
 def update_known_ids():
     global ids
-    data = {"known_ids": list(ids)}
+    data = {"known_ids": list(ids).sort()}
     cache_path = os.path.join(PATH, "data/cache.json")
     with open(cache_path, "w") as f:
         json.dump(data, f)
@@ -56,7 +56,7 @@ def get_notifications(id, limit=3):
 
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("home.html", ids=list(ids))
+    return render_template("home.html", ids=list(ids).sort())
 
 @app.route("/<id>", methods=["GET"])
 def instance(id):
@@ -122,7 +122,7 @@ def instances():
         init_db(id)
         return jsonify({"status": "success", "id": id})
 
-    return jsonify({"ids": list(ids)})
+    return jsonify({"ids": list(ids).sort()})
 
 @app.after_request
 def add_cache_headers(response):
