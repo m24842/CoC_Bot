@@ -15,10 +15,10 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__)
 
 class Instance:
-    def __init__(self, id):
+    def __init__(self, id, run_status="", end_time=0):
         self.id = id
-        self.run_status = ""
-        self.end_time = 0
+        self.run_status = run_status
+        self.end_time = end_time
         self.db_path = os.path.join(PATH, f"data/notifications_{id}.db")
         self.init_db(id)
     
@@ -68,7 +68,10 @@ def get_known_instances():
     if os.path.exists(cache_path):
         with open(cache_path, "r") as f:
             data = json.load(f)
-    instances = data.get("known_instances", {})
+    known_instances = data.get("known_instances", {})
+    for id in known_instances:
+        info = known_instances[id]
+        instances[id] = Instance(id, run_status=info.get("run_status", ""), end_time=info.get("end_time", 0))
 
 def update_known_instances():
     global instances
