@@ -217,7 +217,8 @@ def send_notification(text):
 
     if TELEGRAM_BOT_TOKEN != "":
         try:
-            requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data={"chat_id": get_telegram_chat_id(), "text": text})
+            telegram_text = f"[{INSTANCE_ID}]\n{text}"
+            requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data={"chat_id": get_telegram_chat_id(), "text": telegram_text})
         except: pass
 
 class Frame_Handler:
