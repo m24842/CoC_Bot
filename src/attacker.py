@@ -4,6 +4,7 @@ import time
 import scipy
 import numpy as np
 from utils import *
+import configs
 from configs import *
 
 class Attacker:
@@ -85,7 +86,7 @@ class Attacker:
         while time.time() < start + timeout:
             try:
                 section = self.frame_handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
-                if DEBUG: self.frame_handler.save_frame(section, "debug/builders.png")
+                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/builders.png")
                 
                 slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
                 res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
@@ -96,7 +97,7 @@ class Attacker:
                 available = int(text[0])
                 return available
             except Exception as e:
-                if DEBUG: print("get_builders", e)
+                if configs.DEBUG: print("get_builders", e)
             time.sleep(1)
         raise Exception("Failed to get builders")
     
@@ -110,7 +111,7 @@ class Attacker:
         profile = (profile - profile.min()) / (profile.max() - profile.min())
         peaks = scipy.signal.find_peaks(profile, height=0.8, distance=10)[0] / frame.shape[1]
         
-        if DEBUG:
+        if configs.DEBUG:
             debug_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
             for x in (peaks * frame.shape[1]).astype(int):
                 cv2.line(debug_frame, (x, 0), (x, frame.shape[0]), (0, 255, 0), 2)
@@ -252,7 +253,7 @@ class Attacker:
                 if found_match: self.complete_attack()
             
             except Exception as e:
-                if DEBUG: print("start_attack", e)
+                if configs.DEBUG: print("start_attack", e)
         
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -261,4 +262,4 @@ class Attacker:
                 self.get_builders(1)
                 break
             except Exception as e:
-                if DEBUG: print("end_attack", e)
+                if configs.DEBUG: print("end_attack", e)

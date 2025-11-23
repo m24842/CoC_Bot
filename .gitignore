@@ -6,5 +6,5 @@ debug
 *.log
 src/cache.json
 src/configs.py
-app/notifications.db
+app/data
 app/coc_bot_web_app.service

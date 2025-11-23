@@ -6,19 +6,22 @@ import os
 import time
 import sqlite3
 from waitress import serve
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, abort, request
 from configs import *
+
+PATH = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 
-run_status = ""
-end_time = 0
-db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), NOTIFICATIONS_DB_PATH)
+run_statuses = {}
+end_times = {}
+ids = set()
 
-def init_db():
+def init_db(id):
+    db_path = os.path.join(PATH, f"data/notifications_{id}.db")
     with sqlite3.connect(db_path) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS notifications (
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS notifications_{id} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 time_stamp REAL,
                 data TEXT
@@ -26,57 +29,81 @@ def init_db():
         """)
         conn.commit()
 
-def get_notifications(limit=3):
+def get_notifications(id, limit=3):
+    db_path = os.path.join(PATH, f"data/notifications_{id}.db")
+    if not os.path.exists(db_path): return []
     with sqlite3.connect(db_path) as conn:
-        cursor = conn.execute("SELECT time_stamp, data FROM notifications ORDER BY time_stamp DESC LIMIT ?", (limit,))
+        cursor = conn.execute(f"SELECT time_stamp, data FROM notifications_{id} ORDER BY time_stamp DESC LIMIT ?", (limit,))
         return [{"time_stamp": row[0], "data": row[1]} for row in cursor.fetchall()]
 
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("index.html", end_time=end_time, current_time=time.time(), notifications=get_notifications(), run_status=run_status)
+    return render_template("home.html", ids=list(ids))
 
-@app.route("/current_time", methods=["GET"])
-def handle_current_time():
+@app.route("/<id>", methods=["GET"])
+def instance(id):
+    init_db(id)
+    if id not in ids: abort(404)
+    return render_template("instance.html", id=id, end_time=end_times.get(id, 0), current_time=time.time(), notifications=get_notifications(id), run_status=run_statuses.get(id, ""))
+
+@app.route("/<id>/current_time", methods=["GET"])
+def handle_current_time(id):
     return {"current_time": time.time()}
 
-@app.route("/end_time", methods=["GET", "POST"])
-def handle_end_time():
-    global end_time
+@app.route("/<id>/end_time", methods=["GET", "POST"])
+def handle_end_time(id):
+    global end_times
     if request.method == "POST":
         if "preset" in request.form:
-            end_time = int(request.form["preset"]) * 60 + time.time()
+            end_times[id] = int(request.form["preset"]) * 60 + time.time()
         elif "cancel" in request.form:
-            end_time = 0
+            end_times[id] = 0
         else:
-            end_time = int(request.form["custom_input"]) * 60 + time.time()
+            end_times[id] = int(request.form["custom_input"]) * 60 + time.time()
     
-    return {"end_time": end_time}
+    return {"end_time": end_times.get(id, 0)}
 
-@app.route("/running", methods=["GET"])
-def handle_running():
-    return {"running": end_time == 0 or end_time < time.time()}
+@app.route("/<id>/running", methods=["GET"])
+def handle_running(id):
+    return {"running": end_times.get(id, 0) == 0 or end_times.get(id, 0) < time.time()}
 
-@app.route("/status", methods=["GET", "POST"])
-def handle_status():
-    global run_status
+@app.route("/<id>/status", methods=["GET", "POST"])
+def handle_status(id):
+    global run_statuses
     if request.method == "POST":
         data = request.json
-        run_status = data["status"]
+        run_statuses[id] = data["status"]
 
-    return {"status": run_status}
+    return {"status": run_statuses.get(id, "")}
 
-@app.route("/notify", methods=["POST"])
-def handle_notify():
+@app.route("/<id>/notify", methods=["POST"])
+def handle_notify(id):
     data = request.json
-    with sqlite3.connect(db_path) as conn:
-        conn.execute("INSERT INTO notifications (time_stamp, data) VALUES (?, ?)",
-                        (time.time(), str(data)))
+    db_path = os.path.join(PATH, f"data/notifications_{id}.db")
+    if os.path.exists(db_path):
+        with sqlite3.connect(db_path) as conn:
+            conn.execute(f"INSERT INTO notifications_{id} (time_stamp, data) VALUES (?, ?)",
+                            (time.time(), str(data)))
     return jsonify({"status": "success", "received": data})
 
-@app.route("/notifications", methods=["POST"])
-def handle_notifications():
+@app.route("/<id>/notifications", methods=["POST"])
+def handle_notifications(id):
     n = request.json
-    return jsonify(get_notifications(n))
+    return jsonify(get_notifications(id, n))
+
+@app.route("/instances", methods=["GET", "POST"])
+def instances():
+    global ids
+    if request.method == "POST":
+        data = request.json
+        id = data.get("id", "").strip()
+        if id == "":
+            return jsonify({"status": "error", "message": "Invalid ID"}), 400
+        ids.add(id)
+        init_db(id)
+        return jsonify({"status": "success", "id": id})
+
+    return jsonify({"ids": list(ids)})
 
 @app.after_request
 def add_cache_headers(response):
@@ -92,7 +119,6 @@ def add_cache_headers(response):
         response.headers["Expires"] = "0"
     return response
 
-init_db()
 if __name__ == "__main__":
-    if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
+    if True: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
