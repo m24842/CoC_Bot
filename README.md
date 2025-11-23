@@ -9,6 +9,7 @@
 * Hero upgrades 👑
 * Laboratory upgrades 🔬
 * Normal attacks ⚔️
+* Multiple accounts 👥
 
 ## Quality of Life Features
 * View status on web app 🚦
@@ -47,3 +48,5 @@
 4. Start the bot: ```python src/main.py```
     * __Note__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
     * __Note__: On MacOS, if ```DISABLE_DEEVICE_SLEEP = True``` in [configs.py](src/configs.py), the user password is required to toggle the ```disablesleep``` flag in power management settings
+5. To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager,
+    set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to ```INSTANCE_IDS``` and ```ADB_ADDRESSES``` in [configs.py](src/configs.py)
