@@ -143,7 +143,8 @@ def handle_instances():
         id = data.get("id", "").strip()
         if id == "":
             return jsonify({"status": "error", "message": "Invalid ID"}), 400
-        instances[id] = Instance(id)
+        if id not in instances:
+            instances[id] = Instance(id)
         update_known_instances()
         return jsonify({"status": "success", "id": id})
 
