@@ -52,7 +52,7 @@ def parse_args():
     configs.DEBUG = args.debug
     assert args.id in INSTANCE_IDS, f"Invalid instance ID. Must be one of: {INSTANCE_IDS}"
     INSTANCE_ID = args.id
-    if WEB_APP_URL != "": requests.post(f"{WEB_APP_URL}/add_instance", json={"id": INSTANCE_ID})
+    if WEB_APP_URL != "": requests.post(f"{WEB_APP_URL}/instances", json={"id": INSTANCE_ID})
     ADB_ADDRESS = ADB_ADDRESSES[INSTANCE_IDS.index(INSTANCE_ID)]
 
 def disable_sleep():
