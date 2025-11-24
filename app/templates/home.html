@@ -66,11 +66,9 @@
                     
                     const submitter = e.submitter;
 
-                    const formData = new FormData(form);
-
-                    form.reset();
-
-                    window.location.href = `/${submitter.value}`;
+                    setTimeout(() => {
+                        window.location.href = `/${submitter.value}`;
+                    }, 500);
                 });
             });
         </script>
