@@ -9,11 +9,18 @@
 </head>
 <body>
     <header>
+        <div class="instance_tag">
+            <strong class="instance_id" id="instance_id" style="font-size:2em">{{ id }}</strong>
+        </div>
+
         <img src="{{ url_for('static', filename='coc_bot_logo.png') }}" alt="CoC Bot">
+
         <h1 class="themed_text">CoC Bot</h1>
+
     </header>
 
     <div class="container">
+
         <div style="margin-bottom:25px;">
             <p>
                 <span class="themed_padding" id="left_padding"></span><!--
