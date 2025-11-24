@@ -7,14 +7,12 @@ import time
 import json
 import sqlite3
 from waitress import serve
-from flask_apscheduler import APScheduler
 from flask import Flask, render_template, jsonify, abort, request
 from configs import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
-scheduler = APScheduler()
 
 class Instance:
     def __init__(self, id, run_status="", end_time=0):
@@ -87,17 +85,6 @@ def update_known_instances():
     with open(cache_path, "w") as f:
         json.dump({"known_instances": data}, f, indent=4)
 
-def init_scheduler():
-    global scheduler
-    scheduler.init_app(app)
-    scheduler.add_job(
-        id="instance_caching",
-        func=update_known_instances,
-        trigger="interval",
-        seconds=1
-    )
-    scheduler.start()
-
 @app.route("/", methods=["GET"])
 def home():
     return render_template("home.html", ids=sorted(instances.keys()))
@@ -123,6 +110,7 @@ def handle_end_time(id):
             instance.end_time = int(request.form["custom_input"]) * 60 + time.time()
         elif "cancel" in request.form:
             instance.end_time = 0
+        update_known_instances()
     
     return {"end_time": instance.end_time}
 
@@ -138,6 +126,7 @@ def handle_status(id):
     if request.method == "POST":
         data = request.json
         instance.run_status = data.get("status", "")
+        update_known_instances()
 
     return {"status": instance.run_status}
 
@@ -163,6 +152,7 @@ def handle_instances():
             return jsonify({"status": "error", "message": "Invalid ID"}), 400
         if id not in instances:
             instances[id] = Instance(id)
+            update_known_instances()
         return jsonify({"status": "success", "id": id})
 
     return jsonify({"ids": sorted(instances.keys())})
@@ -181,8 +171,7 @@ def add_cache_headers(response):
         response.headers["Expires"] = "0"
     return response
 
+get_known_instances()
 if __name__ == "__main__":
-    get_known_instances()
-    init_scheduler()
     if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True, use_reloader=False)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)

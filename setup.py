@@ -15,7 +15,6 @@ bot_packages = [
 web_app_packages = [
     "flask",
     "waitress",
-    "Flask-APScheduler",
 ]
 
 bot_setup = input("Install bot dependencies? (y/n): ").lower() == 'y'
