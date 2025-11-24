@@ -36,7 +36,7 @@
 
             function updateInstances() {
                 let i = 0;
-                while (i < ids.length) {                    
+                while (i < ids.length) {
                     if (!document.getElementById(`id_${ids[i]}`)) {
                         const idButton = document.createElement("button");
                         idButton.type = "submit";
@@ -58,15 +58,17 @@
             update();
             setInterval(update, 3000);
 
+            document.body.addEventListener("touchstart", () => {}, false);
+
             document.querySelectorAll("form").forEach(form => {
                 form.addEventListener("submit", async (e) => {
                     e.preventDefault();
-                                        
+                    
                     const submitter = e.submitter;
 
                     const formData = new FormData(form);
 
-                    form.reset()
+                    form.reset();
 
                     window.location.href = `/${submitter.value}`;
                 });
