@@ -38,7 +38,7 @@
                 let i = 0;
                 while (i < ids.length) {                    
                     if (!document.getElementById(`id_${i}`)) {
-                        const idButton = document.createElement("div");
+                        const idButton = document.createElement("button");
                         idButton.id = `id_${i}`;
                         idButton.innerHTML = `
                             <button type="submit" name="instance_id" value=${ids[i]}>${ids[i]}</button>
