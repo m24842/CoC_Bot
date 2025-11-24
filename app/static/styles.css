@@ -289,15 +289,44 @@ header img {
     text-align: right;
 }
 
-.instance_tag {
-    position: fixed;
-    top: 0px;
-    right: 0px;
-    background-color: rgb(250, 217, 56);
-    border-radius: 0px 0px 0px 15px;
-    padding: 0.5em 1.5em;
-    box-shadow: 0 3px 20px var(--shadow);
-    z-index: 10;
+@media (hover: hover) and (pointer: fine) {
+    .instance_tag {
+        position: fixed;
+        top: 30px;
+        right: -10px;
+        background-color: rgb(250, 217, 56);
+        border-radius: 15px 0px 0px 15px;
+        padding: 0.5em calc(1.5em + 10px) 0.5em 1.5em;
+        box-shadow: 0 3px 20px var(--shadow);
+        z-index: 10;
+        transition: transform 0.2s ease-out, background-color 0.1s ease-out;
+    }
+
+    .instance_tag:hover {
+        transform: translateX(-10px);
+        background-color: rgb(120, 216, 230);
+        transition-duration: 0.2s;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .instance_tag {
+        position: fixed;
+        top: 30px;
+        right: -10px;
+        background-color: rgb(250, 217, 56);
+        border-radius: 15px 0px 0px 15px;
+        padding: 0.5em calc(1.5em + 10px) 0.5em 1.5em;
+        box-shadow: 0 3px 20px var(--shadow);
+        z-index: 10;
+        transition: transform 0.5s ease-out, background-color 0.5s ease-out;
+    }
+
+    .instance_tag:active {
+        transform: translateX(-10px);
+        background-color: rgb(120, 216, 230);
+        transition-duration: 0.2s;
+    }
 }
 
 .instance_id {
