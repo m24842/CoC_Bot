@@ -294,12 +294,17 @@ header img {
         position: fixed;
         top: 30px;
         right: -10px;
+        max-width: calc(9.5em + 10px);
         background-color: rgb(250, 217, 56);
         border-radius: 15px 0px 0px 15px;
         padding: 0.5em calc(1.5em + 10px) 0.5em 1.5em;
         box-shadow: 0 3px 20px var(--shadow);
         z-index: 10;
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
+
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-wrap: break-word;
     }
 
     .instance_tag:hover {
@@ -314,12 +319,17 @@ header img {
         position: fixed;
         top: 30px;
         right: -10px;
+        max-width: calc(9.5em + 10px);
         background-color: rgb(250, 217, 56);
         border-radius: 15px 0px 0px 15px;
         padding: 0.5em calc(1.5em + 10px) 0.5em 1.5em;
         box-shadow: 0 3px 20px var(--shadow);
         z-index: 10;
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
+
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-wrap: break-word;
     }
 
     .instance_tag:active {
