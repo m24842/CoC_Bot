@@ -19,7 +19,7 @@
             <strong class="themed_text" style="font-size:4em; padding:0;">Instances</strong>
         </div>
 
-        <form method="POST" class="stacked-buttons"></form>
+        <form class="stacked-buttons"></form>
         
         <script>
             let ids = {{ ids|default([])|tojson }};
@@ -37,13 +37,12 @@
             function updateInstances() {
                 let i = 0;
                 while (i < ids.length) {                    
-                    if (!document.getElementById(`id_${i}`)) {
+                    if (!document.getElementById(`id_${ids[i]}`)) {
                         const idButton = document.createElement("button");
-                        idButton.id = `id_${i}`;
-                        idButton.innerHTML = `
-                            <button type="submit" name="instance_id" value=${ids[i]}>${ids[i]}</button>
-                        `;
-
+                        idButton.type = "submit";
+                        idButton.id = `id_${ids[i]}`;
+                        idButton.value = ids[i];
+                        idButton.innerHTML = `${ids[i]}`;
                         document.querySelector(".stacked-buttons").appendChild(idButton);
                     }
 
