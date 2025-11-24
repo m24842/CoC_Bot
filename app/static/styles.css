@@ -288,3 +288,19 @@ header img {
     color: rgb(124, 124, 124);
     text-align: right;
 }
+
+.instance_tag {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    background-color: rgb(250, 217, 56);
+    border-radius: 0px 0px 0px 15px;
+    padding: 0.5em 1.5em;
+    box-shadow: 0 3px 20px var(--shadow);
+    z-index: 10;
+}
+
+.instance_id {
+    font-size: 1.5em;
+    color: var(--text_inverted);
+}
