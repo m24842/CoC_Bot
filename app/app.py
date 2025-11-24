@@ -7,12 +7,14 @@ import time
 import json
 import sqlite3
 from waitress import serve
+from flask_apscheduler import APScheduler
 from flask import Flask, render_template, jsonify, abort, request
 from configs import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
+scheduler = APScheduler()
 
 class Instance:
     def __init__(self, id, run_status="", end_time=0):
@@ -79,6 +81,17 @@ def update_known_instances():
     cache_path = os.path.join(PATH, "data/cache.json")
     with open(cache_path, "w") as f:
         json.dump({"known_instances": data}, f)
+
+def init_scheduler():
+    global scheduler
+    scheduler.init_app(app)
+    scheduler.add_job(
+        id="instance_caching",
+        func=update_known_instances,
+        trigger="interval",
+        seconds=60
+    )
+    scheduler.start()
 
 @app.route("/", methods=["GET"])
 def home():
@@ -165,6 +178,7 @@ def add_cache_headers(response):
     return response
 
 get_known_instances()
+init_scheduler()
 if __name__ == "__main__":
     if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
