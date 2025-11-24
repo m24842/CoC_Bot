@@ -79,6 +79,7 @@ def get_known_instances():
 def update_known_instances():
     global instances
     data = {id: instances[id].to_dict() for id in instances}
+    print(data)
     cache_path = os.path.join(PATH, "data/cache.json")
     with open(cache_path, "w") as f:
         json.dump({"known_instances": data}, f, indent=4)
@@ -180,5 +181,5 @@ def add_cache_headers(response):
 get_known_instances()
 init_scheduler()
 if __name__ == "__main__":
-    if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
+    if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True, use_reloader=False)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
