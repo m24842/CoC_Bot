@@ -68,8 +68,11 @@ def get_known_instances():
     data = {}
     cache_path = os.path.join(PATH, "data/cache.json")
     if os.path.exists(cache_path):
-        with open(cache_path, "r") as f:
-            data = json.load(f)
+        try:
+            with open(cache_path, "r") as f:
+                data = json.load(f)
+        except:
+            data = {}
     known_instances = data.get("known_instances", {})
     for id in known_instances:
         id = str(id)
