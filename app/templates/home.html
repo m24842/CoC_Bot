@@ -37,11 +37,7 @@
             function updateInstances() {
                 let i = 0;
                 while (i < ids.length) {                    
-                    if (document.getElementById(`id_${i}`)) {
-                        document.getElementById(`id_${i}`).innerHTML = `
-                            <button type="submit" name="instance_id" value=${ids[i]}>${ids[i]}</button>
-                        `;
-                    } else {
+                    if (!document.getElementById(`id_${i}`)) {
                         const idButton = document.createElement("div");
                         idButton.id = `id_${i}`;
                         idButton.innerHTML = `
