@@ -72,6 +72,7 @@ def get_known_instances():
             data = json.load(f)
     known_instances = data.get("known_instances", {})
     for id in known_instances:
+        id = str(id)
         info = known_instances[id]
         instances[id] = Instance(id, run_status=info.get("run_status", ""), end_time=info.get("end_time", 0))
 
@@ -89,7 +90,7 @@ def init_scheduler():
         id="instance_caching",
         func=update_known_instances,
         trigger="interval",
-        seconds=60
+        seconds=1
     )
     scheduler.start()
 
@@ -114,10 +115,10 @@ def handle_end_time(id):
     if request.method == "POST":
         if "preset" in request.form:
             instance.end_time = int(request.form["preset"]) * 60 + time.time()
+        elif "custom_input" in request.form:
+            instance.end_time = int(request.form["custom_input"]) * 60 + time.time()
         elif "cancel" in request.form:
             instance.end_time = 0
-        else:
-            instance.end_time = int(request.form["custom_input"]) * 60 + time.time()
     
     return {"end_time": instance.end_time}
 
@@ -153,12 +154,11 @@ def handle_instances():
     global instances
     if request.method == "POST":
         data = request.json
-        id = data.get("id", "").strip()
+        id = str(data.get("id", "")).strip()
         if id == "":
             return jsonify({"status": "error", "message": "Invalid ID"}), 400
         if id not in instances:
             instances[id] = Instance(id)
-        update_known_instances()
         return jsonify({"status": "success", "id": id})
 
     return jsonify({"ids": sorted(instances.keys())})
@@ -180,5 +180,5 @@ def add_cache_headers(response):
 get_known_instances()
 init_scheduler()
 if __name__ == "__main__":
-    if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
+    if True: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
     else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
