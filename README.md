@@ -24,6 +24,7 @@
 3. [BlueStacks](https://www.bluestacks.com/)
     * Device profile: Samsung Galaxy S22 Ultra
     * Display resolution: 1920 x 1080
+    * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
     * Enable Android Debug Bridge
     * Install Clash of Clans from Google Play
 4. [minitouch](https://app.unpkg.com/minitouch-prebuilt-support10@1.2.0/files/prebuilt) 

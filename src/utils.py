@@ -132,6 +132,7 @@ def swipe(x1, y1, x2, y2, duration=100, hold_end_time=0.0):
     if y1 < 0: y1 = 1 + y1
     if x2 < 0: x2 = 1 + x2
     if y2 < 0: y2 = 1 + y2
+    
     builder = CommandBuilder()
     
     MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
