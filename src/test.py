@@ -13,6 +13,6 @@ if __name__ == "__main__":
     # bot.frame_handler.get_frame(grayscale=False)
     bot.start()
     # bot.run()
-    # bot.upgrader.run()
+    bot.upgrader.run()
     # bot.attacker.run()
-    bot.upgrader.lab_upgrade()
+    # bot.upgrader.lab_upgrade()
