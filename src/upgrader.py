@@ -243,7 +243,7 @@ class Upgrader:
                 y_diff = abs(y_sug - y_other)
                 label_height = 0.055
                 n_sug = round(y_diff / label_height) - 1
-                idx = np.random.randint(0, n_sug)
+                idx = np.random.randint(0, n_sug) if n_sug > 0 else 0
                 if configs.DEBUG: print(f"lab_upgrade: n_sug={n_sug}, idx={idx}")
                 y_pot = y_sug + label_height * (idx + 1)
             else:
