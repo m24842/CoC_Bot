@@ -10,7 +10,7 @@ from coc_bot import CoC_Bot
 if __name__ == "__main__":
     parse_args(debug=True, id="alt")
     bot = CoC_Bot()
-    # bot.frame_handler.get_frame(grayscale=False)
+    # bot.frame_handler.screenshot()
     bot.start()
     # bot.run()
     bot.upgrader.run()

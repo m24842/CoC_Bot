@@ -136,9 +136,9 @@ class Upgrader:
             n_sug = 1
             idx = 0
             alt_idx = 1
+            label_height = 0.055
             if other_upgrades_avail:
                 y_diff = abs(y_sug - y_other)
-                label_height = 0.055
                 n_sug = round(y_diff / label_height) - 1
                 if n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
                 else: alt_idx = 0
@@ -177,6 +177,17 @@ class Upgrader:
             x_sug, y_sug = self.frame_handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
             x_hero, y_hero = self.frame_handler.locate(self.assets["hero_hall"], thresh=0.8)
             if (x_sug is None or y_sug is None) and (x_hero is None or y_hero is None):
+                x_upgrade, y_upgrade = self.frame_handler.locate(self.assets["upgrade"], thresh=0.9)
+                if x_upgrade is None and y_upgrade is None:
+                    # If no upgrade button, build new building
+                    click(0.5, 0.6) # click new building
+                    x, y = self.frame_handler.locate(self.assets["checkmark"], thresh=0.85)
+                    if x is None or y is None: return None
+                    click(x, y)
+                    time.sleep(0.5)
+                    click_exit(5, 0.1)
+                    return None
+                
                 self.click_builders()
                 alt_upgrade = "none"
                 click(x_sug, y_pot)
@@ -188,12 +199,13 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find upgrade button
-            x, y, c = self.frame_handler.locate(self.assets["upgrade"], thresh=0.9, return_confidence=True)
-            xyc_hero = self.frame_handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_confidence=True, return_all=True)
+            x, y = self.frame_handler.locate(self.assets["upgrade"], thresh=0.9)
+            xyc_hero = self.frame_handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_all=True)
             if len(xyc_hero) > 0:
                 idx = np.random.randint(0, len(xyc_hero)-1)
-                x, y = xyc_hero[idx][:2]
+                x, y = xyc_hero[idx]
             if x is None or y is None: return None
+            
             click(x, y)
             time.sleep(0.5)
             
@@ -217,7 +229,7 @@ class Upgrader:
             else:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
                 if configs.DEBUG: self.frame_handler.save_frame(section, "debug/upgrade_cost.png")
-                resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
+                # resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
                 # send_notification(f"Insufficient {resource_type}!")
                 click_exit(5, 0.1)
                 return None
@@ -272,7 +284,7 @@ class Upgrader:
             else:
                 section = self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, high_contrast=True)
                 if configs.DEBUG: self.frame_handler.save_frame(section, "debug/lab_upgrade_cost.png")
-                resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
+                # resource_type = self.get_resource_type(self.frame_handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False))
                 # send_notification(f"Insufficient {resource_type}!")
                 click_exit(5, 0.1)
                 return None
