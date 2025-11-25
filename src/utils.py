@@ -43,15 +43,15 @@ def setup_signal_handlers():
     for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         signal.signal(sig, handle_sig)
 
-def parse_args():
+def parse_args(debug=None, id=None):
     global INSTANCE_ID, ADB_ADDRESS
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--id", type=str, default=INSTANCE_IDS[0], help="Instance ID")
     args = parser.parse_args()
-    configs.DEBUG = args.debug
+    configs.DEBUG = args.debug if debug is None else debug
     assert args.id in INSTANCE_IDS, f"Invalid instance ID. Must be one of: {INSTANCE_IDS}"
-    INSTANCE_ID = args.id
+    INSTANCE_ID = args.id if id is None else id
     if WEB_APP_URL != "": requests.post(f"{WEB_APP_URL}/instances", json={"id": INSTANCE_ID})
     ADB_ADDRESS = ADB_ADDRESSES[INSTANCE_IDS.index(INSTANCE_ID)]
 

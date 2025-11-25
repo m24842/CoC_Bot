@@ -18,8 +18,6 @@ from attacker import Attacker
 
 class CoC_Bot:
     def __init__(self):
-        parse_args()
-        
         if DISABLE_DEEVICE_SLEEP:
             disable_sleep()
             register_exit(enable_sleep)
