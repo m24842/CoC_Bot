@@ -52,7 +52,12 @@ def parse_args(debug=None, id=None):
     configs.DEBUG = args.debug if debug is None else debug
     assert args.id in INSTANCE_IDS, f"Invalid instance ID. Must be one of: {INSTANCE_IDS}"
     INSTANCE_ID = args.id if id is None else id
-    if WEB_APP_URL != "": requests.post(f"{WEB_APP_URL}/instances", json={"id": INSTANCE_ID})
+    if WEB_APP_URL != "": 
+        requests.post(
+            f"{WEB_APP_URL}/instances",
+            auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+            json={"id": INSTANCE_ID}
+        )
     ADB_ADDRESS = ADB_ADDRESSES[INSTANCE_IDS.index(INSTANCE_ID)]
 
 def disable_sleep():
@@ -201,25 +206,39 @@ def get_telegram_chat_id():
             data = json.load(f)
             if "telegram_chat_id" in data: return data["telegram_chat_id"]
     
-    res = requests.get(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates").json()
-    if res["ok"] and len(res["result"]) > 0:
-        chat_id = res["result"][-1]["message"]["chat"]["id"]
-        data["telegram_chat_id"] = chat_id
-        with open(cache_path, "w") as f:
-            json.dump(data, f, indent=4)
-        return chat_id
+    res = requests.get(
+        f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates",
+        auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+    )
+    if res.status_code == 200:
+        res = res.json()
+        if res["ok"] and len(res["result"]) > 0:
+            chat_id = res["result"][-1]["message"]["chat"]["id"]
+            data["telegram_chat_id"] = chat_id
+            with open(cache_path, "w") as f:
+                json.dump(data, f, indent=4)
+            return chat_id
 
     raise Exception("Failed to get Telegram chat ID")
 
 def send_notification(text):
     if WEB_APP_URL != "":
-        try: requests.post(f"{WEB_APP_URL}/{INSTANCE_ID}/notify", json=text)
+        try:
+            requests.post(
+                f"{WEB_APP_URL}/{INSTANCE_ID}/notify",
+                auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+                json=text,
+            )
         except: pass
 
     if TELEGRAM_BOT_TOKEN != "":
         try:
             telegram_text = f"[{INSTANCE_ID}]\n{text}"
-            requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data={"chat_id": get_telegram_chat_id(), "text": telegram_text})
+            requests.post(
+                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+                auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+                data={"chat_id": get_telegram_chat_id(),"text": telegram_text}
+            )
         except: pass
 
 class Frame_Handler:
