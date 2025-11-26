@@ -14,6 +14,7 @@
 ## Quality of Life Features
 * View status on web app 🚦
 * Resume / pause execution through web app ⏯️
+* iPhone shortcut to auto esume / pause bot when CoC is open ⏯️
 * Telegram and web app notifications 🔔
 
 ## Dependencies

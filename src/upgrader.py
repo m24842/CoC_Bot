@@ -251,15 +251,15 @@ class Upgrader:
             x_other, y_other = self.frame_handler.locate(self.assets["other_upgrades"], thresh=0.70)
             if x_other is None or y_other is None: other_upgrades_avail = False
             
+            label_height = 0.055
             if other_upgrades_avail:
                 y_diff = abs(y_sug - y_other)
-                label_height = 0.055
                 n_sug = round(y_diff / label_height) - 1
                 idx = np.random.randint(0, n_sug) if n_sug > 0 else 0
                 if configs.DEBUG: print(f"lab_upgrade: n_sug={n_sug}, idx={idx}")
                 y_pot = y_sug + label_height * (idx + 1)
             else:
-                y_pot = y_sug + 0.055
+                y_pot = y_sug + label_height
 
             click(x_sug, y_pot)
             time.sleep(0.5)
