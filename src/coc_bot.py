@@ -113,13 +113,12 @@ class CoC_Bot:
             start = time.time()
             while time.time() - start < timeout:
                 try:
-                    if not self.running: return False
-                    
                     utils.ADB_DEVICE.shell("am start -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
                     click_exit(5, 0.1)
                     self.get_builders(1)
                     break
                 except:
+                    if not self.running: return False
                     pass
                 time.sleep(1)
             if time.time() - start > timeout:
