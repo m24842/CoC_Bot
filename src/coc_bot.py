@@ -36,7 +36,11 @@ class CoC_Bot:
     def running(self):
         if WEB_APP_URL == "": return True
         try:
-            response = requests.get(f"{WEB_APP_URL}/{utils.INSTANCE_ID}/running", timeout=3)
+            response = requests.get(
+                f"{WEB_APP_URL}/{utils.INSTANCE_ID}/running",
+                auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+                timeout=3
+            )
             if response.status_code == 200:
                 return response.json().get("running", False)
             return False
@@ -48,7 +52,12 @@ class CoC_Bot:
         if WEB_APP_URL == "": return
         for _ in range(5):
             try:
-                requests.post(f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status", json={"status": status}, timeout=3)
+                requests.post(
+                    f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status",
+                    auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+                    json={"status": status},
+                    timeout=3
+                )
                 return
             except Exception as e:
                 if configs.DEBUG: print("update_status", e)

@@ -8,6 +8,7 @@ TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 # OPTIONAL: Web app (enter empty string to disable)
 WEB_APP_URL = "" # (e.g. 12.34.567.890:1234)
 WEB_APP_PORT = 1234
+WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD = "", "" # (leave empty if not applicable)
 INSTANCE_IDS = ["main"]
 
 # REQUIRED: General Settings
