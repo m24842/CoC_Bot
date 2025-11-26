@@ -47,6 +47,7 @@
     * __Note__: To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send ```/start```. Enter the API token generated during the setup process for ```TELEGRAM_BOT_TOKEN```.
 3. Start web app: ```python app/app.py```
     * __Note__: It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) using the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 3 months.
+    * __Note__: If you enable password protection on pythonanywhere, you'll need to enter the credentials into ```WEB_APP_AUTH_USERNAME``` and ```WEB_APP_AUTH_PASSWORD``` in [configs.py](src/configs.py)
     * __Note__: If hosting from a personal device, open port 1234 (or whatever port ```WEB_APP_PORT``` is set to in [configs.py](src/configs.py)) and configure port forwarding as necessary
     * Each bot instance can be accessed at ```WEB_APP_ADDRESS/<instance_name>``` (the default instance name is ```main```)
 4. Setup iPhone shortcut:
