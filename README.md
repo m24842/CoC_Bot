@@ -12,8 +12,8 @@
 * Multiple accounts 👥
 
 ## Quality of Life Features
-* View status on web app 🚦
-* Resume / pause execution from web app ⏯️
+* View bot status on web app 🚦
+* Resume / pause bot execution from web app ⏯️
 * iPhone shortcut to auto resume / pause bot when CoC is opened by user ⏯️
 * Telegram and web app notifications 🔔
 
