@@ -53,7 +53,7 @@
 4. Setup iPhone shortcut:
     * Open the [provided shortcut](<CoC Bot Auto Pause.shortcut>) on an iPhone
     * Enter your ```WEB_APP_URL``` into the first Text variable
-    * Enter your web app auth credentials into the second Text variable as ```WEB_APP_AUTH_USERNAME:WEB_APP_AUTH_PASSWORD```
+    * If applicable, enter your web app auth credentials into the second Text variable as ```WEB_APP_AUTH_USERNAME:WEB_APP_AUTH_PASSWORD```
     * Adjust the List variable containing instance names as necessary
     * Create an Automation task that runs when CoC opens and is set to run immediately
 5. Start the bot: ```python src/main.py```
