@@ -104,7 +104,7 @@ class CoC_Bot:
                     self.update_status("now")
                     
                     self.upgrader.run()
-                    self.attacker.run()
+                    self.attacker.run(restart=False)
                     
                     stop_coc()
                     self.update_status(time.time())
