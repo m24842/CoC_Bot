@@ -3,7 +3,7 @@
     <img src="Cover_Image.png" alt="Cover Image" width="25%">
 </p>
 
-## Automated Features
+## Automated Features (Both Villages)
 * Resource collection 💰
 * Building upgrades 🧱
 * Hero upgrades 👑

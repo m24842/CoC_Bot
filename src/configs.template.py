@@ -15,8 +15,9 @@ INSTANCE_IDS = ["main"]
 CHECK_INTERVAL = 5 * 60 # seconds
 
 # REQUIRED: Upgrade settings
-MAX_UPGRADES_PER_CHECK = 10
-COLLECT_RESOURCES = False
+MAX_UPGRADES_PER_CHECK = 10 # applies to both home and builder base
+CHECK_HOME_BASE = True
+CHECK_BUILDER_BASE = True
 
 # REQUIRED: Attack Settings
 TROOP_DEPLOY_TIME = 3 # seconds

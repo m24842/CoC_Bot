@@ -9,10 +9,16 @@ from utils import *
 from coc_bot import CoC_Bot
 
 if __name__ == "__main__":
-    parse_args(debug=True, id="alt")
+    parse_args(debug=True, id="main")
     bot = CoC_Bot()
-    # bot.frame_handler.screenshot()
-    start_coc()
+    # Frame_Handler.screenshot()
+    # start_coc()
     # bot.run()
-    # bot.upgrader.run()
-    bot.attacker.run()
+    # to_home_base()
+    # bot.upgrader.run_home_base()
+    # bot.attacker.run_home_base()
+    to_builder_base()
+    bot.upgrader.collect_builder_attack_elixir()
+    # bot.upgrader.builder_upgrade()
+    # bot.upgrader.builder_lab_upgrade()
+    # bot.attacker.run_builder_base()
