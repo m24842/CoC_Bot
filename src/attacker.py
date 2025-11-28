@@ -138,7 +138,7 @@ class Attacker:
                 Input_Handler.multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
         Input_Handler.click(0.01, 0.9)
     
-    def complete_attack(self, timeout=60):
+    def complete_attack(self, timeout=60, restart=True):
         Input_Handler.swipe_up()
         
         total_slots_seen = 0
@@ -186,24 +186,27 @@ class Attacker:
                 last_card_left = Frame_Handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
                 if abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
 
-        # Close and reopen app to auto complete attack
+        # Close CoC to auto complete attack
         stop_coc()
-        start_coc()
         
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                Input_Handler.click_exit(5, 0.1)
-                get_builders(1)
-                break
-            except Exception as e:
-                if configs.DEBUG: print("end_attack", e)
+        # Reopen if requested
+        if restart:
+            start_coc()
+
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                try:
+                    Input_Handler.click_exit(5, 0.1)
+                    get_builders(1)
+                    break
+                except Exception as e:
+                    if configs.DEBUG: print("end_attack", e)
     
     # ============================================================
     # ⚔️ Attack Management
     # ============================================================
 
-    def run(self, timeout=60):
+    def run(self, timeout=60, restart=True):
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_down()
         
@@ -219,7 +222,7 @@ class Attacker:
                 
                 found_match = self.start_normal_attack(timeout)
                 
-                if found_match: self.complete_attack(timeout)
+                if found_match: self.complete_attack(timeout, restart=restart)
             
             except Exception as e:
                 if configs.DEBUG: print("start_attack", e)
