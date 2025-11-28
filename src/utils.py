@@ -157,12 +157,27 @@ def send_notification(text):
             )
         except: pass
 
-def get_builders(timeout=60):
+def to_home_base():
+    Input_Handler.zoom(dir="out")
+    for _ in range(3):
+        Input_Handler.swipe_up(
+            y1=0.5,
+            y2=1.0,
+        )
+    for _ in range(3):
+        Input_Handler.swipe_left(
+            x1=1.0,
+            x2=0.0,
+        )
+    Input_Handler.click(0.75, 0.3)
+    time.sleep(0.5)
+
+def get_home_builders(timeout=60):
     start = time.time()
     while time.time() < start + timeout:
         try:
             section = Frame_Handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/builders.png")
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/home_builders.png")
             
             slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
             res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
@@ -173,9 +188,9 @@ def get_builders(timeout=60):
             available = int(text[0])
             return available
         except Exception as e:
-            if configs.DEBUG: print("get_builders", e)
+            if configs.DEBUG: print("get_home_builders", e)
         time.sleep(0.5)
-    raise Exception("Failed to get builders")
+    raise Exception("Failed to get home builders")
 
 def start_coc(timeout=60):
     try:
@@ -183,14 +198,22 @@ def start_coc(timeout=60):
         i = 0
         start = time.time()
         while time.time() - start < timeout:
+            ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
+            Input_Handler.click_exit(5, 0.1)
             try:
-                ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
-                Input_Handler.click_exit(5, 0.1)
-                get_builders(1)
+                get_home_builders(1)
                 break
             except:
                 if not running(): return False
                 pass
+            
+            try:
+                get_builder_builders(1)
+                break
+            except:
+                if not running(): return False
+                pass
+            
             i += 1
             time.sleep(1)
         if time.time() - start > timeout:
@@ -205,6 +228,47 @@ def stop_coc():
     print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
     ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
+
+def to_builder_base():
+    Input_Handler.zoom(dir="out")
+    Input_Handler.swipe(
+        x1=0.5,
+        y1=0.5,
+        x2=1.0,
+        y2=0.0,
+    )
+    Input_Handler.click(0.25, 0.75)
+    time.sleep(0.5)
+
+def get_builder_builders(timeout=60):
+    start = time.time()
+    while time.time() < start + timeout:
+        try:
+            section = Frame_Handler.get_frame_section(0.565, 0.04, -0.38, 0.08, high_contrast=True)
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/builder_builders.png")
+            
+            slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
+            res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
+            if max_val < 0.9: continue
+            
+            text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
+            available = int(text[0])
+            return available
+        except Exception as e:
+            if configs.DEBUG: print("get_builder_builders", e)
+        time.sleep(0.5)
+    raise Exception("Failed to get builder builders")
+
+def require_exit(n=5, delay=0.1):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            result = None
+            try: result = func(*args, **kwargs)
+            finally: Input_Handler.click_exit(n, delay)
+            return result
+        return wrapper
+    return decorator
 
 class Asset_Manager:
     @staticmethod
@@ -249,7 +313,7 @@ class Input_Handler:
         MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
 
     @classmethod
-    def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0.0):
+    def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0):
         if x1 < 0: x1 = 1 + x1
         if y1 < 0: y1 = 1 + y1
         if x2 < 0: x2 = 1 + x2
@@ -271,25 +335,25 @@ class Input_Handler:
         builder.wait(duration)
         builder.commit()
         builder.publish(MINITOUCH_DEVICE.connection)
-        time.sleep(hold_end_time)
+        time.sleep(hold_end_time / 1000)
         builder.up(0)
         builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
-    def swipe_up(cls, y1=0.5, y2=0.0, x=0.5, hold_end_time=0.0):
-        cls.swipe(x, y1, x, y2, duration=100, hold_end_time=hold_end_time)
+    def swipe_up(cls, y1=0.5, y2=0.0, x=0.5, duration=100, hold_end_time=0):
+        cls.swipe(x, y1, x, y2, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
-    def swipe_down(cls, y1=0.5, y2=1.0, x=0.5, hold_end_time=0.0):
-        cls.swipe(x, y1, x, y2, duration=100, hold_end_time=hold_end_time)
+    def swipe_down(cls, y1=0.5, y2=1.0, x=0.5, duration=100, hold_end_time=0):
+        cls.swipe(x, y1, x, y2, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
-    def swipe_left(cls, x1=0.5, x2=0.0, y=0.5, hold_end_time=0.0):
-        cls.swipe(x1, y, x2, y, duration=100, hold_end_time=hold_end_time)
+    def swipe_left(cls, x1=0.5, x2=0.0, y=0.5, duration=100, hold_end_time=0):
+        cls.swipe(x1, y, x2, y, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
-    def swipe_right(cls, x1=0.5, x2=1.0, y=0.5, hold_end_time=0.0):
-        cls.swipe(x1, y, x2, y, duration=100, hold_end_time=hold_end_time)
+    def swipe_right(cls, x1=0.5, x2=1.0, y=0.5, duration=100, hold_end_time=0):
+        cls.swipe(x1, y, x2, y, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
     def zoom(cls, dir="out"):

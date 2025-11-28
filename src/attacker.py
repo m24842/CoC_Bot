@@ -83,6 +83,26 @@ class Attacker:
             if x is not None and y is not None: return True
         return False
     
+    def start_builder_attack(self, timeout=60):
+        # Click attack
+        Input_Handler.click(0.07, 0.9)
+        
+        # Find a match
+        for _ in range(20):
+            time.sleep(0.5)
+            x, y = Frame_Handler.locate(self.assets["find_now"], thresh=0.9)
+            if x is not None and y is not None: break
+        if x is None or y is None: return False
+        Input_Handler.click(x, y)
+        
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            time.sleep(0.5)
+            section = Frame_Handler.get_frame_section(0, 0, 1, 0.1, grayscale=True, high_contrast=True, thresh=150)
+            x, y = Frame_Handler.locate(self.assets["battle_starts_in"], section, thresh=0.9)
+            if x is not None and y is not None: return True
+        return False
+    
     def detect_troop_positions(self, frame, clip_left=0.0, clip_right=1.0, return_boundaries=False):
         if len(frame.shape) == 3: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         frame = cv2.equalizeHist(frame)
@@ -138,7 +158,7 @@ class Attacker:
                 Input_Handler.multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
         Input_Handler.click(0.01, 0.9)
     
-    def complete_attack(self, timeout=60, restart=True):
+    def complete_attack(self, timeout=10, restart=True):
         Input_Handler.swipe_up()
         
         total_slots_seen = 0
@@ -180,33 +200,39 @@ class Attacker:
                 total_slots_seen += len(card_centers) - 1
                 self.deploy_troops(card_centers[:-1], available_slots[:-1])
                 last_card_frame = frame[:, int(card_boundaries[-2] * frame.shape[1]):int(card_boundaries[-1] * frame.shape[1])]
-                Input_Handler.swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=0.5)
+                Input_Handler.swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=500)
                 time.sleep(0.5)
                 frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
                 last_card_left = Frame_Handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
                 if abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
-
-        # Close CoC to auto complete attack
-        stop_coc()
         
-        # Reopen if requested
+        # Close and reopen CoC to auto complete battle
         if restart:
             start_coc()
 
             start_time = time.time()
             while time.time() - start_time < timeout:
+                Input_Handler.click_exit(5, 0.1)
                 try:
-                    Input_Handler.click_exit(5, 0.1)
-                    get_builders(1)
+                    get_home_builders(1)
                     break
                 except Exception as e:
                     if configs.DEBUG: print("end_attack", e)
+                
+                try:
+                    get_builder_builders(1)
+                    break
+                except Exception as e:
+                    if configs.DEBUG: print("end_attack", e)
+        else:
+            stop_coc()
     
     # ============================================================
     # ⚔️ Attack Management
     # ============================================================
 
-    def run(self, timeout=60, restart=True):
+    @require_exit()
+    def run_home_base(self, timeout=60, restart=True):
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_down()
         
@@ -215,12 +241,34 @@ class Attacker:
                 start_time = time.time()
                 while time.time() - start_time < timeout:
                     try:
-                        get_builders(1)
+                        get_home_builders(1)
                         break
                     except: pass
                 if time.time() - start_time >= timeout: break
                 
                 found_match = self.start_normal_attack(timeout)
+                
+                if found_match: self.complete_attack(timeout, restart=restart)
+            
+            except Exception as e:
+                if configs.DEBUG: print("start_attack", e)
+
+    @require_exit()
+    def run_builder_base(self, timeout=60, restart=True):
+        Input_Handler.zoom(dir="out")
+        Input_Handler.swipe_down()
+        
+        for _ in range(1):
+            try:
+                start_time = time.time()
+                while time.time() - start_time < timeout:
+                    try:
+                        get_builder_builders(1)
+                        break
+                    except: pass
+                if time.time() - start_time >= timeout: break
+                
+                found_match = self.start_builder_attack(timeout)
                 
                 if found_match: self.complete_attack(timeout, restart=restart)
             

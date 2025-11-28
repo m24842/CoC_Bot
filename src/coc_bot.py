@@ -103,8 +103,18 @@ class CoC_Bot:
                 if start_coc():
                     self.update_status("now")
                     
-                    self.upgrader.run()
-                    self.attacker.run(restart=False)
+                    if CHECK_HOME_BASE:
+                        to_home_base()
+                        self.upgrader.run_home_base()
+                        self.attacker.run_home_base(restart=CHECK_BUILDER_BASE)
+                    
+                    if CHECK_BUILDER_BASE:
+                        to_builder_base()
+                        self.upgrader.collect_builder_attack_elixir()
+                        self.upgrader.run_builder_base()
+                        self.attacker.run_builder_base(restart=True)
+                        to_home_base()
+                        time.sleep(2)
                     
                     stop_coc()
                     self.update_status(time.time())
