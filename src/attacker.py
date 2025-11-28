@@ -9,8 +9,7 @@ from configs import *
 
 class Attacker:
     def __init__(self):
-        self.frame_handler = Frame_Handler()
-        self.assets = self.load_assets()
+        self.assets = Asset_Manager.attacker_assets
 
     # ============================================================
     # 📁 Asset & Image Processing
@@ -27,79 +26,62 @@ class Attacker:
     # ============================================================
     
     def click_okay(self):
-        x, y = self.frame_handler.locate(self.assets["okay"], thresh=0.9)
+        x, y = Frame_Handler.locate(self.assets["okay"], thresh=0.9)
         if x is not None and y is not None:
-            click(x, y)
+            Input_Handler.click(x, y)
             return True
         return False
     
     def click_surrender(self):
-        x, y = self.frame_handler.locate(self.assets["surrender"], thresh=0.9)
+        x, y = Frame_Handler.locate(self.assets["surrender"], thresh=0.9)
         if x is not None and y is not None:
-            click(x, y)
+            Input_Handler.click(x, y)
             return True
         return False
     
     def click_end_battle(self):
-        x, y = self.frame_handler.locate(self.assets["end_battle"], thresh=0.9)
+        x, y = Frame_Handler.locate(self.assets["end_battle"], thresh=0.9)
         if x is not None and y is not None:
-            click(x, y)
+            Input_Handler.click(x, y)
             return True
         return False
     
     def click_return_home(self):
-        x, y = self.frame_handler.locate(self.assets["return_home"], thresh=0.9)
+        x, y = Frame_Handler.locate(self.assets["return_home"], thresh=0.9)
         if x is not None and y is not None:
-            click(x, y)
+            Input_Handler.click(x, y)
             return True
         return False
     
-    def start_normal_attack(self, timeout=MAX_ATTACK_DURATION):
+    def start_normal_attack(self, timeout=60):
         # Click attack
-        click(0.07, 0.9)
+        Input_Handler.click(0.07, 0.9)
         
         # Find a match
         for _ in range(20):
             time.sleep(0.5)
-            x, y = self.frame_handler.locate(self.assets["find_a_match"], thresh=0.9)
-            if x is not None and y is not None: break
-        if x is None or y is None: return False
-        click(x, y)
+            xys = Frame_Handler.locate(self.assets["find_a_match"], thresh=0.9, return_all=True)
+            if len(xys) > 0: break
+        if len(xys) == 0: return False
+        xys = sorted(xys, key=lambda xy: xy[0])
+        x, y = xys[0]
+        if x > 0.2: return False
+        Input_Handler.click(x, y)
         
         # Confirm attack
         for _ in range(20):
             time.sleep(0.5)
-            x, y = self.frame_handler.locate(self.assets["confirm_attack"], thresh=0.9)
+            x, y = Frame_Handler.locate(self.assets["confirm_attack"], thresh=0.9)
             if x is not None and y is not None: break
         if x is None or y is None: return False
-        click(x, y)
+        Input_Handler.click(x, y)
         
         start_time = time.time()
         while time.time() - start_time < timeout:
             time.sleep(0.5)
-            x, y = self.frame_handler.locate(self.assets["end_battle"], thresh=0.9)
+            x, y = Frame_Handler.locate(self.assets["end_battle"], thresh=0.9)
             if x is not None and y is not None: return True
         return False
-    
-    def get_builders(self, timeout=60):
-        start = time.time()
-        while time.time() < start + timeout:
-            try:
-                section = self.frame_handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
-                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/builders.png")
-                
-                slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
-                res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, _ = cv2.minMaxLoc(res)
-                if max_val < 0.9: continue
-                
-                text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
-                available = int(text[0])
-                return available
-            except Exception as e:
-                if configs.DEBUG: print("get_builders", e)
-            time.sleep(1)
-        raise Exception("Failed to get builders")
     
     def detect_troop_positions(self, frame, clip_left=0.0, clip_right=1.0, return_boundaries=False):
         if len(frame.shape) == 3: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
@@ -115,7 +97,7 @@ class Attacker:
             debug_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
             for x in (peaks * frame.shape[1]).astype(int):
                 cv2.line(debug_frame, (x, 0), (x, frame.shape[0]), (0, 255, 0), 2)
-            self.frame_handler.save_frame(debug_frame, "debug/troop_detection.png")
+            Frame_Handler.save_frame(debug_frame, "debug/troop_detection.png")
         
         dists = np.diff(peaks)
         min_dist = dists.min()
@@ -144,41 +126,40 @@ class Attacker:
         for i in range(len(card_centers)):
             if available_slots[i]:
                 # Select troop
-                click(card_centers[i], 0.9)
+                Input_Handler.click(card_centers[i], 0.9)
                 
                 # Random deployment for spells
                 n = 10
                 rxs = np.random.uniform(0.35, 0.65, n)
                 rys = np.random.uniform(0.45, 0.55, n)
-                for coord in zip(rxs, rys): click(*coord)
+                for coord in zip(rxs, rys): Input_Handler.click(*coord)
                 
                 # Deploy troop
-                multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
-        click(0.01, 0.9)
+                Input_Handler.multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
+        Input_Handler.click(0.01, 0.9)
     
-    def complete_attack(self):
-        swipe_up()
+    def complete_attack(self, timeout=60):
+        Input_Handler.swipe_up()
         
-        start_time = time.time()
         total_slots_seen = 0
         no_more_slots = False
         last_card_left = 0.0
         
         while total_slots_seen < ATTACK_SLOT_RANGE[1] + 1 and not no_more_slots:
-            frame = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
+            frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
             card_centers, card_boundaries = self.detect_troop_positions(frame, clip_left=last_card_left, return_boundaries=True)
 
             # Determine troops to use
             available_slots = np.ones_like(card_centers)
             if EXCLUDE_CLAN_TROOPS:
-                frame_gray = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=True)
-                x, y = self.frame_handler.locate(self.assets["clan_castle_deploy"], frame=frame_gray, thresh=0.9)
+                frame_gray = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=True)
+                x, y = Frame_Handler.locate(self.assets["clan_castle_deploy"], frame=frame_gray, thresh=0.9)
                 if x is not None and y is not None:
                     diffs = np.abs(card_centers - x)
                     if min(diffs) < 0.01:
                         closest_idx = np.argmin(diffs)
                         available_slots[closest_idx] = 0
-                locs = self.frame_handler.locate(self.assets["clan_castle_icon"], frame=frame_gray, thresh=0.9, return_all=True)
+                locs = Frame_Handler.locate(self.assets["clan_castle_icon"], frame=frame_gray, thresh=0.9, return_all=True)
                 for x, y in locs:
                     diffs = np.abs(card_centers - (x + 0.01))
                     if min(diffs) < 0.01:
@@ -199,67 +180,46 @@ class Attacker:
                 total_slots_seen += len(card_centers) - 1
                 self.deploy_troops(card_centers[:-1], available_slots[:-1])
                 last_card_frame = frame[:, int(card_boundaries[-2] * frame.shape[1]):int(card_boundaries[-1] * frame.shape[1])]
-                swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=0.5)
+                Input_Handler.swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=0.5)
                 time.sleep(0.5)
-                frame = self.frame_handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
-                last_card_left = self.frame_handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
+                frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
+                last_card_left = Frame_Handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
                 if abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
 
-        # Wait for specified attack duration or until battle ends
-        elapsed = time.time() - start_time
+        # Close and reopen app to auto complete attack
+        stop_coc()
+        start_coc()
+        
         start_time = time.time()
-        while time.time() - start_time + elapsed < MAX_ATTACK_DURATION:
-            time.sleep(1)
-            if self.click_return_home(): return
-        
-        # Surrender / End battle
-        for _ in range(5):
-            time.sleep(0.5)
-            if self.click_surrender(): break
-            if self.click_end_battle(): break
-            if self.click_return_home(): return
-        
-        # Press okay
-        for _ in range(5):
-            time.sleep(0.5)
-            if self.click_okay(): continue
-            if self.click_return_home(): return
-        
-        # Return home
-        for _ in range(10):
-            time.sleep(0.5)
-            if self.click_return_home(): return
+        while time.time() - start_time < timeout:
+            try:
+                Input_Handler.click_exit(5, 0.1)
+                get_builders(1)
+                break
+            except Exception as e:
+                if configs.DEBUG: print("end_attack", e)
     
     # ============================================================
     # ⚔️ Attack Management
     # ============================================================
 
-    def run(self, timeout=MAX_ATTACK_DURATION):
-        zoom(dir="out")
-        swipe_down()
+    def run(self, timeout=60):
+        Input_Handler.zoom(dir="out")
+        Input_Handler.swipe_down()
         
-        for _ in range(MAX_ATTACKS_PER_CHECK):
+        for _ in range(1):
             try:
                 start_time = time.time()
                 while time.time() - start_time < timeout:
-                    try: 
-                        self.get_builders(1)
+                    try:
+                        get_builders(1)
                         break
                     except: pass
                 if time.time() - start_time >= timeout: break
                 
-                found_match = self.start_normal_attack(timeout=timeout)
+                found_match = self.start_normal_attack(timeout)
                 
-                if found_match: self.complete_attack()
+                if found_match: self.complete_attack(timeout)
             
             except Exception as e:
                 if configs.DEBUG: print("start_attack", e)
-        
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                click_exit(5, 0.1)
-                self.get_builders(1)
-                break
-            except Exception as e:
-                if configs.DEBUG: print("end_attack", e)

@@ -19,8 +19,6 @@ MAX_UPGRADES_PER_CHECK = 10
 COLLECT_RESOURCES = False
 
 # REQUIRED: Attack Settings
-MAX_ATTACKS_PER_CHECK = 1
-MAX_ATTACK_DURATION = 3 * 60 # seconds
 TROOP_DEPLOY_TIME = 3 # seconds
 ATTACK_SLOT_RANGE = (0, 100) # inclusive first slot is index 0
 EXCLUDE_ATTACK_SLOTS = [] # e.g. [2, 5, 7]

@@ -13,6 +13,7 @@ import requests
 import argparse
 import subprocess
 import numpy as np
+from datetime import datetime
 from pyminitouch import MNTDevice, CommandBuilder
 import configs
 from configs import *
@@ -24,24 +25,7 @@ if sys.platform == "win32":
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 READER = easyocr.Reader(['en'])
 
-RUN_AT_EXIT = []
-
 INSTANCE_ID = None
-
-def register_exit(func):
-    atexit.register(func)
-    RUN_AT_EXIT.append(func)
-    return func
-
-def handle_sig(sig, frame):
-    for func in RUN_AT_EXIT:
-        try: func()
-        except: pass
-    sys.exit(0)
-
-def setup_signal_handlers():
-    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
-        signal.signal(sig, handle_sig)
 
 def parse_args(debug=None, id=None):
     global INSTANCE_ID, ADB_ADDRESS
@@ -81,10 +65,25 @@ def connect_adb():
     try:
         device = adbutils.device(ADB_ADDRESS)
         mt_device = MNTDevice(ADB_ADDRESS)
-        register_exit(mt_device.stop)
+        Exit_Handler.register(mt_device.stop)
     except:
         raise Exception("Failed to get ADB device.")
     ADB_DEVICE, MINITOUCH_DEVICE = device, mt_device
+
+def running():
+    if WEB_APP_URL == "": return True
+    try:
+        response = requests.get(
+            f"{WEB_APP_URL}/{INSTANCE_ID}/running",
+            auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+            timeout=3
+        )
+        if response.status_code == 200:
+            return response.json().get("running", False)
+        return False
+    except Exception as e:
+        if configs.DEBUG: print("running", e)
+        return False
 
 def check_color(color, frame, tol=10):
     assert len(frame.shape) == 3 and frame.shape[2] == 3, "Frame must be a color image"
@@ -112,91 +111,8 @@ def parse_time(text):
     except:
         return 0
 
-def click(x, y, n=1, delay=0):
-    if x < 0: x = 1 + x
-    if y < 0: y = 1 + y
-    command = [f"input tap {int(x*WINDOW_DIMS[0])} {int(y*WINDOW_DIMS[1])}"] * n
-    if delay == 0:
-        command = " && ".join(command) + ";"
-        ADB_DEVICE.shell(command)
-    else:
-        for c in command:
-            ADB_DEVICE.shell(c)
-            time.sleep(delay)
-
-def click_exit(n=1, delay=0):
-    click(0.99, 0.01, n, delay=delay)
-
-def multi_click(x1, y1, x2, y2, duration=0):
-    MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-    MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
-    MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
-
-def swipe(x1, y1, x2, y2, duration=100, hold_end_time=0.0):
-    if x1 < 0: x1 = 1 + x1
-    if y1 < 0: y1 = 1 + y1
-    if x2 < 0: x2 = 1 + x2
-    if y2 < 0: y2 = 1 + y2
-    
-    builder = CommandBuilder()
-    
-    MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-    MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
-    
-    x1 = int(x1 * MAX_X)
-    y1 = int(y1 * MAX_Y)
-    x2 = int(x2 * MAX_X)
-    y2 = int(y2 * MAX_Y)
-    
-    builder.down(0, x1, y1, pressure=100)
-    builder.publish(MINITOUCH_DEVICE.connection)
-    builder.move(0, x2, y2, pressure=100)
-    builder.wait(duration)
-    builder.commit()
-    builder.publish(MINITOUCH_DEVICE.connection)
-    time.sleep(hold_end_time)
-    builder.up(0)
-    builder.publish(MINITOUCH_DEVICE.connection)
-
-def swipe_up(y1=0.5, y2=0.0, x=0.5, hold_end_time=0.0):
-    swipe(x, y1, x, y2, duration=100, hold_end_time=hold_end_time)
-
-def swipe_down(y1=0.5, y2=1.0, x=0.5, hold_end_time=0.0):
-    swipe(x, y1, x, y2, duration=100, hold_end_time=hold_end_time)
-
-def swipe_left(x1=0.5, x2=0.0, y=0.5, hold_end_time=0.0):
-    swipe(x1, y, x2, y, duration=100, hold_end_time=hold_end_time)
-
-def swipe_right(x1=0.5, x2=1.0, y=0.5, hold_end_time=0.0):
-    swipe(x1, y, x2, y, duration=100, hold_end_time=hold_end_time)
-
 def to_int_tuple(*args):
     return tuple(map(int, args))
-
-def zoom(dir="out"):
-    builder = CommandBuilder()
-    
-    MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-    MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
-    
-    left_in = to_int_tuple(0.45*MAX_X, 0.5*MAX_Y)
-    left_out = to_int_tuple(0.15*MAX_X, 0.5*MAX_Y)
-    right_in = to_int_tuple(0.55*MAX_X, 0.5*MAX_Y)
-    right_out = to_int_tuple(0.85*MAX_X, 0.5*MAX_Y)
-    
-    start = [left_in, right_in] if dir=="in" else [left_out, right_out]
-    end = [left_out, right_out] if dir=="in" else [left_in, right_in]
-    
-    builder.down(0, *start[0], pressure=100)
-    builder.down(1, *start[1], pressure=100)
-    builder.publish(MINITOUCH_DEVICE.connection)
-    builder.move(0, *end[0], pressure=100)
-    builder.move(1, *end[1], pressure=100)
-    builder.commit()
-    builder.publish(MINITOUCH_DEVICE.connection)
-    builder.up(0)
-    builder.up(1)
-    builder.publish(MINITOUCH_DEVICE.connection)
 
 def get_telegram_chat_id():
     data = {}
@@ -241,35 +157,200 @@ def send_notification(text):
             )
         except: pass
 
-class Frame_Handler:
-    def get_frame(self, grayscale=True):
-        frame = np.array(ADB_DEVICE.screenshot())
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        if configs.DEBUG: self.save_frame(frame, "debug/frame.png")
-        if grayscale: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        return frame
+def get_builders(timeout=60):
+    start = time.time()
+    while time.time() < start + timeout:
+        try:
+            section = Frame_Handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/builders.png")
+            
+            slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
+            res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
+            if max_val < 0.9: continue
+            
+            text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
+            available = int(text[0])
+            return available
+        except Exception as e:
+            if configs.DEBUG: print("get_builders", e)
+        time.sleep(0.5)
+    raise Exception("Failed to get builders")
 
-    def get_frame_section(self, x1, y1, x2, y2, high_contrast=False, thresh=200, grayscale=True):
+def start_coc(timeout=60):
+    try:
+        print("Starting CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
+        i = 0
+        start = time.time()
+        while time.time() - start < timeout:
+            try:
+                ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
+                Input_Handler.click_exit(5, 0.1)
+                get_builders(1)
+                break
+            except:
+                if not running(): return False
+                pass
+            i += 1
+            time.sleep(1)
+        if time.time() - start > timeout:
+            stop_coc()
+            raise Exception("Failed to start CoC")
+        print("CoC started", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
+        return True
+    except:
+        return False
+
+def stop_coc():
+    print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
+    ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
+    print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
+
+class Asset_Manager:
+    @staticmethod
+    def load_upgrader_assets():
+        assets = {}
+        for file in os.listdir(UPGRADER_ASSETS_DIR):
+            assets[file.replace('.png', '')] = cv2.imread(os.path.join(UPGRADER_ASSETS_DIR, file), cv2.IMREAD_COLOR)
+        return assets
+
+    @staticmethod
+    def load_attacker_assets():
+        assets = {}
+        for file in os.listdir(ATTACKER_ASSETS_DIR):
+            assets[file.replace('.png', '')] = cv2.imread(os.path.join(ATTACKER_ASSETS_DIR, file), cv2.IMREAD_COLOR)
+        return assets
+
+    upgrader_assets = load_upgrader_assets()
+    attacker_assets = load_attacker_assets()
+
+class Input_Handler:
+    @classmethod
+    def click(cls, x, y, n=1, delay=0):
+        if x < 0: x = 1 + x
+        if y < 0: y = 1 + y
+        command = [f"input tap {int(x*WINDOW_DIMS[0])} {int(y*WINDOW_DIMS[1])}"] * n
+        if delay == 0:
+            command = " && ".join(command) + ";"
+            ADB_DEVICE.shell(command)
+        else:
+            for c in command:
+                ADB_DEVICE.shell(c)
+                time.sleep(delay)
+
+    @classmethod
+    def click_exit(cls, n=1, delay=0):
+        cls.click(0.99, 0.01, n, delay=delay)
+
+    @classmethod
+    def multi_click(cls, x1, y1, x2, y2, duration=0):
+        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
+
+    @classmethod
+    def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0.0):
         if x1 < 0: x1 = 1 + x1
         if y1 < 0: y1 = 1 + y1
         if x2 < 0: x2 = 1 + x2
         if y2 < 0: y2 = 1 + y2
-        frame = self.get_frame(grayscale)[int(WINDOW_DIMS[1]*y1):int(WINDOW_DIMS[1]*y2), int(WINDOW_DIMS[0]*x1):int(WINDOW_DIMS[0]*x2)]
+        
+        builder = CommandBuilder()
+        
+        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        
+        x1 = int(x1 * MAX_X)
+        y1 = int(y1 * MAX_Y)
+        x2 = int(x2 * MAX_X)
+        y2 = int(y2 * MAX_Y)
+        
+        builder.down(0, x1, y1, pressure=100)
+        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.move(0, x2, y2, pressure=100)
+        builder.wait(duration)
+        builder.commit()
+        builder.publish(MINITOUCH_DEVICE.connection)
+        time.sleep(hold_end_time)
+        builder.up(0)
+        builder.publish(MINITOUCH_DEVICE.connection)
+
+    @classmethod
+    def swipe_up(cls, y1=0.5, y2=0.0, x=0.5, hold_end_time=0.0):
+        cls.swipe(x, y1, x, y2, duration=100, hold_end_time=hold_end_time)
+
+    @classmethod
+    def swipe_down(cls, y1=0.5, y2=1.0, x=0.5, hold_end_time=0.0):
+        cls.swipe(x, y1, x, y2, duration=100, hold_end_time=hold_end_time)
+
+    @classmethod
+    def swipe_left(cls, x1=0.5, x2=0.0, y=0.5, hold_end_time=0.0):
+        cls.swipe(x1, y, x2, y, duration=100, hold_end_time=hold_end_time)
+
+    @classmethod
+    def swipe_right(cls, x1=0.5, x2=1.0, y=0.5, hold_end_time=0.0):
+        cls.swipe(x1, y, x2, y, duration=100, hold_end_time=hold_end_time)
+
+    @classmethod
+    def zoom(cls, dir="out"):
+        builder = CommandBuilder()
+        
+        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        
+        left_in = to_int_tuple(0.45*MAX_X, 0.5*MAX_Y)
+        left_out = to_int_tuple(0.15*MAX_X, 0.5*MAX_Y)
+        right_in = to_int_tuple(0.55*MAX_X, 0.5*MAX_Y)
+        right_out = to_int_tuple(0.85*MAX_X, 0.5*MAX_Y)
+        
+        start = [left_in, right_in] if dir=="in" else [left_out, right_out]
+        end = [left_out, right_out] if dir=="in" else [left_in, right_in]
+        
+        builder.down(0, *start[0], pressure=100)
+        builder.down(1, *start[1], pressure=100)
+        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.move(0, *end[0], pressure=100)
+        builder.move(1, *end[1], pressure=100)
+        builder.commit()
+        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.up(0)
+        builder.up(1)
+        builder.publish(MINITOUCH_DEVICE.connection)
+
+class Frame_Handler:
+    @classmethod
+    def get_frame(cls, grayscale=True):
+        frame = np.array(ADB_DEVICE.screenshot())
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if configs.DEBUG: cls.save_frame(frame, "debug/frame.png")
+        if grayscale: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        return frame
+
+    @classmethod
+    def get_frame_section(cls, x1, y1, x2, y2, high_contrast=False, thresh=200, grayscale=True):
+        if x1 < 0: x1 = 1 + x1
+        if y1 < 0: y1 = 1 + y1
+        if x2 < 0: x2 = 1 + x2
+        if y2 < 0: y2 = 1 + y2
+        frame = cls.get_frame(grayscale)[int(WINDOW_DIMS[1]*y1):int(WINDOW_DIMS[1]*y2), int(WINDOW_DIMS[0]*x1):int(WINDOW_DIMS[0]*x2)]
         if high_contrast and grayscale: frame[frame < thresh] = 0
         return frame
-    
-    def save_frame(self, frame, filename="frame.png"):
+
+    @classmethod
+    def save_frame(cls, frame, filename="frame.png"):
         cv2.imwrite(filename, frame)
+
+    @classmethod
+    def screenshot(cls, filename="debug/screenshot.png", grayscale=False):
+        frame = cls.get_frame(grayscale)
+        cls.save_frame(frame, filename)
     
-    def screenshot(self, filename="debug/screenshot.png", grayscale=False):
-        frame = self.get_frame(grayscale)
-        self.save_frame(frame, filename)
-    
-    def locate(self, template, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
+    @classmethod
+    def locate(cls, template, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
         if grayscale and len(template.shape) == 3:
             template = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
         h, w = template.shape[:2]
-        frame = self.get_frame(grayscale) if frame is None else frame
+        frame = cls.get_frame(grayscale) if frame is None else frame
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
         if configs.DEBUG: print(max_val)
@@ -308,3 +389,26 @@ class Frame_Handler:
         if return_confidence:
             return None, None, max_val
         return None, None
+
+class Exit_Handler:
+    RUN_AT_EXIT = []
+    
+    @classmethod
+    def register(cls, func):
+        atexit.register(func)
+        cls.RUN_AT_EXIT.append(func)
+        return func
+
+    @classmethod
+    def handle_sig(cls, sig, frame):
+        for func in cls.RUN_AT_EXIT:
+            try: func()
+            except: pass
+        sys.exit(0)
+
+    @classmethod
+    def setup_signal_handlers(cls):
+        for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+            signal.signal(sig, cls.handle_sig)
+
+Exit_Handler.setup_signal_handlers()
