@@ -9,7 +9,6 @@ import time
 import psutil
 import requests
 import subprocess
-from datetime import datetime
 import utils
 from utils import *
 from configs import *
@@ -20,33 +19,15 @@ class CoC_Bot:
     def __init__(self):
         if DISABLE_DEEVICE_SLEEP:
             disable_sleep()
-            register_exit(enable_sleep)
+            Exit_Handler.register(enable_sleep)
         
         self.start_bluestacks()
-        self.frame_handler = Frame_Handler()
         self.upgrader = Upgrader()
-        self.assets = self.upgrader.assets.copy()
         self.attacker = Attacker()
 
     # ============================================================
     # 🖥️ System & Emulator Management
     # ============================================================
-
-    @property
-    def running(self):
-        if WEB_APP_URL == "": return True
-        try:
-            response = requests.get(
-                f"{WEB_APP_URL}/{utils.INSTANCE_ID}/running",
-                auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
-                timeout=3
-            )
-            if response.status_code == 200:
-                return response.json().get("running", False)
-            return False
-        except Exception as e:
-            if configs.DEBUG: print("running", e)
-            return False
     
     def update_status(self, status):
         if WEB_APP_URL == "": return
@@ -73,7 +54,7 @@ class CoC_Bot:
                 proc.terminate()
             except Exception:
                 pass
-        register_exit(cleanup)
+        Exit_Handler.register(cleanup)
     
     def start_bluestacks(self):
         if sys.platform == "darwin":
@@ -96,7 +77,8 @@ class CoC_Bot:
             try:
                 connect_adb()
                 return
-            except: pass
+            except Exception as e:
+                if configs.DEBUG: print("start_bluestacks", e)
             time.sleep(0.5)
         
         raise Exception("BlueStacks failed to start.")
@@ -106,58 +88,7 @@ class CoC_Bot:
             if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
                 return True
         return False
-    
-    def start(self, timeout=60):
-        try:
-            print("Starting CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
-            start = time.time()
-            while time.time() - start < timeout:
-                try:
-                    utils.ADB_DEVICE.shell("am start -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
-                    click_exit(5, 0.1)
-                    self.get_builders(1)
-                    break
-                except:
-                    if not self.running: return False
-                    pass
-                time.sleep(1)
-            if time.time() - start > timeout:
-                self.stop()
-                raise Exception("Failed to start CoC")
-            print("CoC started", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
-            return True
-        except:
-            return False
-    
-    def stop(self):
-        print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
-        utils.ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
-        print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
-    # ============================================================
-    # 📱 Screen Interaction
-    # ============================================================
-    
-    def get_builders(self, timeout=60):
-        start = time.time()
-        while time.time() < start + timeout:
-            try:
-                section = self.frame_handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
-                if configs.DEBUG: self.frame_handler.save_frame(section, "debug/builders.png")
-                
-                slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
-                res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, _ = cv2.minMaxLoc(res)
-                if max_val < 0.9: continue
-                
-                text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
-                available = int(text[0])
-                return available
-            except Exception as e:
-                if configs.DEBUG: print("get_builders", e)
-            time.sleep(1)
-        raise Exception("Failed to get builders")
-    
     # ============================================================
     # ⏱️ Task Execution
     # ============================================================
@@ -165,21 +96,21 @@ class CoC_Bot:
     def run(self):
         while True:
             try:
-                if not self.running:
+                if not running():
                     time.sleep(1)
                     continue
                 
-                if self.start():
+                if start_coc():
                     self.update_status("now")
                     
                     self.upgrader.run()
                     self.attacker.run()
                     
-                    self.stop()
+                    stop_coc()
                     self.update_status(time.time())
                 
                 time.sleep(CHECK_INTERVAL)
             except Exception as e:
                 print(e)
-                self.stop()
+                stop_coc()
                 self.update_status("error")
