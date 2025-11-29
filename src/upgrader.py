@@ -385,7 +385,7 @@ class Upgrader:
             # Get upgrade name
             section = Frame_Handler.get_frame_section(0.15, 0.1, 0.43, 0.35, high_contrast=True, thresh=240)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", "".join(get_text(section)).lower()[:-3])
+            upgrade_name = "".join(get_text(section)).lower()
             
             # Complete upgrade
             thresh = 0.36
