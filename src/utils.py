@@ -76,7 +76,7 @@ def running():
         response = requests.get(
             f"{WEB_APP_URL}/{INSTANCE_ID}/running",
             auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
-            timeout=3
+            timeout=(10, 20)
         )
         if response.status_code == 200:
             return response.json().get("running", False)
