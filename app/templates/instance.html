@@ -84,7 +84,7 @@
                     const latest_notif = (notifications.length > 0) ? notifications[0].time_stamp : 0;
                     notifications = data;
 
-                    if (data.length > 0 && data[0].time_stamp > latest_notif && document.hidden) {
+                    if (data.length > 0 && data[0].time_stamp > latest_notif && document.visibilityState === "hidden") {
                         document.querySelector('link[rel="icon"]').href = "{{ url_for('static', filename='favicon_alert.png') }}";
                     }
                 } catch (error) {
