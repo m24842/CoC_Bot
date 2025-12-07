@@ -82,7 +82,7 @@ class Upgrader:
         start = time.time()
         while time.time() < start + timeout:
             try:
-                section = Frame_Handler.get_frame_section(0.44, 0.04, -0.515, 0.08, high_contrast=True)
+                section = Frame_Handler.get_frame_section(0.448, 0.04, -0.515, 0.08, high_contrast=True)
                 if configs.DEBUG: Frame_Handler.save_frame(section, "debug/builder_lab.png")
                 
                 slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
