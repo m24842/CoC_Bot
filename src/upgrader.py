@@ -227,10 +227,10 @@ class Upgrader:
             
             # Find upgrade button
             x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
-            xyc_hero = Frame_Handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_all=True)
-            if len(xyc_hero) > 0:
-                idx = np.random.randint(0, len(xyc_hero)-1)
-                x, y = xyc_hero[idx]
+            xy_hero = Frame_Handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_all=True)
+            if len(xy_hero) > 0:
+                idx = np.random.randint(0, len(xy_hero))
+                x, y = xy_hero[idx]
             if x is None or y is None: return None
             
             Input_Handler.click(x, y)
