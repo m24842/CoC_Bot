@@ -120,6 +120,7 @@ class Attacker:
             Frame_Handler.save_frame(debug_frame, "debug/troop_detection.png")
         
         dists = np.diff(peaks)
+        
         min_dist = dists.min()
         max_dist = dists.max()
         
@@ -169,42 +170,39 @@ class Attacker:
             frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
             card_centers, card_boundaries = self.detect_troop_positions(frame, clip_left=last_card_left, return_boundaries=True)
 
+            if len(card_centers) == 0: break
+
             # Determine troops to use
             available_slots = np.ones_like(card_centers)
             if EXCLUDE_CLAN_TROOPS:
-                frame_gray = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=True)
-                x, y = Frame_Handler.locate(self.assets["clan_castle_deploy"], frame=frame_gray, thresh=0.9)
-                if x is not None and y is not None:
-                    diffs = np.abs(card_centers - x)
-                    if min(diffs) < 0.01:
-                        closest_idx = np.argmin(diffs)
-                        available_slots[closest_idx] = 0
-                locs = Frame_Handler.locate(self.assets["clan_castle_icon"], frame=frame_gray, thresh=0.9, return_all=True)
-                for x, y in locs:
-                    diffs = np.abs(card_centers - (x + 0.01))
-                    if min(diffs) < 0.01:
-                        closest_idx = np.argmin(diffs)
-                        available_slots[closest_idx] = 0
-            
+                # frame_gray = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=True)
+                hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+                lower_gold = (15, 80, 120)
+                upper_gold = (35, 255, 255)
+                frame_gray = cv2.inRange(hsv, lower_gold, upper_gold)
+                for dim in [39, 100]: # 39 for small icon, 100 for large icon
+                    template = cv2.resize(self.assets["clan_castle_icon"], (dim, dim))
+                    locs = Frame_Handler.locate(template, frame=frame_gray, thresh=0.6, return_all=True)
+                    for x, y in locs:
+                        diffs = np.abs(card_centers - x)
+                        if min(diffs) < 0.05:
+                            closest_idx = np.argmin(diffs)
+                            available_slots[closest_idx] = 0
+
             if len(EXCLUDE_ATTACK_SLOTS) and min(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) >= 0 and max(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) < len(available_slots):
                 available_slots[np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen] = 0
             available_slots[:ATTACK_SLOT_RANGE[0] - total_slots_seen] = 0
             available_slots[ATTACK_SLOT_RANGE[1] + 1 - total_slots_seen:] = 0
             
             # Deploy troops
-            if len(card_centers) < 12:
-                no_more_slots = True
-                total_slots_seen += len(card_centers)
-                self.deploy_troops(card_centers, available_slots)
-            else:
-                total_slots_seen += len(card_centers) - 1
-                self.deploy_troops(card_centers[:-1], available_slots[:-1])
-                last_card_frame = frame[:, int(card_boundaries[-2] * frame.shape[1]):int(card_boundaries[-1] * frame.shape[1])]
-                Input_Handler.swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=500)
-                time.sleep(0.5)
-                frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
-                last_card_left = Frame_Handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
-                if abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
+            total_slots_seen += len(card_centers) - 1
+            self.deploy_troops(card_centers[:-1], available_slots[:-1])
+            last_card_frame = frame[:, int(card_boundaries[-2] * frame.shape[1]):int(card_boundaries[-1] * frame.shape[1])]
+            Input_Handler.swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=500)
+            time.sleep(0.5)
+            frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
+            last_card_left = Frame_Handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
+            if last_card_left is None or abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
         
         # Close and reopen CoC to auto complete battle
         if restart:
@@ -215,13 +213,13 @@ class Attacker:
                 Input_Handler.click_exit(5, 0.1)
                 try:
                     get_home_builders(1)
-                    break
+                    return
                 except Exception as e:
                     if configs.DEBUG: print("end_attack", e)
                 
                 try:
                     get_builder_builders(1)
-                    break
+                    return
                 except Exception as e:
                     if configs.DEBUG: print("end_attack", e)
         else:
