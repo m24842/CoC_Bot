@@ -182,7 +182,7 @@ class Attacker:
                 frame_gray = cv2.inRange(hsv, lower_gold, upper_gold)
                 for dim in [39, 100]: # 39 for small icon, 100 for large icon
                     template = cv2.resize(self.assets["clan_castle_icon"], (dim, dim))
-                    locs = Frame_Handler.locate(template, frame=frame_gray, thresh=0.6, return_all=True)
+                    locs = Frame_Handler.locate(template, frame=frame_gray, thresh=0.55, return_all=True)
                     for x, y in locs:
                         diffs = np.abs(card_centers - x)
                         if min(diffs) < 0.05:
