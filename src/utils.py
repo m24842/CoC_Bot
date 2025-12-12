@@ -200,6 +200,7 @@ def start_coc(timeout=60):
         while time.time() - start < timeout:
             ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
             Input_Handler.click_exit(5, 0.1)
+            Input_Handler.swipe_down()
             try:
                 get_home_builders(1)
                 break
