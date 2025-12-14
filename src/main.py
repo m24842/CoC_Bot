@@ -4,7 +4,7 @@ from coc_bot import CoC_Bot
 
 if __name__ == "__main__":
     print("\033c", end="")
-    enable_logging()
-    parse_args()
+    args = parse_args()
+    enable_logging(args.id)
     bot = CoC_Bot()
     bot.run()

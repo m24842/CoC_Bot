@@ -14,7 +14,7 @@ class Tee:
         for s in self.streams:
             s.flush()
 
-def enable_logging():
+def enable_logging(id="main"):
     os.makedirs("debug", exist_ok=True)
-    log_file = open("debug/output.log", "a")
+    log_file = open(f"debug/{id}_output.log", "a")
     sys.stdout = Tee(sys.stdout, log_file)

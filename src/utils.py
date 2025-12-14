@@ -43,6 +43,7 @@ def parse_args(debug=None, id=None):
             json={"id": INSTANCE_ID}
         )
     ADB_ADDRESS = ADB_ADDRESSES[INSTANCE_IDS.index(INSTANCE_ID)]
+    return args
 
 def disable_sleep():
     if sys.platform == "darwin":
