@@ -95,7 +95,7 @@ class CoC_Bot:
     
     def run(self):
         while True:
-            try:
+            try:                
                 if not running():
                     time.sleep(1)
                     continue
@@ -120,6 +120,7 @@ class CoC_Bot:
                     self.update_status(time.time())
                 
                 time.sleep(CHECK_INTERVAL)
+            
             except Exception as e:
                 print(e)
                 stop_coc()

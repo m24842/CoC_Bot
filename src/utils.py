@@ -22,6 +22,7 @@ if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
 
+LAST_HEARTBEAT = time.time()
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 READER = easyocr.Reader(['en'])
 
@@ -470,6 +471,8 @@ class Exit_Handler:
         for func in cls.RUN_AT_EXIT:
             try: func()
             except: pass
+        if sig == signal.SIGINT:
+            raise KeyboardInterrupt
         sys.exit(0)
 
     @classmethod

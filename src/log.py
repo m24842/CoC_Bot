@@ -5,9 +5,9 @@ class Tee:
     def __init__(self, *streams):
         self.streams = streams
 
-    def write(self, message):
+    def write(self, data):
         for s in self.streams:
-            s.write(message)
+            s.write(data)
             s.flush()
 
     def flush(self):
@@ -16,5 +16,8 @@ class Tee:
 
 def enable_logging(id="main"):
     os.makedirs("debug", exist_ok=True)
-    log_file = open(f"debug/{id}_output.log", "a")
-    sys.stdout = Tee(sys.stdout, log_file)
+
+    log = open(f"debug/{id}.log", "a", buffering=1)
+
+    sys.stdout = Tee(sys.stdout, log)
+    sys.stderr = Tee(sys.stderr, log)
