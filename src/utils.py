@@ -22,7 +22,6 @@ if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
 
-LAST_HEARTBEAT = time.time()
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 READER = easyocr.Reader(['en'])
 
