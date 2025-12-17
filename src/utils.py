@@ -40,7 +40,8 @@ def parse_args(debug=None, id=None):
         requests.post(
             f"{WEB_APP_URL}/instances",
             auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
-            json={"id": INSTANCE_ID}
+            json={"id": INSTANCE_ID},
+            timeout=(10, 20)
         )
     ADB_ADDRESS = ADB_ADDRESSES[INSTANCE_IDS.index(INSTANCE_ID)]
     return args
@@ -126,6 +127,7 @@ def get_telegram_chat_id():
     res = requests.get(
         f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates",
         auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+        timeout=(10, 20)
     )
     if res.status_code == 200:
         res = res.json()
@@ -145,6 +147,7 @@ def send_notification(text):
                 f"{WEB_APP_URL}/{INSTANCE_ID}/notify",
                 auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
                 json=text,
+                timeout=(10, 20)
             )
         except: pass
 
@@ -154,7 +157,8 @@ def send_notification(text):
             requests.post(
                 f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
                 auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
-                data={"chat_id": get_telegram_chat_id(),"text": telegram_text}
+                data={"chat_id": get_telegram_chat_id(),"text": telegram_text},
+                timeout=(10, 20)
             )
         except: pass
 

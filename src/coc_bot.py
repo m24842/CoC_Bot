@@ -37,7 +37,7 @@ class CoC_Bot:
                     f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status",
                     auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
                     json={"status": status},
-                    timeout=3
+                    timeout=(10, 20)
                 )
                 return
             except Exception as e:
