@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # to_home_base()
     # bot.upgrader.run_home_base()
     # bot.attacker.run_home_base()
-    bot.attacker.complete_attack()
+    # bot.attacker.complete_attack()
     # to_builder_base()
     # bot.upgrader.collect_builder_attack_elixir()
     # bot.upgrader.builder_upgrade()
