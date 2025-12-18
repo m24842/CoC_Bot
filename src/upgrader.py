@@ -227,7 +227,7 @@ class Upgrader:
             
             # Find upgrade button
             x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
-            xy_hero = Frame_Handler.locate(self.assets["hero_upgrade"], thresh=0.9, return_all=True)
+            xy_hero = Frame_Handler.locate(self.assets["hero_upgrade"], thresh=0.97, grayscale=False, return_all=True)
             if len(xy_hero) > 0:
                 idx = np.random.randint(0, len(xy_hero))
                 x, y = xy_hero[idx]
