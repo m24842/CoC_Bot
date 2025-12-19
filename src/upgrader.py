@@ -177,7 +177,7 @@ class Upgrader:
             # Get potential upgrade names
             pot_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(pot_section, "debug/upgrade_name.png")
-            pot_upgrade_name = re.sub(r"\s*x\d+$", "", get_text(pot_section)[0].lower())
+            pot_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(pot_section)[0].lower()))
             
             alt_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(alt_section, "debug/upgrade_name.png")
@@ -240,7 +240,7 @@ class Upgrader:
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3])
+            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3]))
             
             # Complete upgrade
             x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
@@ -289,7 +289,7 @@ class Upgrader:
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3])
+            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3]))
             
             # Complete upgrade
             x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
@@ -385,7 +385,7 @@ class Upgrader:
             # Get upgrade name
             section = Frame_Handler.get_frame_section(0.15, 0.1, 0.43, 0.35, high_contrast=True, thresh=240)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = "".join(get_text(section)).lower()
+            upgrade_name = spell_check("".join(get_text(section)).lower())
             
             # Complete upgrade
             thresh = 0.36
@@ -449,7 +449,7 @@ class Upgrader:
             # Get upgrade name
             pot_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(pot_section, "debug/lab_upgrade_name.png")
-            upgrade_name = re.sub(r"\s*x\d+$", "", get_text(pot_section)[0].lower())
+            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(pot_section)[0].lower()))
 
             Input_Handler.click(x_sug, y_pot)
             time.sleep(0.5)

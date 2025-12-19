@@ -9,7 +9,7 @@ from utils import *
 from coc_bot import CoC_Bot
 
 if __name__ == "__main__":
-    parse_args(debug=True, id="main")
+    parse_args(debug=True, id="alt")
     bot = CoC_Bot()
     # Frame_Handler.screenshot()
     # start_coc()
