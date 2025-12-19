@@ -7,13 +7,16 @@ import time
 import signal
 import atexit
 import ctypes
+import difflib
 import easyocr
 import adbutils
 import requests
 import argparse
 import subprocess
 import numpy as np
+import portalocker
 from datetime import datetime
+from bs4 import BeautifulSoup
 from pyminitouch import MNTDevice, CommandBuilder
 import configs
 from configs import *
@@ -22,10 +25,10 @@ if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
 
+INSTANCE_ID = None
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 READER = easyocr.Reader(['en'])
-
-INSTANCE_ID = None
+CACHE_PATH = "src/cache.json"
 
 def parse_args(debug=None, id=None):
     global INSTANCE_ID, ADB_ADDRESS
@@ -96,6 +99,67 @@ def get_text(frame):
     result = READER.readtext(frame)
     return [text for _, text, _ in result if text.strip()]
 
+def get_vocab():
+    data = {}
+    existing_vocab = None
+    for _ in range(1):
+        if os.path.exists(CACHE_PATH):
+            with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
+                data = json.load(f)
+                if "vocab" in data:
+                    existing_vocab = data["vocab"]["text"]
+                    if time.time() - data["vocab"]["last_updated"] > 86400: break
+                    return existing_vocab
+    
+    vocab = set()
+    endpoints = [
+        "A-I",
+        "J-P",
+        "Q-Z",
+    ]
+
+    for endpoint in endpoints:
+        res = requests.get(
+            f"https://clashofclans.fandom.com/wiki/Glossary/{endpoint}",
+            timeout=(10, 20),
+        )
+        if res.status_code == 200:
+            soup = BeautifulSoup(res.text, "lxml")
+            elements = soup.select("h3 span.mw-headline")
+            for e in elements:
+                words = [s for s in e.text.lower().split(" ") if len(s) > 2]
+                vocab = vocab.union(words)
+        else:
+            if existing_vocab is not None: return existing_vocab
+            raise Exception("Failed to update vocabulary")
+    
+    vocab = sorted(list(vocab))
+    data["vocab"] = {
+        "last_updated": time.time(),
+        "text": vocab,
+    }
+    
+    with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
+        json.dump(data, f, indent=4)
+
+    return vocab
+
+def spell_check(text, cutoff=0.7):
+    vocab = get_vocab()
+    words = re.split(r"[ _]+", text)
+    results = []
+
+    for word in words:
+        suggestion = word
+        if word not in vocab:
+            correction = difflib.get_close_matches(
+                word, vocab, n=1, cutoff=cutoff
+            )
+            if len(correction) != 0: suggestion = correction[0]
+        results.append(suggestion)
+
+    return " ".join(results)
+
 def fix_digits(text):
     if type(text) is list:
         return [fix_digits(t) for t in text]
@@ -118,9 +182,8 @@ def to_int_tuple(*args):
 
 def get_telegram_chat_id():
     data = {}
-    cache_path = "src/cache.json"
-    if os.path.exists(cache_path):
-        with open(cache_path, "r") as f:
+    if os.path.exists(CACHE_PATH):
+        with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
             data = json.load(f)
             if "telegram_chat_id" in data: return data["telegram_chat_id"]
     
@@ -134,7 +197,7 @@ def get_telegram_chat_id():
         if res["ok"] and len(res["result"]) > 0:
             chat_id = res["result"][-1]["message"]["chat"]["id"]
             data["telegram_chat_id"] = chat_id
-            with open(cache_path, "w") as f:
+            with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
                 json.dump(data, f, indent=4)
             return chat_id
 
