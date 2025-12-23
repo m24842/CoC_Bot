@@ -103,45 +103,66 @@ class Attacker:
             if x is not None and y is not None: return True
         return False
     
-    def detect_troop_positions(self, frame, clip_left=0.0, clip_right=1.0, return_boundaries=False):
+    def detect_troop_positions(self, frame, clip_left=0.0, clip_right=1.0, return_boundaries=False, return_types=False):
         if len(frame.shape) == 3: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         frame = cv2.equalizeHist(frame)
-        sobelx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=3)
-        abs_sobelx = np.abs(sobelx)
-        edges = cv2.convertScaleAbs(abs_sobelx)
+        edges = cv2.convertScaleAbs(np.abs(cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=3)))
         profile = np.sum(edges, axis=0)
         profile = (profile - profile.min()) / (profile.max() - profile.min())
-        peaks = scipy.signal.find_peaks(profile, height=0.8, distance=10)[0] / frame.shape[1]
+        peaks = scipy.signal.find_peaks(profile, height=0.8, distance=10)[0]
+        peaks_norm =  peaks / frame.shape[1]
         
         if configs.DEBUG:
             debug_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-            for x in (peaks * frame.shape[1]).astype(int):
+            for x in peaks:
                 cv2.line(debug_frame, (x, 0), (x, frame.shape[0]), (0, 255, 0), 2)
             Frame_Handler.save_frame(debug_frame, "debug/troop_detection.png")
         
-        dists = np.diff(peaks)
+        dists = np.diff(peaks_norm)
+        dist_categories = np.array([0.007, 0.015, 0.068])
+        dists_discrete = dist_categories[np.argmin(np.abs(dists[:, None] - dist_categories), axis=1)]
         
         min_dist = dists.min()
         max_dist = dists.max()
         
-        if abs(dists[0] - min_dist) < abs(dists[0] - max_dist): peaks = peaks[1:]
-        if abs(dists[-1] - min_dist) < abs(dists[-1] - max_dist): peaks = peaks[:-1]
+        if abs(dists[0] - min_dist) < abs(dists[0] - max_dist):
+            peaks = peaks[1:]
+            peaks_norm = peaks_norm[1:]
+        if abs(dists[-1] - min_dist) < abs(dists[-1] - max_dist):
+            peaks = peaks[:-1]
+            peaks_norm = peaks_norm[:-1]
         
         assert len(peaks) % 2 == 0, "Uneven number of troop slot edges detected"
         
+        card_types = []
         card_centers = []
         card_boundaries = []
-        for i in range(0, len(peaks), 2):
-            x = (peaks[i] + peaks[i+1]) / 2
+        for i in range(0, len(peaks_norm), 2):
+            card_section = frame[:, peaks[i]:peaks[i+1]]
+            card_texture = cv2.Canny(card_section, 50, 150) / 255
+            x_sign_loc = Frame_Handler.locate(self.assets["x"], card_section, grayscale=True, thresh=0.9, ref="lc")
+            if x_sign_loc[0] is not None and x_sign_loc[1] is not None:
+                prev_gap = dists_discrete[i-1] if i-1 > 0 else dist_categories[0]
+                next_gap = dists_discrete[i+1] if i+1 < len(dists_discrete) else dist_categories[0]
+                if max(card_texture[int(card_section.shape[0]*x_sign_loc[1])-10:int(card_section.shape[0]*x_sign_loc[1])+10, :int(card_section.shape[1]*x_sign_loc[0]-1)].mean(1)) > 0.1: card_type = "clan"
+                elif prev_gap == dist_categories[1] and next_gap == dist_categories[1]: card_type = "clan"
+                else: card_type = "troop"
+            else: card_type = "hero"
+            card_types.append(card_type)
+            
+            x = (peaks_norm[i] + peaks_norm[i+1]) / 2
             if x >= clip_left and x <= clip_right:
                 card_centers.append(x)
-                card_boundaries.extend([peaks[i], peaks[i+1]])
+                card_boundaries.extend([peaks_norm[i], peaks_norm[i+1]])
         
         card_centers = np.array(card_centers)
         
-        if return_boundaries:
-            return card_centers, card_boundaries
-        return card_centers
+        if not return_boundaries and not return_types: return card_centers
+        
+        output = [card_centers]
+        if return_boundaries: output.append(card_boundaries)
+        if return_types: output.append(card_types)
+        return output
     
     def deploy_troops(self, card_centers, available_slots):
         for i in range(len(card_centers)):
@@ -159,7 +180,7 @@ class Attacker:
                 Input_Handler.multi_click(0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
         Input_Handler.click(0.01, 0.9)
     
-    def complete_attack(self, timeout=10, restart=True):
+    def complete_attack(self, timeout=10, restart=True, exclude_clan_troops=False):
         Input_Handler.swipe_up()
         
         total_slots_seen = 0
@@ -168,26 +189,15 @@ class Attacker:
         
         while total_slots_seen < ATTACK_SLOT_RANGE[1] + 1 and not no_more_slots:
             frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
-            card_centers, card_boundaries = self.detect_troop_positions(frame, clip_left=last_card_left, return_boundaries=True)
+            card_centers, card_boundaries, card_types = self.detect_troop_positions(frame, clip_left=last_card_left, return_boundaries=True, return_types=True)
 
             if len(card_centers) == 0: break
 
             # Determine troops to use
             available_slots = np.ones_like(card_centers)
-            if EXCLUDE_CLAN_TROOPS:
-                # frame_gray = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=True)
-                hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-                lower_gold = (15, 80, 120)
-                upper_gold = (35, 255, 255)
-                frame_gray = cv2.inRange(hsv, lower_gold, upper_gold)
-                for dim in [39, 100]: # 39 for small icon, 100 for large icon
-                    template = cv2.resize(self.assets["clan_castle_icon"], (dim, dim))
-                    locs = Frame_Handler.locate(template, frame=frame_gray, thresh=0.55, return_all=True)
-                    for x, y in locs:
-                        diffs = np.abs(card_centers - x)
-                        if min(diffs) < 0.05:
-                            closest_idx = np.argmin(diffs)
-                            available_slots[closest_idx] = 0
+            if exclude_clan_troops:
+                for i, card_type in enumerate(card_types):
+                    if card_type == "clan": available_slots[i] = 0
 
             if len(EXCLUDE_ATTACK_SLOTS) and min(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) >= 0 and max(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) < len(available_slots):
                 available_slots[np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen] = 0
@@ -202,8 +212,12 @@ class Attacker:
             time.sleep(0.5)
             frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
             last_card_left = Frame_Handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
-            if last_card_left is None or abs(last_card_left - card_boundaries[-2]) < 0.01: no_more_slots = True
-        
+            if last_card_left is not None and abs(last_card_left - card_boundaries[-2]) < 0.01:
+                self.deploy_troops(card_centers[-1:], available_slots[-1:])
+                no_more_slots = True
+            else:
+                no_more_slots = True
+
         # Close and reopen CoC to auto complete battle
         if restart:
             start_coc()
@@ -246,7 +260,7 @@ class Attacker:
                 
                 found_match = self.start_normal_attack(timeout)
                 
-                if found_match: self.complete_attack(timeout, restart=restart)
+                if found_match: self.complete_attack(timeout, restart=restart, exclude_clan_troops=EXCLUDE_CLAN_TROOPS)
             
             except Exception as e:
                 if configs.DEBUG: print("start_attack", e)
@@ -268,7 +282,7 @@ class Attacker:
                 
                 found_match = self.start_builder_attack(timeout)
                 
-                if found_match: self.complete_attack(timeout, restart=restart)
+                if found_match: self.complete_attack(timeout, restart=restart, exclude_clan_troops=False)
             
             except Exception as e:
                 if configs.DEBUG: print("start_attack", e)

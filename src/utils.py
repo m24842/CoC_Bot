@@ -483,6 +483,7 @@ class Frame_Handler:
             template = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
         h, w = template.shape[:2]
         frame = cls.get_frame(grayscale) if frame is None else frame
+        fh, fw = frame.shape[:2]
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
         if configs.DEBUG: print(max_val)
@@ -501,9 +502,9 @@ class Frame_Handler:
                     y_loc += h
 
                 if return_confidence:
-                    results.append((x_loc / WINDOW_DIMS[0], y_loc / WINDOW_DIMS[1], float(val)))
+                    results.append((x_loc / fw, y_loc / fh, float(val)))
                 else:
-                    results.append((x_loc / WINDOW_DIMS[0], y_loc / WINDOW_DIMS[1]))
+                    results.append((x_loc / fw, y_loc / fh))
 
             results.sort(key=lambda r: r[-1] if return_confidence else 0, reverse=True)
             return results
@@ -515,9 +516,9 @@ class Frame_Handler:
             if ref[1] == 'c': y_loc += h / 2
             elif ref[1] == 'b': y_loc += h
             if return_confidence:
-                return x_loc / WINDOW_DIMS[0], y_loc / WINDOW_DIMS[1], max_val
+                return x_loc / fw, y_loc / fh, max_val
             else:
-                return x_loc / WINDOW_DIMS[0], y_loc / WINDOW_DIMS[1]
+                return x_loc / fw, y_loc / fh
         if return_confidence:
             return None, None, max_val
         return None, None
