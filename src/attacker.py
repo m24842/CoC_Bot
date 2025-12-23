@@ -138,22 +138,22 @@ class Attacker:
         card_centers = []
         card_boundaries = []
         for i in range(0, len(peaks_norm), 2):
-            card_section = frame[:, peaks[i]:peaks[i+1]]
-            card_texture = cv2.Canny(card_section, 50, 150) / 255
-            x_sign_loc = Frame_Handler.locate(self.assets["x"], card_section, grayscale=True, thresh=0.9, ref="lc")
-            if x_sign_loc[0] is not None and x_sign_loc[1] is not None:
-                prev_gap = dists_discrete[i-1] if i-1 > 0 else dist_categories[0]
-                next_gap = dists_discrete[i+1] if i+1 < len(dists_discrete) else dist_categories[0]
-                if max(card_texture[int(card_section.shape[0]*x_sign_loc[1])-10:int(card_section.shape[0]*x_sign_loc[1])+10, :int(card_section.shape[1]*x_sign_loc[0]-1)].mean(1)) > 0.1: card_type = "clan"
-                elif prev_gap == dist_categories[1] and next_gap == dist_categories[1]: card_type = "clan"
-                else: card_type = "troop"
-            else: card_type = "hero"
-            card_types.append(card_type)
-            
             x = (peaks_norm[i] + peaks_norm[i+1]) / 2
             if x >= clip_left and x <= clip_right:
                 card_centers.append(x)
                 card_boundaries.extend([peaks_norm[i], peaks_norm[i+1]])
+                
+                card_section = frame[:, peaks[i]:peaks[i+1]]
+                card_texture = cv2.Canny(card_section, 50, 150) / 255
+                x_sign_loc = Frame_Handler.locate(self.assets["x"], card_section, grayscale=True, thresh=0.9, ref="lc")
+                if x_sign_loc[0] is not None and x_sign_loc[1] is not None:
+                    prev_gap = dists_discrete[i-1] if i-1 > 0 else dist_categories[0]
+                    next_gap = dists_discrete[i+1] if i+1 < len(dists_discrete) else dist_categories[0]
+                    if max(card_texture[int(card_section.shape[0]*x_sign_loc[1])-10:int(card_section.shape[0]*x_sign_loc[1])+10, :int(card_section.shape[1]*x_sign_loc[0]-1)].mean(1)) > 0.1: card_type = "clan"
+                    elif prev_gap == dist_categories[1] and next_gap == dist_categories[1]: card_type = "clan"
+                    else: card_type = "troop"
+                else: card_type = "hero"
+                card_types.append(card_type)
         
         card_centers = np.array(card_centers)
         
@@ -197,12 +197,10 @@ class Attacker:
             if exclude_clan_troops:
                 for i, card_type in enumerate(card_types):
                     if card_type == "clan": available_slots[i] = 0
-
-            if len(EXCLUDE_ATTACK_SLOTS) and min(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) >= 0 and max(np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen) < len(available_slots):
-                available_slots[np.array(EXCLUDE_ATTACK_SLOTS) - total_slots_seen] = 0
-            available_slots[:ATTACK_SLOT_RANGE[0] - total_slots_seen] = 0
-            available_slots[ATTACK_SLOT_RANGE[1] + 1 - total_slots_seen:] = 0
             
+            available_slots[:max(0, ATTACK_SLOT_RANGE[0] - total_slots_seen)] = 0
+            available_slots[max(0, ATTACK_SLOT_RANGE[1] + 1 - total_slots_seen):] = 0
+                        
             # Deploy troops
             total_slots_seen += len(card_centers) - 1
             self.deploy_troops(card_centers[:-1], available_slots[:-1])
@@ -216,7 +214,7 @@ class Attacker:
                 break
             elif last_card_left is None:
                 break
-
+        exit()
         # Close and reopen CoC to auto complete battle
         if restart:
             start_coc()
