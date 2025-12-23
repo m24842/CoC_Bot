@@ -184,10 +184,9 @@ class Attacker:
         Input_Handler.swipe_up()
         
         total_slots_seen = 0
-        no_more_slots = False
         last_card_left = 0.0
         
-        while total_slots_seen < ATTACK_SLOT_RANGE[1] + 1 and not no_more_slots:
+        while total_slots_seen < ATTACK_SLOT_RANGE[1] + 1:
             frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
             card_centers, card_boundaries, card_types = self.detect_troop_positions(frame, clip_left=last_card_left, return_boundaries=True, return_types=True)
 
@@ -214,9 +213,9 @@ class Attacker:
             last_card_left = Frame_Handler.locate(last_card_frame, frame, thresh=0.9, grayscale=False, ref="lc")[0]
             if last_card_left is not None and abs(last_card_left - card_boundaries[-2]) < 0.01:
                 self.deploy_troops(card_centers[-1:], available_slots[-1:])
-                no_more_slots = True
-            else:
-                no_more_slots = True
+                break
+            elif last_card_left is None:
+                break
 
         # Close and reopen CoC to auto complete battle
         if restart:
