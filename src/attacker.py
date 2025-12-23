@@ -214,7 +214,7 @@ class Attacker:
                 break
             elif last_card_left is None:
                 break
-        exit()
+
         # Close and reopen CoC to auto complete battle
         if restart:
             start_coc()
