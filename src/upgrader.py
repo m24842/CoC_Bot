@@ -510,6 +510,7 @@ class Upgrader:
                 if upgraded is not None:
                     if final_builders < initial_builders: upgrades_started.append(upgraded)
                     elif final_builders == initial_builders and upgraded != "wall": break
+                else: break
             except:
                 pass
         
@@ -545,6 +546,7 @@ class Upgrader:
                 if upgraded is not None:
                     if final_builders < initial_builders: upgrades_started.append(upgraded)
                     elif final_builders == initial_builders and upgraded != "wall": break
+                else: break
             except:
                 pass
         
