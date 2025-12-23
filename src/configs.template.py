@@ -22,7 +22,6 @@ CHECK_BUILDER_BASE = True
 # REQUIRED: Attack Settings
 TROOP_DEPLOY_TIME = 3 # seconds
 ATTACK_SLOT_RANGE = (0, 100) # inclusive first slot is index 0
-EXCLUDE_ATTACK_SLOTS = [] # e.g. [2, 5, 7]
 EXCLUDE_CLAN_TROOPS = True
 
 ########################
