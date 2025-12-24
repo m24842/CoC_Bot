@@ -5,6 +5,7 @@ import shutil
 bot_packages = [
     "opencv-python",
     "easyocr",
+    "adbutils",
     "requests",
     "numpy",
     "scipy",
