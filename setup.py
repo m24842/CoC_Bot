@@ -7,8 +7,9 @@ bot_packages = [
     "easyocr",
     "requests",
     "numpy",
+    "scipy",
     "beautifulsoup4",
-    "lxml"
+    "lxml",
     "portalocker",
     "pure-python-adb",
     "pyminitouch",
