@@ -23,6 +23,8 @@ CHECK_BUILDER_BASE = True
 TROOP_DEPLOY_TIME = 3 # seconds
 ATTACK_SLOT_RANGE = (0, 100) # inclusive first slot is index 0
 EXCLUDE_CLAN_TROOPS = True
+ATTACK_HOME_BASE = True
+ATTACK_BUILDER_BASE = True
 
 ########################
 # == System Configs == #
