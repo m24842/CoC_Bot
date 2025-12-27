@@ -226,12 +226,14 @@ def send_notification(text):
         except: pass
 
 def to_home_base():
+    try:
+        get_home_builders(1)
+        return
+    except:
+        pass
     Input_Handler.zoom(dir="out")
     for _ in range(3):
-        Input_Handler.swipe_up(
-            y1=0.5,
-            y2=1.0,
-        )
+        Input_Handler.swipe_down()
     for _ in range(3):
         Input_Handler.swipe_left(
             x1=1.0,
@@ -298,10 +300,15 @@ def stop_coc():
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
 def to_builder_base():
+    try:
+        get_builder_builders(1)
+        return
+    except:
+        pass
     Input_Handler.zoom(dir="out")
     Input_Handler.swipe(
-        x1=0.5,
-        y1=0.5,
+        x1=0.0,
+        y1=1.0,
         x2=1.0,
         y2=0.0,
     )
@@ -408,19 +415,19 @@ class Input_Handler:
         builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
-    def swipe_up(cls, y1=0.5, y2=0.0, x=0.5, duration=100, hold_end_time=0):
+    def swipe_up(cls, y1=0.5, y2=0.0, x=1.0, duration=100, hold_end_time=0):
         cls.swipe(x, y1, x, y2, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
-    def swipe_down(cls, y1=0.5, y2=1.0, x=0.5, duration=100, hold_end_time=0):
+    def swipe_down(cls, y1=0.5, y2=1.0, x=1.0, duration=100, hold_end_time=0):
         cls.swipe(x, y1, x, y2, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
-    def swipe_left(cls, x1=0.5, x2=0.0, y=0.5, duration=100, hold_end_time=0):
+    def swipe_left(cls, x1=0.5, x2=0.0, y=1.0, duration=100, hold_end_time=0):
         cls.swipe(x1, y, x2, y, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
-    def swipe_right(cls, x1=0.5, x2=1.0, y=0.5, duration=100, hold_end_time=0):
+    def swipe_right(cls, x1=0.5, x2=1.0, y=1.0, duration=100, hold_end_time=0):
         cls.swipe(x1, y, x2, y, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
