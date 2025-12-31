@@ -3,6 +3,7 @@ import re
 import sys
 import cv2
 import json
+import nltk
 import time
 import signal
 import atexit
@@ -100,6 +101,9 @@ def get_text(frame):
     return [text for _, text, _ in result if text.strip()]
 
 def get_vocab():
+    nltk.download('words')
+    other_words = nltk.corpus.words.words()
+    
     data = {}
     existing_vocab = None
     for _ in range(1):
@@ -109,7 +113,7 @@ def get_vocab():
                 if "vocab" in data:
                     existing_vocab = data["vocab"]["text"]
                     if time.time() - data["vocab"]["last_updated"] > 86400: break
-                    return existing_vocab
+                    return existing_vocab.union(other_words)
     
     vocab = set()
     endpoints = [
@@ -142,7 +146,7 @@ def get_vocab():
     with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
         json.dump(data, f, indent=4)
 
-    return vocab
+    return vocab.union(other_words)
 
 def spell_check(text, cutoff=0.7):
     vocab = get_vocab()
