@@ -9,6 +9,7 @@ bot_packages = [
     "requests",
     "numpy",
     "scipy",
+    "nltk",
     "beautifulsoup4",
     "lxml",
     "portalocker",
