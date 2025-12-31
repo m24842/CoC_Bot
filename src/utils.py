@@ -383,7 +383,7 @@ class Input_Handler:
 
     @classmethod
     def click_exit(cls, n=1, delay=0):
-        cls.click(0.99, 0.01, n, delay=delay)
+        cls.click(0.99, 0.99, n, delay=delay)
 
     @classmethod
     def multi_click(cls, x1, y1, x2, y2, duration=0):
