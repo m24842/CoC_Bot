@@ -111,9 +111,9 @@ def get_vocab():
             with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
                 data = json.load(f)
                 if "vocab" in data:
-                    existing_vocab = data["vocab"]["text"]
+                    existing_vocab = set(data["vocab"]["text"])
                     if time.time() - data["vocab"]["last_updated"] > 86400: break
-                    return existing_vocab.union(other_words)
+                    return list(existing_vocab.union(other_words))
     
     vocab = set()
     endpoints = [
@@ -137,16 +137,16 @@ def get_vocab():
             if existing_vocab is not None: return existing_vocab
             raise Exception("Failed to update vocabulary")
     
-    vocab = sorted(list(vocab))
+    text = sorted(list(vocab))
     data["vocab"] = {
         "last_updated": time.time(),
-        "text": vocab,
+        "text": text,
     }
     
     with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
         json.dump(data, f, indent=4)
 
-    return vocab.union(other_words)
+    return list(vocab.union(other_words))
 
 def spell_check(text, cutoff=0.7):
     vocab = get_vocab()
