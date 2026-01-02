@@ -21,4 +21,6 @@ if __name__ == "__main__":
     # to_builder_base()
     # bot.upgrader.collect_builder_attack_elixir()
     # bot.upgrader.run_builder_base()
+    # bot.upgrader.builder_upgrade()
+    # bot.upgrader.builder_lab_upgrade()
     # bot.attacker.run_builder_base()

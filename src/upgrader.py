@@ -223,7 +223,22 @@ class Upgrader:
                 x_upgrade, y_upgrade = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
                 if x_upgrade is None and y_upgrade is None:
                     # If no upgrade button, build new building
-                    Input_Handler.click(0.5, 0.6) # click new building
+                    building_section = Frame_Handler.get_frame_section(0.05, 0.5, 0.95, 0.51, grayscale=False)[0] / 255
+                    grayscale = np.mean(building_section, axis=-1, keepdims=True)
+                    gray_dist = np.sqrt(((building_section - grayscale)**2).sum(-1))
+                    thresh = 0.1
+                    gray_dist = np.where(gray_dist < thresh, 0, 1)
+                    centers = []
+                    start, prev = 0, 0
+                    for i in range(len(gray_dist)):
+                        if gray_dist[i] == 1 and prev == 0:
+                            start = i
+                        if gray_dist[i] == 0 and prev == 1:
+                            centers.append((start + i) // 2)
+                        prev = gray_dist[i]
+                    if gray_dist[-1] == 1: centers.append((start + len(gray_dist)) // 2)
+                    rand_center = np.random.choice(centers)
+                    Input_Handler.click(0.05 + rand_center / WINDOW_DIMS[0], 0.6) # click new building
                     x, y = Frame_Handler.locate(self.assets["checkmark"], thresh=0.85)
                     if x is None or y is None: return None
                     Input_Handler.click(x, y)
@@ -360,9 +375,9 @@ class Upgrader:
             y_alt = y_sug + label_height * (alt_idx + 1)
             
             # Get alternative upgrade name
-            alt_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
-            if configs.DEBUG: Frame_Handler.save_frame(alt_section, "debug/upgrade_name.png")
-            alt_upgrade_text = get_text(alt_section)
+            name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
+            if configs.DEBUG: Frame_Handler.save_frame(name_section, "debug/upgrade_name.png")
+            alt_upgrade_text = get_text(name_section)
             
             # Choose one upgrade from suggested and other upgrades
             alt_upgrade_options = ["none"]
@@ -371,15 +386,20 @@ class Upgrader:
             alt_upgrade = np.random.choice(alt_upgrade_options)
             if configs.DEBUG: print(f"alt_upgrade: {alt_upgrade}")
             
-            # Click on the chosen upgrade
+            # Click on the chosen upgrade and get upgrade name
             if alt_upgrade == "none":
+                name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
+                upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(name_section)[0].lower()))
                 Input_Handler.click(x_sug, y_pot)
             elif alt_upgrade == "suggested":
+                upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", alt_upgrade_text[0].lower()))
                 Input_Handler.click(x_sug, y_alt)
             elif alt_upgrade == "other":
+                name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_other+0.055-0.035, x_sug+0.03, y_other+0.055+0.025, high_contrast=True)
+                upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(name_section)[0].lower()))
                 Input_Handler.click(x_sug, y_other+0.055)
             time.sleep(0.5)
-            
+                        
             # If suggested upgrades disappears, then there was a misclick
             x_sug, y_sug = Frame_Handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
             if x_sug is None or y_sug is None:
@@ -413,18 +433,18 @@ class Upgrader:
             Input_Handler.click(x, y)
             time.sleep(0.5)
             
-            # Get upgrade name
-            section = Frame_Handler.get_frame_section(0.15, 0.1, 0.43, 0.35, high_contrast=True, thresh=240)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = spell_check("".join(get_text(section)).lower())
+            # # Get upgrade name
+            # section = Frame_Handler.get_frame_section(0.15, 0.1, 0.43, 0.35, high_contrast=True, thresh=240)
+            # if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
+            # upgrade_name = spell_check("".join(get_text(section)).lower())
             
             # Find confirm button
-            thresh = 0.36
-            section = Frame_Handler.get_frame_section(0.0, 0.8, 1.0, 1.0, grayscale=False)
+            thresh = 0.2
+            section = Frame_Handler.get_frame_section(0.0, 0.9, 1.0, 0.92, grayscale=False)
             section = cv2.cvtColor(section, cv2.COLOR_BGR2LAB)
             avg_color = cv2.mean(cv2.cvtColor(self.assets["blank_green_button"], cv2.COLOR_BGR2LAB))[:3]
             diff = np.linalg.norm((section - avg_color)/255, axis=2).mean(0)
-            diff = gaussian_filter1d(diff, sigma=20)
+            diff = gaussian_filter1d(diff, sigma=10)
             min_loc = np.argmin(diff)
             x = min_loc / section.shape[1]
             if diff[min_loc] > thresh: return None
@@ -445,7 +465,7 @@ class Upgrader:
             section = Frame_Handler.get_frame_section(x1-0.02, y-0.05, x2+0.05, y+0.09, grayscale=False)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
-                Input_Handler.click(0.5, 0.9)
+                Input_Handler.click(x, y)
                 time.sleep(0.5)
                 return upgrade_name
             return None
@@ -490,12 +510,12 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find confirm button
-            thresh = 0.36
-            section = Frame_Handler.get_frame_section(0.0, 0.8, 1.0, 1.0, grayscale=False)
+            thresh = 0.2
+            section = Frame_Handler.get_frame_section(0.0, 0.9, 1.0, 0.92, grayscale=False)
             section = cv2.cvtColor(section, cv2.COLOR_BGR2LAB)
             avg_color = cv2.mean(cv2.cvtColor(self.assets["blank_green_button"], cv2.COLOR_BGR2LAB))[:3]
             diff = np.linalg.norm((section - avg_color)/255, axis=2).mean(0)
-            diff = gaussian_filter1d(diff, sigma=20)
+            diff = gaussian_filter1d(diff, sigma=10)
             min_loc = np.argmin(diff)
             x = min_loc / section.shape[1]
             if diff[min_loc] > thresh: return None

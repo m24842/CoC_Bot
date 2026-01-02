@@ -3,12 +3,10 @@ import re
 import sys
 import cv2
 import json
-import nltk
 import time
 import signal
 import atexit
 import ctypes
-import difflib
 import easyocr
 import adbutils
 import requests
@@ -18,6 +16,7 @@ import numpy as np
 import portalocker
 from datetime import datetime
 from bs4 import BeautifulSoup
+from rapidfuzz import process, distance
 from pyminitouch import MNTDevice, CommandBuilder
 import configs
 from configs import *
@@ -101,8 +100,10 @@ def get_text(frame):
     return [text for _, text, _ in result if text.strip()]
 
 def get_vocab():
-    nltk.download('words')
-    other_words = nltk.corpus.words.words()
+    other_words = [
+        "prince",
+        "copter",
+    ]
     
     data = {}
     existing_vocab = None
@@ -111,9 +112,9 @@ def get_vocab():
             with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
                 data = json.load(f)
                 if "vocab" in data:
-                    existing_vocab = set(data["vocab"]["text"])
+                    existing_vocab = set(data["vocab"]["text"] + other_words)
                     if time.time() - data["vocab"]["last_updated"] > 86400: break
-                    return list(existing_vocab.union(other_words))
+                    return list(existing_vocab)
     
     vocab = set()
     endpoints = [
@@ -137,6 +138,7 @@ def get_vocab():
             if existing_vocab is not None: return existing_vocab
             raise Exception("Failed to update vocabulary")
     
+    vocab = vocab.union(other_words)
     text = sorted(list(vocab))
     data["vocab"] = {
         "last_updated": time.time(),
@@ -146,9 +148,15 @@ def get_vocab():
     with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
         json.dump(data, f, indent=4)
 
-    return list(vocab.union(other_words))
+    return list(vocab)
 
-def spell_check(text, cutoff=0.7):
+def spell_check(text, cutoff=70):
+    def spell_scorer(a, b, score_cutoff=0):
+        lev = distance.Levenshtein.distance(a, b)
+        length_penalty = abs(len(a) - len(b)) * 0.5
+        score = 100 - 10 * (lev + length_penalty)
+        return score if score >= score_cutoff else 0
+    
     vocab = get_vocab()
     words = re.split(r"[ _]+", text)
     results = []
@@ -156,10 +164,8 @@ def spell_check(text, cutoff=0.7):
     for word in words:
         suggestion = word
         if word not in vocab:
-            correction = difflib.get_close_matches(
-                word, vocab, n=1, cutoff=cutoff
-            )
-            if len(correction) != 0: suggestion = correction[0]
+            match = process.extractOne(word, vocab, scorer=spell_scorer, score_cutoff=cutoff)
+            if match is not None: suggestion = match[0]
         results.append(suggestion)
 
     return " ".join(results)
