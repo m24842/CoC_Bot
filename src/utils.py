@@ -63,8 +63,10 @@ def enable_sleep():
 
 def connect_adb():
     global ADB_DEVICE, MINITOUCH_DEVICE
+    subprocess.run(["adb", "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     res = adbutils.adb.connect(ADB_ADDRESS)
     if "connected" not in res:
+        subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         raise Exception("Failed to connect to ADB.")
     device, mt_device = None, None
     try:
@@ -72,6 +74,7 @@ def connect_adb():
         mt_device = MNTDevice(ADB_ADDRESS)
         Exit_Handler.register(mt_device.stop)
     except:
+        subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         raise Exception("Failed to get ADB device.")
     ADB_DEVICE, MINITOUCH_DEVICE = device, mt_device
 

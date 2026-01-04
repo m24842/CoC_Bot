@@ -72,6 +72,7 @@ class CoC_Bot:
         for _ in range(120):
             if self.check_bluestacks(): break
             time.sleep(0.5)
+        if configs.DEBUG: print("BlueStacks started.")
         
         for _ in range(120):
             try:
@@ -80,6 +81,7 @@ class CoC_Bot:
             except Exception as e:
                 if configs.DEBUG: print("start_bluestacks", e)
             time.sleep(0.5)
+        if configs.DEBUG: print("Connected to ADB.")
         
         raise Exception("BlueStacks failed to start.")
     
