@@ -30,7 +30,8 @@
     * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
     * Enable Android Debug Bridge
     * Install Clash of Clans from Google Play
-        * Set troop deployment size to default
+        * Standard scenery size (i.e. not XL or Legendary)
+        * Default troop deployment size
 4. [minitouch](https://app.unpkg.com/minitouch-prebuilt-support10@1.2.0/files/prebuilt) 
 (__OPTIONAL__: pyminitouch should automate this)
     * Download prebuilt binary
