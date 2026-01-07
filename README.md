@@ -48,14 +48,14 @@
 ## Setup Instructions
 1. Install and configure dependencies listed above
 2. Enter user configurations in [configs.py](src/configs.py)
-    * __Note__: To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send ```/start```. Enter the API token generated during the setup process for ```TELEGRAM_BOT_TOKEN```.
+    * __NOTE__: To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send ```/start```. Enter the API token generated during the setup process for ```TELEGRAM_BOT_TOKEN```.
 3. Start web app: ```python app/app.py```
-    * __Note__: It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) using the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 3 months.
-    * __Note__: If you enable password protection on pythonanywhere, you'll need to enter the credentials into ```WEB_APP_AUTH_USERNAME``` and ```WEB_APP_AUTH_PASSWORD``` in [configs.py](src/configs.py)
-    * __Note__: If hosting from a personal device, open port 1234 (or whatever port ```WEB_APP_PORT``` is set to in [configs.py](src/configs.py)) and configure port forwarding as necessary
+    * __NOTE__: It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) using the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 3 months.
+    * __NOTE__: If you enable password protection on pythonanywhere, you'll need to enter the credentials into ```WEB_APP_AUTH_USERNAME``` and ```WEB_APP_AUTH_PASSWORD``` in [configs.py](src/configs.py)
+    * __NOTE__: If hosting from a personal device, open port 1234 (or whatever port ```WEB_APP_PORT``` is set to in [configs.py](src/configs.py)) and configure port forwarding as necessary
     * Each bot instance can be accessed at ```WEB_APP_ADDRESS/<instance_name>``` (the default instance name is ```main```)
 4. Setup iPhone shortcut:
-    * __Note__: An [older version](<shortcut/CoC Bot Auto Pause Old.shortcut>) of the shortcut is provided that does not require Scriptable, but is incapable of handling request errors
+    * __NOTE__: An [older version](<shortcut/CoC Bot Auto Pause Old.shortcut>) of the shortcut is provided that does not require Scriptable, but is incapable of handling request errors
     * Download [Scriptable](https://apps.apple.com/us/app/scriptable/id1405459188) and create a new script named "CoC Bot Script" with the contents of [CoC_Bot_Script.js](<shortcut/Scriptable.js>)
     * Open the [provided shortcut](<shortcut/CoC Bot Auto Pause.shortcut>)
     * Enter your ```WEB_APP_URL``` into the ```url``` item of the Dictionary
@@ -63,7 +63,7 @@
     * Adjust the ```id``` item containing an array of instance names as necessary
     * Create an Automation task that runs when CoC opens and is set to run immediately
 5. Start the bot: ```python src/main.py```
-    * __Note__: ```src/start.sh``` uses tmux to start the bot in the background. It is recommended to just run the bot in the background by starting a tmux session, running ```src/main.py```, and detaching manually.
-    * __Note__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
-    * __Note__: On MacOS, if ```DISABLE_DEEVICE_SLEEP = True``` in [configs.py](src/configs.py), the user password is required to toggle the ```disablesleep``` flag in power management settings.
+    * __NOTE__: ```src/start.sh``` uses tmux to start the bot in the background. It is recommended to just run the bot in the background by starting a tmux session, running ```src/main.py```, and detaching manually.
+    * __NOTE__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
+    * __NOTE__: On MacOS, if ```DISABLE_DEEVICE_SLEEP = True``` in [configs.py](src/configs.py), the user password is required to toggle the ```disablesleep``` flag in power management settings.
     * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager, set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to ```INSTANCE_IDS``` and ```ADB_ADDRESSES``` in [configs.py](src/configs.py)
