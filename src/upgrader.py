@@ -194,24 +194,28 @@ class Upgrader:
             alt_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(alt_section, "debug/upgrade_name.png")
             alt_upgrade_text = get_text(alt_section)
+            alt_upgrade_name = None
+            if len(alt_upgrade_text) > 0: alt_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", alt_upgrade_text[0].lower()))
+            
+            other_section = Frame_Handler.get_frame_section(x_sug-0.13, y_other+0.055-0.035, x_sug+0.03, y_other+0.055+0.025, high_contrast=True)
+            if configs.DEBUG: Frame_Handler.save_frame(other_section, "debug/upgrade_name.png")
+            other_upgrade_text = get_text(other_section)
+            other_upgrade_name = None
+            if len(other_upgrade_text) > 0: other_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", other_upgrade_text[0].lower()))
             
             # Choose one upgrade from suggested and other upgrades
-            alt_upgrade_options = ["none"]
-            if len(alt_upgrade_text) > 0: alt_upgrade_options.append("suggested")
-            if other_upgrades_avail: alt_upgrade_options.append("other")
-            if "town hall" in pot_upgrade_name:
-                if len(alt_upgrade_options) > 1: alt_upgrade = np.random.choice(alt_upgrade_options)
-                else: alt_upgrade = "none"
-            else:
-                alt_upgrade = np.random.choice(alt_upgrade_options)
-            if configs.DEBUG: print(f"alt_upgrade: {alt_upgrade}")
+            upgrade_options = ["none"]
+            if alt_upgrade_name and "town hall" not in alt_upgrade_name: upgrade_options.append("suggested")
+            if other_upgrade_name and "town hall" not in other_upgrade_name: upgrade_options.append("other")
+            chosen_upgrade = np.random.choice(upgrade_options)
+            if configs.DEBUG: print(f"chosen_upgrade: {chosen_upgrade}")
             
             # Click on the chosen upgrade
-            if alt_upgrade == "none":
+            if chosen_upgrade == "none":
                 Input_Handler.click(x_sug, y_pot)
-            elif alt_upgrade == "suggested":
+            elif chosen_upgrade == "suggested":
                 Input_Handler.click(x_sug, y_alt)
-            elif alt_upgrade == "other":
+            elif chosen_upgrade == "other":
                 Input_Handler.click(x_sug, y_other+0.055)
             time.sleep(0.5)
             
@@ -378,23 +382,25 @@ class Upgrader:
             name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(name_section, "debug/upgrade_name.png")
             alt_upgrade_text = get_text(name_section)
+            alt_upgrade_name = None
+            if len(alt_upgrade_text) > 0: alt_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", alt_upgrade_text[0].lower()))
             
             # Choose one upgrade from suggested and other upgrades
-            alt_upgrade_options = ["none"]
-            if len(alt_upgrade_text) > 0: alt_upgrade_options.append("suggested")
-            if other_upgrades_avail: alt_upgrade_options.append("other")
-            alt_upgrade = np.random.choice(alt_upgrade_options)
-            if configs.DEBUG: print(f"alt_upgrade: {alt_upgrade}")
+            upgrade_options = ["none"]
+            if alt_upgrade_name: upgrade_options.append("suggested")
+            if other_upgrades_avail: upgrade_options.append("other")
+            chosen_upgrade = np.random.choice(upgrade_options)
+            if configs.DEBUG: print(f"chosen_upgrade: {chosen_upgrade}")
             
             # Click on the chosen upgrade and get upgrade name
-            if alt_upgrade == "none":
+            if chosen_upgrade == "none":
                 name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
                 upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(name_section)[0].lower()))
                 Input_Handler.click(x_sug, y_pot)
-            elif alt_upgrade == "suggested":
-                upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", alt_upgrade_text[0].lower()))
+            elif chosen_upgrade == "suggested":
+                upgrade_name = alt_upgrade_name
                 Input_Handler.click(x_sug, y_alt)
-            elif alt_upgrade == "other":
+            elif chosen_upgrade == "other":
                 name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_other+0.055-0.035, x_sug+0.03, y_other+0.055+0.025, high_contrast=True)
                 upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(name_section)[0].lower()))
                 Input_Handler.click(x_sug, y_other+0.055)
