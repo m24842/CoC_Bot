@@ -55,10 +55,11 @@
     * __Note__: If hosting from a personal device, open port 1234 (or whatever port ```WEB_APP_PORT``` is set to in [configs.py](src/configs.py)) and configure port forwarding as necessary
     * Each bot instance can be accessed at ```WEB_APP_ADDRESS/<instance_name>``` (the default instance name is ```main```)
 4. Setup iPhone shortcut:
-    * Open the [provided shortcut](<CoC Bot Auto Pause.shortcut>) on an iPhone
-    * Enter your ```WEB_APP_URL``` into the first Text variable
-    * If applicable, enter your web app auth credentials into the second Text variable as ```WEB_APP_AUTH_USERNAME:WEB_APP_AUTH_PASSWORD```
-    * Adjust the List variable containing instance names as necessary
+    * Download [Scriptable](https://apps.apple.com/us/app/scriptable/id1405459188) and create a new script named "CoC Bot Script" with the contents of [CoC_Bot_Script.js](<shortcut/Scriptable.js>)
+    * Open the [provided shortcut](<shortcut/CoC Bot Auto Pause.shortcut>)
+    * Enter your ```WEB_APP_URL``` into the ```url``` item of the Dictionary
+    * If applicable, enter your web app auth credentials into the ```auth``` item as ```WEB_APP_AUTH_USERNAME:WEB_APP_AUTH_PASSWORD```
+    * Adjust the ```id``` item containing an array of instance names as necessary
     * Create an Automation task that runs when CoC opens and is set to run immediately
 5. Start the bot: ```python src/main.py```
     * __Note__: ```src/start.sh``` uses tmux to start the bot in the background. It is recommended to just run the bot in the background by starting a tmux session, running ```src/main.py```, and detaching manually.
