@@ -343,3 +343,92 @@ header img {
     font-size: 1.5em;
     color: var(--text_inverted);
 }
+
+.exclusions {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    background-color: var(--notification_highlight);
+    border: none;
+    border-radius: 25px;
+    box-shadow: 0 8px 20px var(--shadow);
+}
+
+.exclusions h1 {
+    font-size: 2.25em;
+    margin: 10px;
+    padding: 20px;
+    background-color: rgb(59, 59, 59);
+    color: var(--notification_highlight);
+    border: none;
+    border-radius: 15px;
+}
+
+.exclusions-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px 0 10px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .exclusion {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px 20px;
+        margin: 0 10px 10px 10px;
+        background-color: rgb(250, 217, 56);
+        border-radius: 15px;
+        font-size: 1.75em;
+        font-weight: bold;
+        color: var(--text_inverted);
+        text-align: center;
+        padding-right: 1em;
+        border-width: 0px;
+        transition: transform 0.2s ease-out, background-color 0.1s ease-out;
+    }
+
+    .exclusion:hover {
+        transform: scale(1.02);
+        transition-duration: 0.2s;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .exclusion {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px 20px;
+        margin: 0 10px 10px 10px;
+        background-color: rgb(250, 217, 56);
+        border-radius: 15px;
+        font-size: 1.75em;
+        font-weight: bold;
+        color: var(--text_inverted);
+        text-align: center;
+        padding-right: 1em;
+        border-width: 0px;
+        transition: transform 0.5s ease-out, background-color 0.5s ease-out;
+    }
+
+    .exclusion:active {
+        transform: scale(0.95);
+        transition-duration: 0.2s;
+    }
+}
+
+.exclusion.active {
+    background-color: rgb(228, 98, 86);
+}
+
+.exclusion.inactive {
+    background-color: rgb(250, 217, 56);
+}

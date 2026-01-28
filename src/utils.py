@@ -238,6 +238,17 @@ def send_notification(text):
             )
         except: pass
 
+def get_exclusions():
+    res = requests.get(
+        f"{WEB_APP_URL}/instances/{INSTANCE_ID}",
+        auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+        timeout=(10, 20)
+    )
+    if res.status_code == 200:
+        exclusions = res.json().get("exclusions", [])
+        return exclusions
+    return []
+
 def to_home_base():
     try:
         get_home_builders(1)
