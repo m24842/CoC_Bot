@@ -83,6 +83,7 @@
                     const response = await fetch(`/${id}/exclude`);
                     const data = await response.json();
                     exclusions = data.exclusions;
+                    updateExclusions();
                 } catch (error) {
                     console.error('Error fetching exclusions:', error);
                 }
@@ -104,6 +105,8 @@
                     if (data.length > 0 && data[0].time_stamp > latest_notif && document.visibilityState === "hidden") {
                         document.querySelector('link[rel="icon"]').href = "{{ url_for('static', filename='favicon_alert.png') }}";
                     }
+
+                    updateNotifications();
                 } catch (error) {
                     console.error('Error fetching notifications:', error);
                 }
@@ -299,16 +302,36 @@
                 });
             }
 
+            function updateExclusions() {
+                document.querySelectorAll(".exclusion").forEach(button => {
+                    let name = button.value;
+                    if (exclusions.includes(name)) {
+                        button.classList.remove("inactive");
+                        button.classList.add("active");
+                    } else {
+                        button.classList.remove("active");
+                        button.classList.add("inactive");
+                    }
+                });
+            }
+
             function updateAll() {
                 updateCountdown();
                 updateLastChecked();
                 updateNotifications();
+                updateExclusions();
                 requestAnimationFrame(updateAll);
             }
-            updateAll();
-            initExclusions();
+            
+            function updateTimers() {
+                updateCountdown();
+                updateLastChecked();
+                requestAnimationFrame(updateTimers);
+            }
 
-            setInterval(updateAll, 500);
+            initExclusions();
+            updateAll();
+            setInterval(updateTimers, 500);
 
             document.querySelectorAll("form").forEach(form => {
                 form.addEventListener("submit", async (e) => {
