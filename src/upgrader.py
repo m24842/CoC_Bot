@@ -264,6 +264,7 @@ class Upgrader:
             x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
             xy_hero = Frame_Handler.locate(self.assets["hero_upgrade"], thresh=0.97, grayscale=False, return_all=True)
             if len(xy_hero) > 0:
+                if "heros" in get_exclusions(): return None
                 idx = np.random.randint(0, len(xy_hero))
                 x, y = xy_hero[idx]
             if x is None or y is None: return None
@@ -579,7 +580,7 @@ class Upgrader:
         # Lab upgrades
         lab_upgrades_started = []
         try:
-            if self.home_lab_available(1):
+            if "home_lab" not in get_exclusions() and self.home_lab_available(1):
                 upgraded = self.home_lab_upgrade()
                 time.sleep(0.5)
                 final_lab_avail = self.home_lab_available(1)
@@ -615,7 +616,7 @@ class Upgrader:
         # Lab upgrades
         lab_upgrades_started = []
         try:
-            if self.builder_lab_available(1):
+            if "builder_lab" not in get_exclusions() and self.builder_lab_available(1):
                 upgraded = self.builder_lab_upgrade()
                 time.sleep(0.5)
                 final_lab_avail = self.builder_lab_available(1)
