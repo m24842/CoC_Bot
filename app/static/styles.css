@@ -379,7 +379,7 @@ header img {
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        width: 100%;
+        width: 96%;
         padding: 10px 20px;
         margin: 0 10px 10px 10px;
         background-color: rgb(250, 217, 56);
@@ -390,6 +390,8 @@ header img {
         text-align: center;
         padding-right: 1em;
         border-width: 0px;
+        cursor: pointer;
+        box-shadow: 0 3px 10px var(--shadow);
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
     }
 
@@ -405,7 +407,7 @@ header img {
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        width: 100%;
+        width: 96%;
         padding: 10px 20px;
         margin: 0 10px 10px 10px;
         background-color: rgb(250, 217, 56);
@@ -416,6 +418,8 @@ header img {
         text-align: center;
         padding-right: 1em;
         border-width: 0px;
+        cursor: pointer;
+        box-shadow: 0 3px 20px var(--shadow);
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
     }
 
