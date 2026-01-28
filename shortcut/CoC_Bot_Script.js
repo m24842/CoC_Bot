@@ -15,10 +15,13 @@ for (let id of instance_ids) {
   req.method = "POST"
 
   req.headers = {
-    "Authorization": authHeader
+    "Authorization": authHeader,
+    "Content-Type": "application/json"
   }
 
-  req.addParameterToMultipart("custom_input", `${Number(action==="pause")}`)
+  req.body = JSON.stringify({
+    time: Number(action==="pause")
+  })
 
   try {
     req.load()
