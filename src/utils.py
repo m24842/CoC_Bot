@@ -240,7 +240,7 @@ def send_notification(text):
 
 def get_exclusions():
     res = requests.get(
-        f"{WEB_APP_URL}/instances/{INSTANCE_ID}",
+        f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
         auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
         timeout=(10, 20)
     )
