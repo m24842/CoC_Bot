@@ -379,7 +379,7 @@ header img {
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        width: 96%;
+        width: 100%;
         padding: 10px 20px;
         margin: 0 10px 10px 10px;
         background-color: rgb(250, 217, 56);
@@ -407,10 +407,10 @@ header img {
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        width: 96%;
+        width: 100%;
         padding: 10px 20px;
         margin: 0 10px 10px 10px;
-        background-color: rgb(250, 217, 56);
+        background-color: var(--notif_background);
         border-radius: 15px;
         font-size: 1.75em;
         font-weight: bold;
@@ -431,8 +431,10 @@ header img {
 
 .exclusion.active {
     background-color: rgb(228, 98, 86);
+    color: var(--notification_highlight);
 }
 
 .exclusion.inactive {
-    background-color: rgb(250, 217, 56);
+    background-color: var(--notif_background);
+    color: var(--text_inverted);
 }
