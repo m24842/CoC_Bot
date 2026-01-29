@@ -84,7 +84,6 @@ def get_known_instances():
 def update_known_instances():
     global instances
     data = {id: instances[id].to_dict() for id in instances}
-    print(data)
     cache_path = os.path.join(PATH, "data/cache.json")
     with open(cache_path, "w") as f:
         json.dump({"known_instances": data}, f, indent=4)
