@@ -391,12 +391,11 @@ header img {
         padding-right: 1em;
         border-width: 0px;
         cursor: pointer;
-        box-shadow: 0 3px 10px var(--shadow);
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
     }
 
     .exclusion:hover {
-        transform: scale(1.02);
+        transform: scale(0.98);
         transition-duration: 0.2s;
     }
 }
@@ -419,7 +418,6 @@ header img {
         padding-right: 1em;
         border-width: 0px;
         cursor: pointer;
-        box-shadow: 0 3px 20px var(--shadow);
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
     }
 
@@ -436,5 +434,5 @@ header img {
 
 .exclusion.inactive {
     background-color: var(--notif_background);
-    color: var(--text_inverted);
+    color: rgb(59, 59, 59);
 }
