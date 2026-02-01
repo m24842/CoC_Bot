@@ -28,6 +28,7 @@ if sys.platform == "win32":
 INSTANCE_ID = None
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 CACHE_PATH = "src/cache.json"
+ADB_WINDOW_DIMS = WINDOW_DIMS
 
 def parse_args(debug=None, id=None):
     global INSTANCE_ID, ADB_ADDRESS
@@ -61,7 +62,7 @@ def enable_sleep():
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
 
 def connect_adb():
-    global ADB_DEVICE, MINITOUCH_DEVICE
+    global ADB_DEVICE, MINITOUCH_DEVICE, ADB_WINDOW_DIMS
     subprocess.run(["adb", "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     res = adbutils.adb.connect(ADB_ADDRESS)
     if "connected" not in res:
@@ -76,6 +77,7 @@ def connect_adb():
         subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         raise Exception("Failed to get ADB device.")
     ADB_DEVICE, MINITOUCH_DEVICE = device, mt_device
+    ADB_WINDOW_DIMS = ADB_DEVICE.window_size(landscape=False)
 
 def running():
     if WEB_APP_URL == "": return True
@@ -271,9 +273,9 @@ def get_home_builders(timeout=60):
             slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
             res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
-            if max_val < 0.9: continue
+            if max_val < 0.9: raise Exception("Slash not found")
             
-            text = fix_digits(''.join(OCR_Handler.get_text(section, configs.LOCAL_OCR)).replace(' ', '').replace('/', ''))
+            text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
             available = int(text[0])
             return available
         except Exception as e:
@@ -345,9 +347,9 @@ def get_builder_builders(timeout=60):
             slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
             res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
-            if max_val < 0.9: continue
+            if max_val < 0.9: raise Exception("Slash not found")
             
-            text = fix_digits(''.join(OCR_Handler.get_text(section, configs.LOCAL_OCR)).replace(' ', '').replace('/', ''))
+            text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
             available = int(text[0])
             return available
         except Exception as e:
@@ -371,7 +373,7 @@ class OCR_Handler:
     def get_text(cls, frame, local=True):
         if local:
             if not hasattr(cls, 'reader'):
-                cls.reader = easyocr.Reader(['en'])
+                cls.reader = easyocr.Reader(['en'], gpu=True)
             result = cls.reader.readtext(frame)
             return [text for _, text, _ in result if text.strip()]
         else:
@@ -382,7 +384,7 @@ class OCR_Handler:
             _, img_encoded = cv2.imencode('.png', frame)
             response = requests.post(
                 "https://api.easyocr.org/ocr",
-                files={"file": ("image.png", img_encoded.tobytes(), "image/png")},
+                files={"file": ("image.png", img_encoded.tobytes())},
                 timeout=(10, 20)
             )
             result = response.json()['words']
@@ -411,7 +413,7 @@ class Input_Handler:
     def click(cls, x, y, n=1, delay=0):
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        command = [f"input tap {int(x*WINDOW_DIMS[0])} {int(y*WINDOW_DIMS[1])}"] * n
+        command = [f"input tap {int(x*ADB_WINDOW_DIMS[0])} {int(y*ADB_WINDOW_DIMS[1])}"] * n
         if delay == 0:
             command = " && ".join(command) + ";"
             ADB_DEVICE.shell(command)
@@ -504,6 +506,7 @@ class Frame_Handler:
     def get_frame(cls, grayscale=True):
         frame = np.array(ADB_DEVICE.screenshot())
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
         if configs.DEBUG: cls.save_frame(frame, "debug/frame.png")
         if grayscale: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         return frame
