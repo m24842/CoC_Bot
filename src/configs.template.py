@@ -13,6 +13,7 @@ INSTANCE_IDS = ["main"]
 
 # REQUIRED: General Settings
 CHECK_INTERVAL = 5 * 60 # seconds
+LOCAL_OCR = True # whether to use EasyOCR locally or via public web API
 
 # REQUIRED: Upgrade settings
 MAX_UPGRADES_PER_CHECK = 10 # applies to both home and builder base

@@ -97,7 +97,7 @@ class CoC_Bot:
     
     def run(self):
         while True:
-            try:                
+            try:
                 if not running():
                     time.sleep(1)
                     continue

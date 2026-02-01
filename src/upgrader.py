@@ -49,7 +49,7 @@ class Upgrader:
             try:
                 section = Frame_Handler.get_frame_section(0.8, 0, 0.96, 0.30, high_contrast=True, thresh=240)
                 if configs.DEBUG: Frame_Handler.save_frame(section, "debug/resources.png")
-                text = get_text(section)
+                text = OCR_Handler.get_text(section, configs.LOCAL_OCR)
                 if configs.DEBUG: print(text)
                 gold, elixir, dark_elixir = [int(fix_digits(s.replace(' ', ''))) for s in text]
                 return {"gold": gold, "elixir": elixir, "dark_elixir": dark_elixir}
@@ -72,7 +72,7 @@ class Upgrader:
                 if max_val < 0.9: continue
                 
                 # Extract text
-                text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
+                text = fix_digits(''.join(OCR_Handler.get_text(section, configs.LOCAL_OCR)).replace(' ', '').replace('/', ''))
                 available = int(text[0])
                 return available > 0
             except Exception as e:
@@ -94,7 +94,7 @@ class Upgrader:
                 if max_val < 0.9: continue
                 
                 # Extract text
-                text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
+                text = fix_digits(''.join(OCR_Handler.get_text(section, configs.LOCAL_OCR)).replace(' ', '').replace('/', ''))
                 available = int(text[0])
                 return available > 0
             except Exception as e:
@@ -189,17 +189,17 @@ class Upgrader:
             # Get potential upgrade names
             pot_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(pot_section, "debug/upgrade_name.png")
-            pot_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(pot_section)[0].lower()))
+            pot_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(pot_section, configs.LOCAL_OCR)[0].lower()))
             
             alt_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(alt_section, "debug/upgrade_name.png")
-            alt_upgrade_text = get_text(alt_section)
+            alt_upgrade_text = OCR_Handler.get_text(alt_section, configs.LOCAL_OCR)
             alt_upgrade_name = None
             if len(alt_upgrade_text) > 0: alt_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", alt_upgrade_text[0].lower()))
             
             other_section = Frame_Handler.get_frame_section(x_sug-0.13, y_other+0.055-0.035, x_sug+0.03, y_other+0.055+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(other_section, "debug/upgrade_name.png")
-            other_upgrade_text = get_text(other_section)
+            other_upgrade_text = OCR_Handler.get_text(other_section, configs.LOCAL_OCR)
             other_upgrade_name = None
             if len(other_upgrade_text) > 0: other_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", other_upgrade_text[0].lower()))
             
@@ -277,7 +277,7 @@ class Upgrader:
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3]))
+            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section, configs.LOCAL_OCR)[0].lower()[:-3]))
             
             # Find confirm button
             x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
@@ -330,7 +330,7 @@ class Upgrader:
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
             section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_name.png")
-            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(section)[0].lower()[:-3]))
+            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section, configs.LOCAL_OCR)[0].lower()[:-3]))
             
             # Find confirm button
             x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
@@ -382,7 +382,7 @@ class Upgrader:
             # Get alternative upgrade name
             name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(name_section, "debug/upgrade_name.png")
-            alt_upgrade_text = get_text(name_section)
+            alt_upgrade_text = OCR_Handler.get_text(name_section, configs.LOCAL_OCR)
             alt_upgrade_name = None
             if len(alt_upgrade_text) > 0: alt_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", alt_upgrade_text[0].lower()))
             
@@ -396,14 +396,14 @@ class Upgrader:
             # Click on the chosen upgrade and get upgrade name
             if chosen_upgrade == "none":
                 name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
-                upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(name_section)[0].lower()))
+                upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(name_section, configs.LOCAL_OCR)[0].lower()))
                 Input_Handler.click(x_sug, y_pot)
             elif chosen_upgrade == "suggested":
                 upgrade_name = alt_upgrade_name
                 Input_Handler.click(x_sug, y_alt)
             elif chosen_upgrade == "other":
                 name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_other+0.055-0.035, x_sug+0.03, y_other+0.055+0.025, high_contrast=True)
-                upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(name_section)[0].lower()))
+                upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(name_section, configs.LOCAL_OCR)[0].lower()))
                 Input_Handler.click(x_sug, y_other+0.055)
             time.sleep(0.5)
                         
@@ -443,7 +443,7 @@ class Upgrader:
             # # Get upgrade name
             # section = Frame_Handler.get_frame_section(0.15, 0.1, 0.43, 0.35, high_contrast=True, thresh=240)
             # if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
-            # upgrade_name = spell_check("".join(get_text(section)).lower())
+            # upgrade_name = spell_check("".join(OCR_Handler.get_text(section, configs.LOCAL_OCR)).lower())
             
             # Find confirm button
             thresh = 0.2
@@ -510,7 +510,7 @@ class Upgrader:
             # Get upgrade name
             pot_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(pot_section, "debug/lab_upgrade_name.png")
-            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", get_text(pot_section)[0].lower()))
+            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(pot_section, configs.LOCAL_OCR)[0].lower()))
 
             # Click on the chosen upgrade
             Input_Handler.click(x_sug, y_pot)
