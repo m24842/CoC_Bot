@@ -27,7 +27,6 @@ if sys.platform == "win32":
 
 INSTANCE_ID = None
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
-READER = easyocr.Reader(['en'])
 CACHE_PATH = "src/cache.json"
 
 def parse_args(debug=None, id=None):
@@ -97,10 +96,6 @@ def check_color(color, frame, tol=10):
     assert len(frame.shape) == 3 and frame.shape[2] == 3, "Frame must be a color image"
     diff = np.abs(frame - np.array(color).reshape((1, 1, 3))).sum(2) <= tol
     return np.any(diff)
-
-def get_text(frame):
-    result = READER.readtext(frame)
-    return [text for _, text, _ in result if text.strip()]
 
 def get_vocab():
     other_words = [
@@ -268,7 +263,7 @@ def to_home_base():
 
 def get_home_builders(timeout=60):
     start = time.time()
-    while time.time() < start + timeout:
+    while True:
         try:
             section = Frame_Handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/home_builders.png")
@@ -278,12 +273,13 @@ def get_home_builders(timeout=60):
             _, max_val, _, _ = cv2.minMaxLoc(res)
             if max_val < 0.9: continue
             
-            text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
+            text = fix_digits(''.join(OCR_Handler.get_text(section, configs.LOCAL_OCR)).replace(' ', '').replace('/', ''))
             available = int(text[0])
             return available
         except Exception as e:
             if configs.DEBUG: print("get_home_builders", e)
         time.sleep(0.5)
+        if time.time() > start + timeout: break
     raise Exception("Failed to get home builders")
 
 def start_coc(timeout=60):
@@ -341,7 +337,7 @@ def to_builder_base():
 
 def get_builder_builders(timeout=60):
     start = time.time()
-    while time.time() < start + timeout:
+    while True:
         try:
             section = Frame_Handler.get_frame_section(0.565, 0.04, -0.38, 0.08, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/builder_builders.png")
@@ -351,12 +347,13 @@ def get_builder_builders(timeout=60):
             _, max_val, _, _ = cv2.minMaxLoc(res)
             if max_val < 0.9: continue
             
-            text = fix_digits(''.join(get_text(section)).replace(' ', '').replace('/', ''))
+            text = fix_digits(''.join(OCR_Handler.get_text(section, configs.LOCAL_OCR)).replace(' ', '').replace('/', ''))
             available = int(text[0])
             return available
         except Exception as e:
             if configs.DEBUG: print("get_builder_builders", e)
         time.sleep(0.5)
+        if time.time() > start + timeout: break
     raise Exception("Failed to get builder builders")
 
 def require_exit(n=5, delay=0.1):
@@ -368,6 +365,28 @@ def require_exit(n=5, delay=0.1):
             return result
         return wrapper
     return decorator
+
+class OCR_Handler:
+    @classmethod
+    def get_text(cls, frame, local=True):
+        if local:
+            if not hasattr(cls, 'reader'):
+                cls.reader = easyocr.Reader(['en'])
+            result = cls.reader.readtext(frame)
+            return [text for _, text, _ in result if text.strip()]
+        else:
+            w, h = frame.shape[1], frame.shape[0]
+            if w < 1024 or h < 1024:
+                scale = max(1024 / w, 1024 / h)
+                frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_CUBIC)
+            _, img_encoded = cv2.imencode('.png', frame)
+            response = requests.post(
+                "https://api.easyocr.org/ocr",
+                files={"file": ("image.png", img_encoded.tobytes(), "image/png")},
+                timeout=(10, 20)
+            )
+            result = response.json()['words']
+            return [res['text'] for res in result if res['text'].strip()]
 
 class Asset_Manager:
     @staticmethod
