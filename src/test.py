@@ -12,12 +12,8 @@ if __name__ == "__main__":
     parse_args(debug=True, id="main")
     bot = CoC_Bot()
     # Frame_Handler.screenshot()
-    configs.LOCAL_OCR = True
-    print(get_builder_builders(0))
-    configs.LOCAL_OCR = False
-    print(get_builder_builders(0))
     # start_coc()
-    # bot.run()
+    bot.run()
     # to_home_base()
     # bot.upgrader.run_home_base()
     # bot.attacker.run_home_base()
