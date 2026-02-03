@@ -112,33 +112,30 @@ class Upgrader:
         except Exception as e:
             if configs.DEBUG: print("collect_resources", e)
 
-    def collect_builder_attack_elixir(self):
+    def collect_builder_attack_elixir(self, restart=False):
+        if restart: start_coc()
+        
         # Align view to top right corner
-        Input_Handler.zoom(dir="out")
-        for _ in range(3):
-            Input_Handler.swipe_up(
-                y1=0.5,
-                y2=1.0,
-            )
-        Input_Handler.swipe_up(
-            y1=0.5,
-            y2=1.0,
-            hold_end_time=500,
-        )
-        for _ in range(3):
-            Input_Handler.swipe_left(
-                x1=1.0,
+        for _ in range(2): Input_Handler.zoom(dir="in")
+        for _ in range(2):
+            Input_Handler.swipe(
+                x1=0.4,
+                y1=0.6,
                 x2=0.0,
+                y2=1.0,
+                hold_end_time=100,
             )
-        Input_Handler.swipe_left(
-            x1=1.0,
-            x2=0.0,
-            hold_end_time=500,
-        )
-        time.sleep(0.5)
+        for _ in range(4):
+            Input_Handler.swipe(
+                x1=1.0,
+                y1=0.5,
+                x2=1.0,
+                y2=1.0,
+                hold_end_time=100,
+            )
         
         # Open elixir cart menu
-        Input_Handler.click(0.61, 0.47)
+        Input_Handler.click(0.5, 0.5)
         time.sleep(0.5)
         
         # Collect elixir

@@ -113,16 +113,18 @@ class CoC_Bot:
                         if not UPGRADE_HOME_BASE: to_home_base()
                         self.attacker.run_home_base(restart=UPGRADE_BUILDER_BASE or ATTACK_BUILDER_BASE)
                     
+                    if UPGRADE_BUILDER_BASE or ATTACK_BUILDER_BASE:
+                        to_builder_base()
+                    
                     # Check builder base
                     if UPGRADE_BUILDER_BASE:
-                        to_builder_base()
                         self.upgrader.collect_builder_attack_elixir()
                         self.upgrader.run_builder_base()
                     if ATTACK_BUILDER_BASE:
-                        if not UPGRADE_BUILDER_BASE: to_builder_base()
-                        self.attacker.run_builder_base(restart=True)
+                        self.attacker.run_builder_base()
                     
                     to_home_base()
+                    Input_Handler.zoom(dir="in")
                     time.sleep(2)
                     
                     stop_coc()

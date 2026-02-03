@@ -187,6 +187,7 @@ class Attacker:
         Input_Handler.click(0.01, 0.9)
     
     def complete_attack(self, timeout=10, restart=True, exclude_clan_troops=False):
+        Input_Handler.zoom(dir="out")
         Input_Handler.swipe_up()
         
         total_slots_seen = 0
@@ -253,9 +254,6 @@ class Attacker:
 
     @require_exit()
     def run_home_base(self, timeout=60, restart=True):
-        Input_Handler.zoom(dir="out")
-        Input_Handler.swipe_down()
-        
         try:
             # Make sure in home base
             start_time = time.time()
@@ -275,9 +273,6 @@ class Attacker:
 
     @require_exit()
     def run_builder_base(self, timeout=60, restart=True):
-        Input_Handler.zoom(dir="out")
-        Input_Handler.swipe_down()
-        
         try:
             # Make sure in builder base
             start_time = time.time()
