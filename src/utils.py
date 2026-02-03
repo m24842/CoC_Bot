@@ -246,22 +246,35 @@ def get_exclusions():
         return exclusions
     return []
 
-def to_home_base():
+def to_home_base(restart=False):
+    # Restart required to align view to center of village
+    if restart:
+        for _ in range(3): Input_Handler.zoom(dir="in")
+        start_coc()
     try:
         get_home_builders(1)
         return
     except:
         pass
-    Input_Handler.zoom(dir="out")
+    for _ in range(3): Input_Handler.zoom(dir="in")
     for _ in range(3):
-        Input_Handler.swipe_down()
-    for _ in range(3):
-        Input_Handler.swipe_left(
-            x1=1.0,
+        Input_Handler.swipe(
+            x1=0.55,
+            y1=0.45,
             x2=0.0,
+            y2=1.0,
+            hold_end_time=100,
         )
-    Input_Handler.click(0.75, 0.3)
-    time.sleep(0.5)
+    for _ in range(4):
+        Input_Handler.swipe(
+            x1=1.0,
+            y1=0.5,
+            x2=1.0,
+            y2=1.0,
+            hold_end_time=100,
+        )
+    Input_Handler.click(0.5, 0.75)
+    time.sleep(2)
 
 def get_home_builders(timeout=60):
     start = time.time()
@@ -291,7 +304,7 @@ def start_coc(timeout=60):
         start = time.time()
         while time.time() - start < timeout:
             ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
-            Input_Handler.click_exit(5, 0.1)
+            Input_Handler.click_exit(4, 0.1)
             try:
                 get_home_builders(1)
                 break
@@ -321,21 +334,34 @@ def stop_coc():
     ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
-def to_builder_base():
+def to_builder_base(restart=False):
+    # Restart required to align view to center of village
+    if restart:
+        for _ in range(3): Input_Handler.zoom(dir="in")
+        start_coc()
     try:
         get_builder_builders(1)
         return
     except:
         pass
-    Input_Handler.zoom(dir="out")
+    for _ in range(3): Input_Handler.zoom(dir="in")
+    for _ in range(2):
+        Input_Handler.swipe(
+            x1=0.0,
+            y1=1.0,
+            x2=0.9,
+            y2=0.0,
+            hold_end_time=100,
+        )
     Input_Handler.swipe(
-        x1=0.0,
+        x1=1.0,
         y1=1.0,
         x2=1.0,
         y2=0.0,
+        hold_end_time=100,
     )
-    Input_Handler.click(0.25, 0.75)
-    time.sleep(0.5)
+    Input_Handler.click(0.5, 0.75)
+    time.sleep(2)
 
 def get_builder_builders(timeout=60):
     start = time.time()
