@@ -1,9 +1,3 @@
-import loguru
-import warnings
-
-loguru.logger.remove()
-warnings.filterwarnings("ignore", category=UserWarning, module='torch')
-
 import sys
 import time
 import psutil

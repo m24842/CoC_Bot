@@ -1,5 +1,10 @@
 import os
 import sys
+import loguru
+import warnings
+
+loguru.logger.remove()
+warnings.filterwarnings("ignore", category=UserWarning, module='torch')
 
 class Tee:
     def __init__(self, *streams):
