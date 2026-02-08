@@ -174,8 +174,8 @@ class Upgrader:
             if other_upgrades_avail:
                 y_diff = abs(y_sug - y_other)
                 n_sug = round(y_diff / label_height) - 1
-                if PRIORITIZE_HEROS and not heros_excluded(): idx, alt_idx = 2, 2
-                if n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
+                if PRIORITIZE_HEROS and not heros_excluded(): idx, alt_idx = n_sug-1, n_sug-1
+                elif n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
                 else: alt_idx = 0
             if configs.DEBUG: print(f"upgrade: n_sug={n_sug}, idx={idx}, alt_idx={alt_idx}")
             y_pot = y_sug + label_height * (idx + 1)
