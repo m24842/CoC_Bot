@@ -46,20 +46,29 @@
 
 ## Setup Instructions
 1. Install and configure dependencies listed above
+
 2. Enter user configurations in [configs.py](src/configs.py)
-    > __NOTE__: To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send `/start`. Enter the API token generated during the setup process for `TELEGRAM_BOT_TOKEN`.
+> [!NOTE]
+> To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send `/start`. Enter the API token generated during the setup process for `TELEGRAM_BOT_TOKEN`.
     
-    > __NOTE__: By default, all capabilities are enabled. Many configurations can be overridden in real time if using the web app.
+> [!IMPORTANT]
+> By default, all capabilities are enabled. Many configurations can be overridden in real time if using the web app.
+
 3. Start web app: `python app/app.py`
-    > __NOTE__: It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) using the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 1 month.
+> [!TIP]
+> It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) using the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 1 month.
     
-    > __NOTE__: If you enable password protection on pythonanywhere, you'll need to enter the credentials into `WEB_APP_AUTH_USERNAME` and `WEB_APP_AUTH_PASSWORD` in [configs.py](src/configs.py)
+> [!IMPORTANT]
+> If you enable password protection on pythonanywhere, you'll need to enter the credentials into `WEB_APP_AUTH_USERNAME` and `WEB_APP_AUTH_PASSWORD` in [configs.py](src/configs.py)
     
-    > __NOTE__: If hosting from a personal device, open port 1234 (or whatever port `WEB_APP_PORT` is set to in [configs.py](src/configs.py)) and configure port forwarding as necessary
+> [!IMPORTANT]
+> If hosting from a personal device, open port 1234 (or whatever port `WEB_APP_PORT` is set to in [configs.py](src/configs.py)) and configure port forwarding as necessary
     
     * Each bot instance can be accessed at `WEB_APP_ADDRESS/<instance_name>` (the default instance name is `main`)
+
 4. Setup iPhone shortcut:
-    > __NOTE__: An [older version](<shortcut/CoC Bot Auto Pause Old.shortcut>) of the shortcut is provided that does not require Scriptable, but is incapable of handling request errors
+> [!NOTE]
+> An [older version](<shortcut/CoC Bot Auto Pause Old.shortcut>) of the shortcut is provided that does not require Scriptable, but is incapable of handling request errors
     
     * Download [Scriptable](https://apps.apple.com/us/app/scriptable/id1405459188) and create a new script named "CoC Bot Script" with the contents of [CoC_Bot_Script.js](<shortcut/Scriptable.js>)
     * Open the [provided shortcut](<shortcut/CoC Bot Auto Pause.shortcut>)
@@ -67,14 +76,15 @@
     * If applicable, enter your web app auth credentials into the `auth` item as `WEB_APP_AUTH_USERNAME:WEB_APP_AUTH_PASSWORD`
     * Adjust the `id` item containing an array of instance names as necessary
     * Create an Automation task that runs when CoC opens and is set to run immediately
+
 5. Start the bot: `python src/main.py`
-    > [!NOTE]
-    >`src/start.sh` uses tmux to start the bot in the background. If on MacOS and `DISABLE_DEVICE_SLEEP = True`, it is recommended to just manually run the bot in the background by starting a tmux session, running `src/main.py`, entering the user password, and detaching. To avoid manual startup, one solution is to add the exact startup command to the sudoers file using `visudo`.
-    
-    > [!NOTE]
-    > The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
-    
-    > [!NOTE]
-    > On MacOS, if `DISABLE_DEVICE_SLEEP = True` in [configs.py](src/configs.py), the user password is required to toggle the `disablesleep` flag in power management settings
+> [!NOTE]
+>`src/start.sh` uses tmux to start the bot in the background. If on MacOS and `DISABLE_DEVICE_SLEEP = True`, it is recommended to just manually run the bot in the background by starting a tmux session, running `src/main.py`, entering the user password, and detaching. To avoid manual startup, one solution is to add the exact startup command to the sudoers file using `visudo`.
+
+> [!TIP]
+> The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
+
+> [!IMPORTANT]
+> On MacOS, if `DISABLE_DEVICE_SLEEP = True` in [configs.py](src/configs.py), the user password is required to toggle the `disablesleep` flag in power management settings
     
     * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager, set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to `INSTANCE_IDS` and `ADB_ADDRESSES` in [configs.py](src/configs.py). Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).
