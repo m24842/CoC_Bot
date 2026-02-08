@@ -16,12 +16,12 @@ CHECK_INTERVAL = 5 * 60 # seconds
 
 # REQUIRED: Upgrade settings
 MAX_UPGRADES_PER_CHECK = 10 # applies to both home and builder base
+PRIORITIZE_HEROS = False # will always upgrade heros when possible over buildings if true
+UPGRADE_HEROS = True # can be overridden on web app
 UPGRADE_HOME_BASE = True # can be overridden on web app
 UPGRADE_BUILDER_BASE = True # can be overridden on web app
 UPGRADE_HOME_LAB = True # can be overridden on web app
 UPGRADE_BUILDER_LAB = True # can be overridden on web app
-UPGRADE_HEROS = True # can be overridden on web app
-PRIORITIZE_HEROS = False # will always upgrade heros when possible over buildings if true
 
 # REQUIRED: Attack Settings
 TROOP_DEPLOY_TIME = 3 # seconds
