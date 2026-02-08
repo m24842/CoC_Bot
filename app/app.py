@@ -186,5 +186,5 @@ def add_cache_headers(response):
 
 get_known_instances()
 if __name__ == "__main__":
-    if DEBUG: app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
-    else: serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)
+    app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
+    # serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)

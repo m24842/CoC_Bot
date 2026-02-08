@@ -246,6 +246,41 @@ def get_exclusions():
         return exclusions
     return []
 
+def heros_excluded():
+    if WEB_APP_URL == "": return UPGRADE_HEROS
+    exclusions = get_exclusions()
+    return "heros" in exclusions
+
+def home_base_excluded():
+    if WEB_APP_URL == "": return UPGRADE_HOME_BASE
+    exclusions = get_exclusions()
+    return "home_base" in exclusions
+
+def builder_base_excluded():
+    if WEB_APP_URL == "": return UPGRADE_BUILDER_BASE
+    exclusions = get_exclusions()
+    return "builder_base" in exclusions
+
+def home_lab_excluded():
+    if WEB_APP_URL == "": return UPGRADE_HOME_LAB
+    exclusions = get_exclusions()
+    return "home_lab" in exclusions
+
+def builder_lab_excluded():
+    if WEB_APP_URL == "": return UPGRADE_BUILDER_LAB
+    exclusions = get_exclusions()
+    return "builder_lab" in exclusions
+
+def home_attacks_excluded():
+    if WEB_APP_URL == "": return False
+    exclusions = get_exclusions()
+    return "home_attacks" in exclusions
+
+def builder_attacks_excluded():
+    if WEB_APP_URL == "": return False
+    exclusions = get_exclusions()
+    return "builder_attacks" in exclusions
+
 def to_home_base(restart=False):
     # Restart required to align view to center of village
     if restart:

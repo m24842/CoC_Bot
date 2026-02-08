@@ -174,6 +174,7 @@ class Upgrader:
             if other_upgrades_avail:
                 y_diff = abs(y_sug - y_other)
                 n_sug = round(y_diff / label_height) - 1
+                if PRIORITIZE_HEROS and not heros_excluded(): idx, alt_idx = 2, 2
                 if n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
                 else: alt_idx = 0
             if configs.DEBUG: print(f"upgrade: n_sug={n_sug}, idx={idx}, alt_idx={alt_idx}")
@@ -183,7 +184,7 @@ class Upgrader:
             # Get potential upgrade names
             pot_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(pot_section, "debug/upgrade_name.png")
-            pot_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(pot_section)[0].lower()))
+            # pot_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(pot_section)[0].lower()))
             
             alt_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(alt_section, "debug/upgrade_name.png")
@@ -198,10 +199,13 @@ class Upgrader:
             if len(other_upgrade_text) > 0: other_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", other_upgrade_text[0].lower()))
             
             # Choose one upgrade from suggested and other upgrades
-            upgrade_options = ["none"]
-            if alt_upgrade_name and "town hall" not in alt_upgrade_name: upgrade_options.append("suggested")
-            if other_upgrade_name and "town hall" not in other_upgrade_name: upgrade_options.append("other")
-            chosen_upgrade = np.random.choice(upgrade_options)
+            if PRIORITIZE_HEROS and not heros_excluded():
+                chosen_upgrade = "none"
+            else:
+                upgrade_options = ["none"]
+                if alt_upgrade_name and "town hall" not in alt_upgrade_name: upgrade_options.append("suggested")
+                if other_upgrade_name and "town hall" not in other_upgrade_name: upgrade_options.append("other")
+                chosen_upgrade = np.random.choice(upgrade_options)
             if configs.DEBUG: print(f"chosen_upgrade: {chosen_upgrade}")
             
             # Click on the chosen upgrade
@@ -258,7 +262,7 @@ class Upgrader:
             x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
             xy_hero = Frame_Handler.locate(self.assets["hero_upgrade"], thresh=0.97, grayscale=False, return_all=True)
             if len(xy_hero) > 0:
-                if "heros" in get_exclusions(): return None
+                if heros_excluded(): return None
                 idx = np.random.randint(0, len(xy_hero))
                 x, y = xy_hero[idx]
             if x is None or y is None: return None
@@ -574,7 +578,7 @@ class Upgrader:
         # Lab upgrades
         lab_upgrades_started = []
         try:
-            if "home_lab" not in get_exclusions() and self.home_lab_available(1):
+            if not home_lab_excluded() and self.home_lab_available(1):
                 upgraded = self.home_lab_upgrade()
                 time.sleep(0.5)
                 final_lab_avail = self.home_lab_available(1)
@@ -610,7 +614,7 @@ class Upgrader:
         # Lab upgrades
         lab_upgrades_started = []
         try:
-            if "builder_lab" not in get_exclusions() and self.builder_lab_available(1):
+            if not builder_lab_excluded() and self.builder_lab_available(1):
                 upgraded = self.builder_lab_upgrade()
                 time.sleep(0.5)
                 final_lab_avail = self.builder_lab_available(1)
