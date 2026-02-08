@@ -68,10 +68,13 @@
     * Adjust the `id` item containing an array of instance names as necessary
     * Create an Automation task that runs when CoC opens and is set to run immediately
 5. Start the bot: `python src/main.py`
-    > __NOTE__: `src/start.sh` uses tmux to start the bot in the background. If on MacOS and `DISABLE_DEVICE_SLEEP = True`, it is recommended to just manually run the bot in the background by starting a tmux session, running `src/main.py`, entering the user password, and detaching. To avoid manual startup, one solution is to add the exact startup command to the sudoers file using `visudo`.
+    > [!NOTE]
+    >`src/start.sh` uses tmux to start the bot in the background. If on MacOS and `DISABLE_DEVICE_SLEEP = True`, it is recommended to just manually run the bot in the background by starting a tmux session, running `src/main.py`, entering the user password, and detaching. To avoid manual startup, one solution is to add the exact startup command to the sudoers file using `visudo`.
     
-    > __NOTE__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
+    > [!NOTE]
+    > The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
     
-    > __NOTE__: On MacOS, if `DISABLE_DEVICE_SLEEP = True` in [configs.py](src/configs.py), the user password is required to toggle the `disablesleep` flag in power management settings
+    > [!NOTE]
+    > On MacOS, if `DISABLE_DEVICE_SLEEP = True` in [configs.py](src/configs.py), the user password is required to toggle the `disablesleep` flag in power management settings
     
     * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager, set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to `INSTANCE_IDS` and `ADB_ADDRESSES` in [configs.py](src/configs.py). Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).
