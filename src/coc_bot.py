@@ -11,7 +11,7 @@ from attacker import Attacker
 
 class CoC_Bot:
     def __init__(self):
-        if DISABLE_DEEVICE_SLEEP:
+        if DISABLE_DEVICE_SLEEP:
             disable_sleep()
             Exit_Handler.register(enable_sleep)
         
@@ -99,22 +99,28 @@ class CoC_Bot:
                 if start_coc():
                     self.update_status("now")
                     
-                    # Check home base
-                    if UPGRADE_HOME_BASE:
-                        to_home_base()
-                        self.upgrader.run_home_base()
-                    if ATTACK_HOME_BASE:
-                        if not UPGRADE_HOME_BASE: to_home_base()
-                        self.attacker.run_home_base(restart=UPGRADE_BUILDER_BASE or ATTACK_BUILDER_BASE)
+                    home_base_excluded_temp = home_base_excluded()
+                    home_attacks_excluded_temp = home_attacks_excluded()
+                    builder_base_excluded_temp = builder_base_excluded()
+                    builder_attacks_excluded_temp = builder_attacks_excluded()
                     
-                    if UPGRADE_BUILDER_BASE or ATTACK_BUILDER_BASE:
+                    # Check home base
+                    if not home_base_excluded_temp or not home_attacks_excluded_temp:
+                        to_home_base()
+                    
+                    if not home_base_excluded_temp:
+                        self.upgrader.run_home_base()
+                    if not home_attacks_excluded_temp:
+                        self.attacker.run_home_base(restart=not home_base_excluded_temp or not builder_base_excluded_temp)
+                    
+                    if not builder_base_excluded_temp or not builder_attacks_excluded_temp:
                         to_builder_base()
                     
                     # Check builder base
-                    if UPGRADE_BUILDER_BASE:
+                    if not builder_base_excluded_temp:
                         self.upgrader.collect_builder_attack_elixir()
                         self.upgrader.run_builder_base()
-                    if ATTACK_BUILDER_BASE:
+                    if not builder_attacks_excluded_temp:
                         self.attacker.run_builder_base()
                     
                     to_home_base()
