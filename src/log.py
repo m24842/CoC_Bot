@@ -23,6 +23,7 @@ def enable_logging(id="main"):
     os.makedirs("debug", exist_ok=True)
 
     log = open(f"debug/{id}.log", "a", buffering=1)
+    os.chmod(f"debug/{id}.log", 0o666)
 
     sys.stdout = Tee(sys.stdout, log)
     sys.stderr = Tee(sys.stderr, log)
