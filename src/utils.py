@@ -236,6 +236,7 @@ def send_notification(text):
         except: pass
 
 def get_exclusions():
+    assert WEB_APP_URL != "", "Undefined WEB_APP_URL"
     res = requests.get(
         f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
         auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
@@ -247,39 +248,53 @@ def get_exclusions():
     return []
 
 def heros_excluded():
-    if WEB_APP_URL == "": return UPGRADE_HEROS
-    exclusions = get_exclusions()
-    return "heros" in exclusions
+    try:
+        exclusions = get_exclusions()
+        return "heros" in exclusions
+    except:
+        return UPGRADE_HEROS
 
 def home_base_excluded():
-    if WEB_APP_URL == "": return UPGRADE_HOME_BASE
-    exclusions = get_exclusions()
-    return "home_base" in exclusions
+    try:
+        exclusions = get_exclusions()
+        return "home_base" in exclusions
+    except:
+        return UPGRADE_HOME_BASE
 
 def builder_base_excluded():
-    if WEB_APP_URL == "": return UPGRADE_BUILDER_BASE
-    exclusions = get_exclusions()
-    return "builder_base" in exclusions
+    try:
+        exclusions = get_exclusions()
+        return "builder_base" in exclusions
+    except:
+        return UPGRADE_BUILDER_BASE
 
 def home_lab_excluded():
-    if WEB_APP_URL == "": return UPGRADE_HOME_LAB
-    exclusions = get_exclusions()
-    return "home_lab" in exclusions
+    try:
+        exclusions = get_exclusions()
+        return "home_lab" in exclusions
+    except:
+        return UPGRADE_HOME_LAB
 
 def builder_lab_excluded():
-    if WEB_APP_URL == "": return UPGRADE_BUILDER_LAB
-    exclusions = get_exclusions()
-    return "builder_lab" in exclusions
+    try:
+        exclusions = get_exclusions()
+        return "builder_lab" in exclusions
+    except:
+        return UPGRADE_BUILDER_LAB
 
 def home_attacks_excluded():
-    if WEB_APP_URL == "": return False
-    exclusions = get_exclusions()
-    return "home_attacks" in exclusions
+    try:
+        exclusions = get_exclusions()
+        return "home_attacks" in exclusions
+    except:
+        return not ATTACK_HOME_BASE
 
 def builder_attacks_excluded():
-    if WEB_APP_URL == "": return False
-    exclusions = get_exclusions()
-    return "builder_attacks" in exclusions
+    try:
+        exclusions = get_exclusions()
+        return "builder_attacks" in exclusions
+    except:
+        return not ATTACK_BUILDER_BASE
 
 def to_home_base(restart=False):
     # Restart required to align view to center of village
