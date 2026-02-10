@@ -308,8 +308,14 @@ def to_home_base():
             x1=1.0,
             x2=0.0,
         )
-    Input_Handler.click(0.75, 0.3)
-    time.sleep(2)
+    for scale in np.linspace(0.3, 1.0, 10):
+        template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+        x, y = Frame_Handler.locate(template, grayscale=True, thresh=0.7, ref="cc")
+        if x is None or y is None: continue
+    
+        Input_Handler.click(x, y)
+        time.sleep(2)
+        break
 
 def get_home_builders(timeout=60):
     start = time.time()
