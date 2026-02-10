@@ -371,6 +371,7 @@ def stop_coc():
 
 def to_builder_base():
     Input_Handler.zoom(dir="out")
+    Input_Handler.swipe_up()
     
     for scale in np.linspace(0.3, 1.0, 10):
         template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
