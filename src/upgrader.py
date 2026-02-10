@@ -294,6 +294,38 @@ class Upgrader:
             return None
     
     @require_exit()
+    def assign_builder_assistant(self):
+        try:
+            # Open upgrade list menu
+            self.click_home_builders()
+            time.sleep(0.5)
+            
+            # Find assistant available label
+            x, y = Frame_Handler.locate(self.assets["assistant_available"], thresh=0.8)
+            if x is None or y is None: return
+            
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            # Find assign assistant label
+            xys = Frame_Handler.locate(self.assets["assign_assistant"], thresh=0.9, grayscale=False, return_all=True)
+            if xys is None: return
+            
+            x, y = sorted(xys, key=lambda pair: pair[1])[0]
+            
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            # Find confirm button
+            x, y = Frame_Handler.locate(self.assets["confirm_assistant"], grayscale=False, thresh=0.9)
+            if x is None or y is None: return
+            
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+        except Exception as e:
+            if configs.DEBUG: print("assign_builder_assistant", e)
+    
+    @require_exit()
     def home_lab_upgrade(self):
         try:
             # Open lab upgrade list menu
@@ -345,6 +377,38 @@ class Upgrader:
         except Exception as e:
             if configs.DEBUG: print("home_lab_upgrade", e)
             return None
+
+    @require_exit()
+    def assign_lab_assistant(self):
+        try:
+            # Open upgrade list menu
+            self.click_home_lab()
+            time.sleep(0.5)
+            
+            # Find assistant available label
+            x, y = Frame_Handler.locate(self.assets["assistant_available"], thresh=0.7)
+            if x is None or y is None: return
+            
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            # Find assign assistant label
+            xys = Frame_Handler.locate(self.assets["assign_assistant"], thresh=0.9, grayscale=False, return_all=True)
+            if xys is None: return
+            
+            x, y = sorted(xys, key=lambda pair: pair[1])[0]
+            
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            # Find confirm button
+            x, y = Frame_Handler.locate(self.assets["confirm_assistant"], grayscale=False, thresh=0.9)
+            if x is None or y is None: return
+            
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+        except Exception as e:
+            if configs.DEBUG: print("assign_lab_assistant", e)
 
     @require_exit()
     def builder_upgrade(self):
@@ -574,6 +638,7 @@ class Upgrader:
                 else: break
             except:
                 pass
+        self.assign_builder_assistant()
         
         # Lab upgrades
         lab_upgrades_started = []
@@ -585,6 +650,7 @@ class Upgrader:
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
         except:
             pass
+        self.assign_lab_assistant()
         
         for upgrade in upgrades_started + lab_upgrades_started:
             send_notification(f"Started upgrading {upgrade}")
