@@ -296,34 +296,19 @@ def builder_attacks_excluded():
     except:
         return not ATTACK_BUILDER_BASE
 
-def to_home_base(restart=False):
-    # Restart required to align view to center of village
-    if restart:
-        for _ in range(3): Input_Handler.zoom(dir="in")
-        start_coc()
-    try:
-        get_home_builders(1)
-        return
-    except:
-        pass
-    for _ in range(3): Input_Handler.zoom(dir="in")
+def to_home_base():
+    Input_Handler.zoom(dir="out")
     for _ in range(3):
-        Input_Handler.swipe(
-            x1=0.55,
-            y1=0.45,
-            x2=0.0,
-            y2=1.0,
-            hold_end_time=100,
-        )
-    for _ in range(4):
-        Input_Handler.swipe(
-            x1=1.0,
+        Input_Handler.swipe_up(
             y1=0.5,
-            x2=1.0,
             y2=1.0,
-            hold_end_time=100,
         )
-    Input_Handler.click(0.5, 0.75)
+    for _ in range(3):
+        Input_Handler.swipe_left(
+            x1=1.0,
+            x2=0.0,
+        )
+    Input_Handler.click(0.75, 0.3)
     time.sleep(2)
 
 def get_home_builders(timeout=60):
@@ -384,34 +369,17 @@ def stop_coc():
     ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
-def to_builder_base(restart=False):
-    # Restart required to align view to center of village
-    if restart:
-        for _ in range(3): Input_Handler.zoom(dir="in")
-        start_coc()
-    try:
-        get_builder_builders(1)
-        return
-    except:
-        pass
-    for _ in range(3): Input_Handler.zoom(dir="in")
-    for _ in range(2):
-        Input_Handler.swipe(
-            x1=0.0,
-            y1=1.0,
-            x2=0.9,
-            y2=0.0,
-            hold_end_time=100,
-        )
-    Input_Handler.swipe(
-        x1=1.0,
-        y1=1.0,
-        x2=1.0,
-        y2=0.0,
-        hold_end_time=100,
-    )
-    Input_Handler.click(0.5, 0.75)
-    time.sleep(2)
+def to_builder_base():
+    Input_Handler.zoom(dir="out")
+    
+    for scale in np.linspace(0.3, 1.0, 10):
+        template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+        x, y = Frame_Handler.locate(template, grayscale=True, thresh=0.7, ref="cc")
+        if x is None or y is None: continue
+    
+        Input_Handler.click(x, y)
+        time.sleep(2)
+        break
 
 def get_builder_builders(timeout=60):
     start = time.time()
@@ -468,6 +436,13 @@ class OCR_Handler:
 
 class Asset_Manager:
     @staticmethod
+    def load_misc_assets():
+        assets = {}
+        for file in os.listdir("assets/misc"):
+            assets[file.replace('.png', '')] = cv2.imread(os.path.join("assets/misc", file), cv2.IMREAD_COLOR)
+        return assets
+    
+    @staticmethod
     def load_upgrader_assets():
         assets = {}
         for file in os.listdir(UPGRADER_ASSETS_DIR):
@@ -481,6 +456,7 @@ class Asset_Manager:
             assets[file.replace('.png', '')] = cv2.imread(os.path.join(ATTACKER_ASSETS_DIR, file), cv2.IMREAD_COLOR)
         return assets
 
+    misc_assets = load_misc_assets()
     upgrader_assets = load_upgrader_assets()
     attacker_assets = load_attacker_assets()
 
