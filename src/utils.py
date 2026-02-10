@@ -297,6 +297,12 @@ def builder_attacks_excluded():
         return not ATTACK_BUILDER_BASE
 
 def to_home_base():
+    try:
+        get_home_builders(1)
+        return
+    except:
+        pass
+    
     Input_Handler.zoom(dir="out")
     for _ in range(3):
         Input_Handler.swipe_up(
@@ -376,6 +382,12 @@ def stop_coc():
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
 def to_builder_base():
+    try:
+        get_builder_builders(1)
+        return
+    except:
+        pass
+    
     Input_Handler.zoom(dir="out")
     Input_Handler.swipe_up()
     
