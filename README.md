@@ -7,9 +7,10 @@
 
 ## Automated Features (Both Villages)
 * Resource collection 💰
-* Building upgrades 🧱
 * Hero upgrades 👑
+* Building upgrades 🧱
 * Laboratory upgrades 🔬
+* Assistant assignment ⏩️
 * Normal attacks ⚔️
 * Multiple accounts 👥
 
