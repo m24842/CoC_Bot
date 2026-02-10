@@ -124,9 +124,6 @@ class CoC_Bot:
                         self.attacker.run_builder_base()
                     
                     to_home_base()
-                    Input_Handler.zoom(dir="in")
-                    time.sleep(2)
-                    
                     stop_coc()
                     self.update_status(time.time())
                 
