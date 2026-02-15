@@ -38,6 +38,11 @@ if not os.path.exists("src/configs.py"):
 else:
     print(f"src/configs.py already exists, skipping creation.")
 
+if not os.path.exists("scripts/start.sh"):
+    shutil.copy("scripts/start.template.sh", "scripts/start.sh")
+else:
+    print(f"scripts/start.sh already exists, skipping creation.")
+
 if web_app_setup:
     web_app_service = input("Setup web app systemd service? (y/n): ").lower() == 'y'
     if web_app_service:

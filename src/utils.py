@@ -4,12 +4,12 @@ import sys
 import cv2
 import json
 import time
+import shlex
 import signal
 import atexit
 import ctypes
 import easyocr
 import adbutils
-from flask import signals
 import requests
 import argparse
 import subprocess
@@ -26,9 +26,14 @@ if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
 
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 INSTANCE_ID = None
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
-CACHE_PATH = "src/cache.json"
+CACHE_PATH = os.path.join(BASE_DIR, "cache.json")
 ADB_WINDOW_DIMS = WINDOW_DIMS
 
 def parse_args(debug=None, id=None):
@@ -52,13 +57,25 @@ def parse_args(debug=None, id=None):
 
 def disable_sleep():
     if sys.platform == "darwin":
+        if os.geteuid() != 0:
+            executable = sys.executable
+            args = " ".join(shlex.quote(arg) for arg in sys.argv[1:])
+            cmd = f"{shlex.quote(executable)} {args}"
+            script = f'do shell script "{cmd}" with administrator privileges'
+            result = subprocess.run(
+                ["osascript", "-e", script]
+            )
+            if result.returncode != 0:
+                return
+            sys.exit()
         subprocess.run(["sudo", "pmset", "-a", "disablesleep", "1"], check=True)
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 
 def enable_sleep():
     if sys.platform == "darwin":
-        subprocess.run(["sudo", "pmset", "-a", "disablesleep", "0"], check=True)
+        if os.geteuid() == 0:
+            subprocess.run(["sudo", "pmset", "-a", "disablesleep", "0"], check=True)
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
 
@@ -455,30 +472,45 @@ class OCR_Handler:
             return [res['text'] for res in result if res['text'].strip()]
 
 class Asset_Manager:
-    @staticmethod
-    def load_misc_assets():
-        assets = {}
-        for file in os.listdir("assets/misc"):
-            assets[file.replace('.png', '')] = cv2.imread(os.path.join("assets/misc", file), cv2.IMREAD_COLOR)
-        return assets
+    misc_assets = {}
+    upgrader_assets = {}
+    attacker_assets = {}
     
     @staticmethod
-    def load_upgrader_assets():
+    def resource_path(rel_path):
+        if hasattr(sys, "_MEIPASS"):
+            base_path = sys._MEIPASS
+        else:
+            base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        return os.path.join(base_path, rel_path)
+    
+    @classmethod
+    def load_misc_assets(cls):
         assets = {}
-        for file in os.listdir(UPGRADER_ASSETS_DIR):
-            assets[file.replace('.png', '')] = cv2.imread(os.path.join(UPGRADER_ASSETS_DIR, file), cv2.IMREAD_COLOR)
-        return assets
-
-    @staticmethod
-    def load_attacker_assets():
+        path = cls.resource_path("assets/misc")
+        for file in os.listdir(path):
+            assets[file.replace('.png', '')] = cv2.imread(os.path.join(path, file), cv2.IMREAD_COLOR)
+        cls.misc_assets = assets
+    
+    @classmethod
+    def load_upgrader_assets(cls):
         assets = {}
-        for file in os.listdir(ATTACKER_ASSETS_DIR):
-            assets[file.replace('.png', '')] = cv2.imread(os.path.join(ATTACKER_ASSETS_DIR, file), cv2.IMREAD_COLOR)
-        return assets
+        path = cls.resource_path("assets/upgrader")
+        for file in os.listdir(path):
+            assets[file.replace('.png', '')] = cv2.imread(os.path.join(path, file), cv2.IMREAD_COLOR)
+        cls.upgrader_assets = assets
 
-    misc_assets = load_misc_assets()
-    upgrader_assets = load_upgrader_assets()
-    attacker_assets = load_attacker_assets()
+    @classmethod
+    def load_attacker_assets(cls):
+        assets = {}
+        path = cls.resource_path("assets/attacker")
+        for file in os.listdir(path):
+            assets[file.replace('.png', '')] = cv2.imread(os.path.join(path, file), cv2.IMREAD_COLOR)
+        cls.attacker_assets = assets
+
+Asset_Manager.load_misc_assets()
+Asset_Manager.load_upgrader_assets()
+Asset_Manager.load_attacker_assets()
 
 class Input_Handler:
     @classmethod

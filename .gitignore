@@ -1,10 +1,14 @@
 .vscode
 .venv
 .DS_Store
+build
+dist
 debug
 *.pyc
 *.log
+*.spec
 src/cache.json
 src/configs.py
+scripts/start.sh
 app/data
 app/coc_bot_web_app.service
