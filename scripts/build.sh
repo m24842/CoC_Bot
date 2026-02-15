@@ -9,8 +9,8 @@ rm -rf build dist *.spec
 
 pyinstaller \
   --name "${NAME}" \
-  --onedir \
-  --windowed \
+  --onefile \
   --icon="media/CoC_Bot.icns" \
   --add-data "assets:assets" \
+  --add-data "src/sleep_helper.sh:." \
   "src/main.py"
