@@ -40,7 +40,7 @@ def parse_args(debug=None, id=None):
     global INSTANCE_ID, ADB_ADDRESS
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-    parser.add_argument("--id", type=str, default=INSTANCE_IDS[0], help="Instance ID")
+    parser.add_argument("--id", type=str, default=DEFAULT_INSTANCE_ID, help="Instance ID")
     args = parser.parse_args()
     configs.DEBUG = args.debug if debug is None else debug
     assert args.id in INSTANCE_IDS, f"Invalid instance ID. Must be one of: {INSTANCE_IDS}"
@@ -57,18 +57,12 @@ def parse_args(debug=None, id=None):
 
 def disable_sleep():
     if sys.platform == "darwin":
-        if os.geteuid() != 0:
-            executable = sys.executable
-            args = " ".join(shlex.quote(arg) for arg in sys.argv[1:])
-            cmd = f"{shlex.quote(executable)} {args}"
-            script = f'do shell script "{cmd}" with administrator privileges'
-            result = subprocess.run(
-                ["osascript", "-e", script]
-            )
-            if result.returncode != 0:
-                return
-            sys.exit()
-        subprocess.run(["sudo", "pmset", "-a", "disablesleep", "1"], check=True)
+        if os.geteuid() == 0:
+            subprocess.run(["sudo", "pmset", "-a", "disablesleep", "1"], check=True)
+        else:
+            sleep_helper = os.path.join(os.path.dirname(__file__), "display_sleep.py")
+            cmd = f'{shlex.quote(sys.executable)} {shlex.quote(sleep_helper)} {os.getpid()}'
+            subprocess.Popen(["osascript", "-e", f'do shell script "{cmd}" with administrator privileges'])
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 
@@ -81,6 +75,7 @@ def enable_sleep():
 
 def connect_adb():
     global ADB_DEVICE, MINITOUCH_DEVICE, ADB_WINDOW_DIMS
+    if ADB_ABS_DIR != "": os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
     subprocess.run(["adb", "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     res = adbutils.adb.connect(ADB_ADDRESS)
     if "connected" not in res:

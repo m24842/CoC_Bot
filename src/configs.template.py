@@ -10,6 +10,7 @@ WEB_APP_URL = "" # (e.g. 12.34.567.890:1234)
 WEB_APP_PORT = 1234
 WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD = "", "" # (leave empty if not applicable)
 INSTANCE_IDS = ["main"]
+DEFAULT_INSTANCE_ID = INSTANCE_IDS[0] # change appropriately for app build
 
 # REQUIRED: General Settings
 CHECK_INTERVAL = 5 * 60 # seconds
@@ -37,5 +38,4 @@ DEBUG = False
 DISABLE_DEVICE_SLEEP = True
 WINDOW_DIMS = (1920, 1080) # width, height
 ADB_ADDRESSES = ["127.0.0.1:5555"] # Bluestacks ADB addresses in order of instance IDs
-UPGRADER_ASSETS_DIR = "assets/upgrader"
-ATTACKER_ASSETS_DIR = "assets/attacker"
+ADB_ABS_DIR = "" # absolute path to dir with adb executable, leave empty to use system PATH (required for app build)

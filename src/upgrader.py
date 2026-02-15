@@ -14,16 +14,6 @@ class Upgrader:
         self.assets = Asset_Manager.upgrader_assets
 
     # ============================================================
-    # 📁 Asset & Image Processing
-    # ============================================================
-
-    def load_assets(self):
-        assets = {}
-        for file in os.listdir(UPGRADER_ASSETS_DIR):
-            assets[file.replace('.png', '')] = cv2.imread(os.path.join(UPGRADER_ASSETS_DIR, file), cv2.IMREAD_COLOR)
-        return assets
-
-    # ============================================================
     # 📱 Screen Interaction
     # ============================================================
     
