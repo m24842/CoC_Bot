@@ -9,6 +9,7 @@ import atexit
 import ctypes
 import easyocr
 import adbutils
+from flask import signals
 import requests
 import argparse
 import subprocess
@@ -667,7 +668,10 @@ class Exit_Handler:
 
     @classmethod
     def setup_signal_handlers(cls):
-        for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signals = [signal.SIGINT, signal.SIGTERM]
+        if sys.platform != "win32":
+            signals.append(signal.SIGHUP)
+        for sig in signals:
             signal.signal(sig, cls.handle_sig)
 
 Exit_Handler.setup_signal_handlers()
