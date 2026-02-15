@@ -7,6 +7,7 @@ bot_packages = [
     "easyocr",
     "adbutils",
     "requests",
+    "curl-cffi",
     "numpy",
     "scipy",
     "nltk",

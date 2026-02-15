@@ -2,13 +2,11 @@
 
 set -e
 
-NAME="CoC_Bot" # Rename for each instance
-
 source .venv/bin/activate
 rm -rf build dist *.spec
 
 pyinstaller \
-  --name "${NAME}" \
+  --name "CoC_Bot" \
   --onefile \
   --icon="media/CoC_Bot.icns" \
   --add-data "assets:assets" \
