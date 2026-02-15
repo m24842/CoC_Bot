@@ -4,7 +4,6 @@ import sys
 import cv2
 import json
 import time
-import shlex
 import signal
 import atexit
 import ctypes
@@ -60,9 +59,8 @@ def disable_sleep():
         if os.geteuid() == 0:
             subprocess.run(["sudo", "pmset", "-a", "disablesleep", "1"], check=True)
         else:
-            sleep_helper = os.path.join(os.path.dirname(__file__), "display_sleep.py")
-            cmd = f'{shlex.quote(sys.executable)} {shlex.quote(sleep_helper)} {os.getpid()}'
-            subprocess.Popen(["osascript", "-e", f'do shell script "{cmd}" with administrator privileges'])
+            sleep_helper = os.path.join(os.path.dirname(__file__), "sleep_helper.sh")
+            subprocess.Popen(["osascript", "-e", f'do shell script "{sleep_helper} {os.getpid()}" with administrator privileges'])
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 
