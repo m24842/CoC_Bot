@@ -12,18 +12,35 @@ class Tee:
 
     def write(self, data):
         for s in self.streams:
-            s.write(data)
-            s.flush()
+            try:
+                s.write(data)
+                s.flush()
+            except:
+                pass
 
     def flush(self):
         for s in self.streams:
-            s.flush()
+            try:
+                s.flush()
+            except:
+                pass
 
 def enable_logging(id="main"):
-    os.makedirs("debug", exist_ok=True)
+    base_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+    log_dir = os.path.join(base_dir, "debug")
+    os.makedirs(log_dir, exist_ok=True)
 
-    log = open(f"debug/{id}.log", "a", buffering=1)
-    os.chmod(f"debug/{id}.log", 0o666)
+    log_path = os.path.join(log_dir, f"{id}.log")
+    log_file = open(log_path, "a", buffering=1)
+    try:
+        os.chmod(log_path, 0o666)
+    except:
+        pass
 
-    sys.stdout = Tee(sys.stdout, log)
-    sys.stderr = Tee(sys.stderr, log)
+    if getattr(sys, "frozen", False):
+        streams = [log_file]
+    else:
+        streams = [log_file, sys.stdout, sys.stderr]
+
+    sys.stdout = Tee(*streams)
+    sys.stderr = Tee(*streams)

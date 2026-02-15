@@ -10,17 +10,7 @@ from configs import *
 class Attacker:
     def __init__(self):
         self.assets = Asset_Manager.attacker_assets
-
-    # ============================================================
-    # 📁 Asset & Image Processing
-    # ============================================================
-
-    def load_assets(self):
-        assets = {}
-        for file in os.listdir(ATTACKER_ASSETS_DIR):
-            assets[file.replace('.png', '')] = cv2.imread(os.path.join(ATTACKER_ASSETS_DIR, file), cv2.IMREAD_COLOR)
-        return assets
-
+    
     # ============================================================
     # 📱 Screen Interaction
     # ============================================================

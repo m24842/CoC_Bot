@@ -16,6 +16,7 @@ class CoC_Bot:
             Exit_Handler.register(enable_sleep)
         
         self.start_bluestacks()
+        self.connect_adb()
         self.upgrader = Upgrader()
         self.attacker = Attacker()
 
@@ -37,19 +38,6 @@ class CoC_Bot:
             except Exception as e:
                 if configs.DEBUG: print("update_status", e)
     
-    def start_web_app(self):
-        proc = subprocess.Popen(
-            [sys.executable, "./app/app.py"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-        )
-        def cleanup():
-            try:
-                proc.terminate()
-            except Exception:
-                pass
-        Exit_Handler.register(cleanup)
-    
     def start_bluestacks(self):
         if sys.platform == "darwin":
             subprocess.Popen([
@@ -64,18 +52,10 @@ class CoC_Bot:
             subprocess.Popen([r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, startupinfo=startupinfo)
         
         for _ in range(120):
-            if self.check_bluestacks(): break
-            time.sleep(0.5)
-        if configs.DEBUG: print("BlueStacks started.")
-        
-        for _ in range(120):
-            try:
-                connect_adb()
+            if self.check_bluestacks():
+                if configs.DEBUG: print("BlueStacks started.")
                 return
-            except Exception as e:
-                if configs.DEBUG: print("start_bluestacks", e)
             time.sleep(0.5)
-        if configs.DEBUG: print("Connected to ADB.")
         
         raise Exception("BlueStacks failed to start.")
     
@@ -85,6 +65,17 @@ class CoC_Bot:
                 return True
         return False
 
+    def connect_adb(self):
+        for _ in range(120):
+            try:
+                connect_adb()
+                if configs.DEBUG: print("Connected to ADB.")
+                return
+            except Exception as e:
+                if configs.DEBUG: print("connect_adb", e)
+            time.sleep(0.5)
+        raise Exception("Failed to connect to ADB.")
+    
     # ============================================================
     # ⏱️ Task Execution
     # ============================================================
