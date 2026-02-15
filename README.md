@@ -79,6 +79,6 @@
 
     > 💡 __Tip__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
 
-    > 💡 __Tip__: If not using the bot for development purposes, it can be built into an executable for convenience using [build.sh](scripts/build.sh). If using more than one instance, the instance that is run is determined by `DEFAULT_INSTANCE_ID`. To build an executable for each instance, just adjust `DEFAULT_INSTANCE_ID` and the name in [build.sh](scripts/build.sh).
+    > 💡 __Tip__: If not using the bot for development purposes, it can be built into an executable for convenience using [build.sh](scripts/build.sh). Command-line arguments can be used to specify the instance to run if using multiple bot instances.
 
     * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager, set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to `INSTANCE_IDS` and `ADB_ADDRESSES` in [configs.py](src/configs.py). Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).

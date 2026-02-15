@@ -1,7 +1,7 @@
-import os
 import sys
 import loguru
 import warnings
+from pathlib import Path
 
 loguru.logger.remove()
 warnings.filterwarnings("ignore", category=UserWarning, module='torch')
@@ -25,15 +25,19 @@ class Tee:
             except:
                 pass
 
-def enable_logging(id="main"):
-    base_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-    log_dir = os.path.join(base_dir, "debug")
-    os.makedirs(log_dir, exist_ok=True)
+def enable_logging(id):
+    if getattr(sys, "frozen", False):
+        APP_DATA_DIR = Path.home() / ".CoC_Bot"
+        APP_DATA_DIR.mkdir(exist_ok=True)
+        LOG_DIR = APP_DATA_DIR / "debug"
+    else:
+        LOG_DIR = Path("debug")
+    LOG_DIR.mkdir(exist_ok=True)
 
-    log_path = os.path.join(log_dir, f"{id}.log")
-    log_file = open(log_path, "a", buffering=1)
+    LOG_PATH = LOG_DIR / f"{id}.log"
+    log_file = open(LOG_PATH, "a", buffering=1)
     try:
-        os.chmod(log_path, 0o666)
+        LOG_PATH.chmod(0o666)
     except:
         pass
 

@@ -14,9 +14,11 @@ import argparse
 import subprocess
 import numpy as np
 import portalocker
+from pathlib import Path
 from datetime import datetime
 from bs4 import BeautifulSoup
 from rapidfuzz import process, distance
+from curl_cffi import requests as curl_requests
 from pyminitouch import MNTDevice, CommandBuilder
 import configs
 from configs import *
@@ -26,13 +28,14 @@ if sys.platform == "win32":
     ES_SYSTEM_REQUIRED = 0x00000001
 
 if getattr(sys, "frozen", False):
-    BASE_DIR = os.path.dirname(sys.executable)
+    APP_DATA_DIR = Path.home() / ".CoC_Bot"
+    APP_DATA_DIR.mkdir(exist_ok=True)
+    CACHE_PATH = APP_DATA_DIR / "cache.json"
 else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    CACHE_PATH = Path(__file__).parent / "cache.json"
 
 INSTANCE_ID = None
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
-CACHE_PATH = os.path.join(BASE_DIR, "cache.json")
 ADB_WINDOW_DIMS = WINDOW_DIMS
 
 def parse_args(debug=None, id=None):
@@ -59,7 +62,7 @@ def disable_sleep():
         if os.geteuid() == 0:
             subprocess.run(["sudo", "pmset", "-a", "disablesleep", "1"], check=True)
         else:
-            sleep_helper = os.path.join(os.path.dirname(__file__), "sleep_helper.sh")
+            sleep_helper = Path(__file__).parent / "sleep_helper.sh"
             subprocess.Popen(["osascript", "-e", f'do shell script "{sleep_helper} {os.getpid()}" with administrator privileges'])
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
@@ -119,7 +122,7 @@ def get_vocab():
     data = {}
     existing_vocab = None
     for _ in range(1):
-        if os.path.exists(CACHE_PATH):
+        if CACHE_PATH.exists():
             with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
                 data = json.load(f)
                 if "vocab" in data:
@@ -135,9 +138,11 @@ def get_vocab():
     ]
 
     for endpoint in endpoints:
-        res = requests.get(
+        # Bypass bot detection
+        res = curl_requests.get(
             f"https://clashofclans.fandom.com/wiki/Glossary/{endpoint}",
             timeout=(10, 20),
+            impersonate="chrome",
         )
         if res.status_code == 200:
             soup = BeautifulSoup(res.text, "lxml")
@@ -203,7 +208,7 @@ def to_int_tuple(*args):
 
 def get_telegram_chat_id():
     data = {}
-    if os.path.exists(CACHE_PATH):
+    if CACHE_PATH.exists():
         with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
             data = json.load(f)
             if "telegram_chat_id" in data: return data["telegram_chat_id"]
@@ -472,17 +477,17 @@ class Asset_Manager:
     @staticmethod
     def resource_path(rel_path):
         if hasattr(sys, "_MEIPASS"):
-            base_path = sys._MEIPASS
+            base_path = Path(sys._MEIPASS)
         else:
-            base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        return os.path.join(base_path, rel_path)
+            base_path = Path(__file__).parent.parent.resolve()
+        return base_path / rel_path
     
     @classmethod
     def load_misc_assets(cls):
         assets = {}
         path = cls.resource_path("assets/misc")
         for file in os.listdir(path):
-            assets[file.replace('.png', '')] = cv2.imread(os.path.join(path, file), cv2.IMREAD_COLOR)
+            assets[file.replace('.png', '')] = cv2.imread(path / file, cv2.IMREAD_COLOR)
         cls.misc_assets = assets
     
     @classmethod
@@ -490,7 +495,7 @@ class Asset_Manager:
         assets = {}
         path = cls.resource_path("assets/upgrader")
         for file in os.listdir(path):
-            assets[file.replace('.png', '')] = cv2.imread(os.path.join(path, file), cv2.IMREAD_COLOR)
+            assets[file.replace('.png', '')] = cv2.imread(path / file, cv2.IMREAD_COLOR)
         cls.upgrader_assets = assets
 
     @classmethod
@@ -498,7 +503,7 @@ class Asset_Manager:
         assets = {}
         path = cls.resource_path("assets/attacker")
         for file in os.listdir(path):
-            assets[file.replace('.png', '')] = cv2.imread(os.path.join(path, file), cv2.IMREAD_COLOR)
+            assets[file.replace('.png', '')] = cv2.imread(path / file, cv2.IMREAD_COLOR)
         cls.attacker_assets = assets
 
 Asset_Manager.load_misc_assets()
