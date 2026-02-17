@@ -610,33 +610,34 @@ class Upgrader:
     # 📡 Upgrade Monitoring
     # ============================================================
     
-    def run_home_base(self):
+    def run_home_base(self, exclude_base=False, exclude_lab=False):
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_down()
         
         # Building upgrades
         upgrades_started = []
-        counter = 0
-        while counter < MAX_UPGRADES_PER_CHECK:
-            counter += 1
-            try:
-                initial_builders = get_home_builders(1)
-                if initial_builders == 0: break
-                upgraded = self.home_upgrade()
-                time.sleep(0.5)
-                final_builders = get_home_builders(1)
-                if upgraded is not None:
-                    if final_builders < initial_builders: upgrades_started.append(upgraded)
-                    elif final_builders == initial_builders and upgraded != "wall": break
-                else: break
-            except:
-                pass
+        if not exclude_base:
+            counter = 0
+            while counter < MAX_UPGRADES_PER_CHECK:
+                counter += 1
+                try:
+                    initial_builders = get_home_builders(1)
+                    if initial_builders == 0: break
+                    upgraded = self.home_upgrade()
+                    time.sleep(0.5)
+                    final_builders = get_home_builders(1)
+                    if upgraded is not None:
+                        if final_builders < initial_builders: upgrades_started.append(upgraded)
+                        elif final_builders == initial_builders and upgraded != "wall": break
+                    else: break
+                except:
+                    pass
         self.assign_builder_assistant()
         
         # Lab upgrades
         lab_upgrades_started = []
         try:
-            if not home_lab_excluded() and self.home_lab_available(1):
+            if not exclude_lab and self.home_lab_available(1):
                 upgraded = self.home_lab_upgrade()
                 time.sleep(0.5)
                 final_lab_avail = self.home_lab_available(1)
@@ -648,32 +649,33 @@ class Upgrader:
         for upgrade in upgrades_started + lab_upgrades_started:
             send_notification(f"Started upgrading {upgrade}")
     
-    def run_builder_base(self):
+    def run_builder_base(self, exclude_base=False, exclude_lab=False):
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_down()
         
         # Building upgrades
         upgrades_started = []
-        counter = 0
-        while counter < MAX_UPGRADES_PER_CHECK:
-            counter += 1
-            try:
-                initial_builders = get_builder_builders(1)
-                if initial_builders == 0: break
-                upgraded = self.builder_upgrade()
-                time.sleep(0.5)
-                final_builders = get_builder_builders(1)
-                if upgraded is not None:
-                    if final_builders < initial_builders: upgrades_started.append(upgraded)
-                    elif final_builders == initial_builders and upgraded != "wall": break
-                else: break
-            except:
-                pass
+        if not exclude_base:
+            counter = 0
+            while counter < MAX_UPGRADES_PER_CHECK:
+                counter += 1
+                try:
+                    initial_builders = get_builder_builders(1)
+                    if initial_builders == 0: break
+                    upgraded = self.builder_upgrade()
+                    time.sleep(0.5)
+                    final_builders = get_builder_builders(1)
+                    if upgraded is not None:
+                        if final_builders < initial_builders: upgrades_started.append(upgraded)
+                        elif final_builders == initial_builders and upgraded != "wall": break
+                    else: break
+                except:
+                    pass
         
         # Lab upgrades
         lab_upgrades_started = []
         try:
-            if not builder_lab_excluded() and self.builder_lab_available(1):
+            if not exclude_lab and self.builder_lab_available(1):
                 upgraded = self.builder_lab_upgrade()
                 time.sleep(0.5)
                 final_lab_avail = self.builder_lab_available(1)

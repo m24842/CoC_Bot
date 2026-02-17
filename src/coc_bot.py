@@ -90,33 +90,33 @@ class CoC_Bot:
                 if start_coc():
                     self.update_status("now")
                     
-                    home_base_excluded_temp = home_base_excluded()
-                    home_lab_excluded_temp = home_lab_excluded()
-                    skip_home_base_upgrades = home_base_excluded_temp and home_lab_excluded_temp
-                    home_attacks_excluded_temp = home_attacks_excluded()
+                    exclude_home_base = home_base_excluded()
+                    exclude_home_lab = home_lab_excluded()
+                    skip_home_base_upgrades = exclude_home_base and exclude_home_lab
+                    exclude_home_attacks = home_attacks_excluded()
                     
-                    builder_base_excluded_temp = builder_base_excluded()
-                    builder_lab_excluded_temp = builder_lab_excluded()
-                    skip_builder_base_upgrades = builder_base_excluded_temp and builder_lab_excluded_temp
-                    builder_attacks_excluded_temp = builder_attacks_excluded()
+                    exclude_builder_base = builder_base_excluded()
+                    exclude_builder_lab = builder_lab_excluded()
+                    skip_builder_base_upgrades = exclude_builder_base and exclude_builder_lab
+                    exclude_builder_attacks = builder_attacks_excluded()
                     
                     # Check home base
-                    if not skip_home_base_upgrades or not home_attacks_excluded_temp:
+                    if not skip_home_base_upgrades or not exclude_home_attacks:
                         to_home_base()
                     
                     if not skip_home_base_upgrades:
-                        self.upgrader.run_home_base()
-                    if not home_attacks_excluded_temp:
+                        self.upgrader.run_home_base(exclude_home_base, exclude_home_lab)
+                    if not exclude_home_attacks:
                         self.attacker.run_home_base(restart=not skip_home_base_upgrades or not skip_builder_base_upgrades)
                     
-                    if not skip_builder_base_upgrades or not builder_attacks_excluded_temp:
+                    if not skip_builder_base_upgrades or not exclude_builder_attacks:
                         to_builder_base()
                     
                     # Check builder base
                     if not skip_builder_base_upgrades:
                         self.upgrader.collect_builder_attack_elixir()
-                        self.upgrader.run_builder_base()
-                    if not builder_attacks_excluded_temp:
+                        self.upgrader.run_builder_base(exclude_builder_base, exclude_builder_lab)
+                    if not exclude_builder_attacks:
                         self.attacker.run_builder_base()
                     
                     to_home_base()
