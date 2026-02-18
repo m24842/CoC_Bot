@@ -16,7 +16,9 @@ bot_packages = [
     "portalocker",
     "pure-python-adb",
     "pyminitouch",
+    "pywebview",
     "psutil",
+    "pyinstaller",
 ]
 
 web_app_packages = [

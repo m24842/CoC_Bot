@@ -22,6 +22,7 @@ from curl_cffi import requests as curl_requests
 from pyminitouch import MNTDevice, CommandBuilder
 import configs
 from configs import *
+from gui import get_gui
 
 if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
@@ -38,24 +39,33 @@ INSTANCE_ID = None
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 ADB_WINDOW_DIMS = WINDOW_DIMS
 
-def parse_args(debug=None, id=None):
-    global INSTANCE_ID, ADB_ADDRESS
+def parse_args(debug=None, id=None, gui=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-    parser.add_argument("--id", type=str, default=DEFAULT_INSTANCE_ID, help="Instance ID")
+    parser.add_argument("--debug", action="store_true", default=configs.DEBUG, help="Enable debug mode")
+    parser.add_argument("--id", type=str, default=None, help="Instance ID")
+    parser.add_argument("--gui", action="store_true", default=configs.LOCAL_GUI, help="Run with GUI")
     args = parser.parse_args()
     configs.DEBUG = args.debug if debug is None else debug
-    assert args.id in INSTANCE_IDS, f"Invalid instance ID. Must be one of: {INSTANCE_IDS}"
-    INSTANCE_ID = args.id if id is None else id
-    if WEB_APP_URL != "": 
+    configs.LOCAL_GUI = args.gui if gui is None else gui
+    if id is not None:
+        assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
+        args.id = id
+    elif args.id is None and not configs.LOCAL_GUI:
+        args.id = configs.DEFAULT_INSTANCE_ID
+    return args
+
+def init_instance(id):
+    global INSTANCE_ID, ADB_ADDRESS
+    assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
+    INSTANCE_ID = id
+    ADB_ADDRESS = configs.ADB_ADDRESSES[configs.INSTANCE_IDS.index(INSTANCE_ID)]
+    if WEB_APP_URL != "":
         requests.post(
             f"{WEB_APP_URL}/instances",
             auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
             json={"id": INSTANCE_ID},
             timeout=(10, 20)
         )
-    ADB_ADDRESS = ADB_ADDRESSES[INSTANCE_IDS.index(INSTANCE_ID)]
-    return args
 
 def disable_sleep():
     if sys.platform == "darwin":
@@ -252,65 +262,60 @@ def send_notification(text):
         except: pass
 
 def get_exclusions():
-    assert WEB_APP_URL != "", "Undefined WEB_APP_URL"
-    res = requests.get(
-        f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
-        auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
-        timeout=(10, 20)
-    )
-    if res.status_code == 200:
-        exclusions = res.json().get("exclusions", [])
-        return exclusions
-    return []
+    if WEB_APP_URL != "":
+        res = requests.get(
+            f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
+            auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+            timeout=(10, 20)
+        )
+        if res.status_code == 200:
+            exclusions = res.json().get("exclusions", [])
+            return exclusions
+        return []
+    elif configs.LOCAL_GUI:
+        return get_gui().get_exclusions()
 
 def heros_excluded():
     try:
-        exclusions = get_exclusions()
-        return "heros" in exclusions
+        return "heros" in get_exclusions()
     except:
-        return UPGRADE_HEROS
+        return configs.UPGRADE_HEROS
 
 def home_base_excluded():
     try:
-        exclusions = get_exclusions()
-        return "home_base" in exclusions
+        return "home_base" in get_exclusions()
     except:
-        return UPGRADE_HOME_BASE
+        return configs.UPGRADE_HOME_BASE
 
 def builder_base_excluded():
     try:
-        exclusions = get_exclusions()
-        return "builder_base" in exclusions
+        return "builder_base" in get_exclusions()
     except:
-        return UPGRADE_BUILDER_BASE
+        return configs.UPGRADE_BUILDER_BASE
 
 def home_lab_excluded():
     try:
-        exclusions = get_exclusions()
-        return "home_lab" in exclusions
+        return "home_lab" in get_exclusions()
     except:
-        return UPGRADE_HOME_LAB
+        return configs.UPGRADE_HOME_LAB
 
 def builder_lab_excluded():
     try:
-        exclusions = get_exclusions()
-        return "builder_lab" in exclusions
+        return "builder_lab" in get_exclusions()
     except:
-        return UPGRADE_BUILDER_LAB
+        return configs.UPGRADE_BUILDER_LAB
 
 def home_attacks_excluded():
     try:
-        exclusions = get_exclusions()
-        return "home_attacks" in exclusions
+        return "home_attacks" in get_exclusions()
     except:
-        return not ATTACK_HOME_BASE
+        return not configs.ATTACK_HOME_BASE
 
 def builder_attacks_excluded():
     try:
-        exclusions = get_exclusions()
-        return "builder_attacks" in exclusions
+        return "builder_attacks" in get_exclusions()
     except:
-        return not ATTACK_BUILDER_BASE
+        return not configs.ATTACK_BUILDER_BASE
 
 def to_home_base():
     try:

@@ -9,10 +9,14 @@ TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 WEB_APP_URL = "" # (e.g. 12.34.567.890:1234)
 WEB_APP_PORT = 1234
 WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD = "", "" # (leave empty if not applicable)
+
+# REQUIRED: Instance Settings
 INSTANCE_IDS = ["main"]
+ADB_ADDRESSES = ["127.0.0.1:5555"] # Bluestacks ADB addresses in order of instance IDs
 DEFAULT_INSTANCE_ID = INSTANCE_IDS[0]
 
 # REQUIRED: General Settings
+LOCAL_GUI = True # web app not required
 CHECK_INTERVAL = 5 * 60 # seconds
 
 # REQUIRED: Upgrade settings
@@ -37,5 +41,4 @@ ATTACK_BUILDER_BASE = True # can be overridden on web app
 DEBUG = False
 DISABLE_DEVICE_SLEEP = True
 WINDOW_DIMS = (1920, 1080) # width, height
-ADB_ADDRESSES = ["127.0.0.1:5555"] # Bluestacks ADB addresses in order of instance IDs
 ADB_ABS_DIR = "" # absolute path to dir with adb executable, leave empty to use system PATH

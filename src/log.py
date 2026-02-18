@@ -42,9 +42,8 @@ def enable_logging(id):
         pass
 
     if getattr(sys, "frozen", False):
-        streams = [log_file]
+        sys.stdout = Tee(*[log_file])
+        sys.stderr = Tee(*[log_file])
     else:
-        streams = [log_file, sys.stdout, sys.stderr]
-
-    sys.stdout = Tee(*streams)
-    sys.stderr = Tee(*streams)
+        sys.stdout = Tee(*[log_file, sys.__stdout__])
+        sys.stderr = Tee(*[log_file, sys.__stderr__])

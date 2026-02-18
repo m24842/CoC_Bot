@@ -15,8 +15,8 @@
 * Multiple accounts 👥
 
 ## Quality of Life Features
-* View bot status on web app 🚦
-* Resume / pause bot execution from web app ⏯️
+* View bot status on desktop or web app 🚦
+* Resume / pause bot execution from desktop or web app ⏯️
 * iPhone shortcut to auto resume / pause bot when CoC is opened by user ⏯️
 * Telegram and web app notifications 🔔
 
@@ -32,6 +32,7 @@
     * Enable Android Debug Bridge
     * Install Clash of Clans from Google Play
         * Default troop deployment size
+        * Standard or XL scenery
 4. [minitouch](https://app.unpkg.com/minitouch-prebuilt-support10@1.2.0/files/prebuilt) 
 (__OPTIONAL__: pyminitouch should automate this)
     * Download prebuilt binary
@@ -79,6 +80,6 @@
 
     > 💡 __Tip__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
 
-    > 💡 __Tip__: If not using the bot for development purposes, it can be built into an executable for convenience using [build.sh](scripts/build.sh). Command-line arguments can be used to specify the instance to run if using multiple bot instances.
+    > 💡 __Tip__: If not using the bot for development purposes, it can be built into an executable or desktop app for convenience using [build.sh](scripts/build.sh). The desktop app GUI or command-line arguments can be used to specify the instance to run if using multiple bot instances.
 
     * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager, set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to `INSTANCE_IDS` and `ADB_ADDRESSES` in [configs.py](src/configs.py). Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).
