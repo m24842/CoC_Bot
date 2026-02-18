@@ -31,8 +31,8 @@ body {
 }
 
 h1 {
-    font-size: 5em;
-    margin: 10px;
+    font-size: 3em;
+    margin: 5px;
 }
 
 button, input {
@@ -49,45 +49,45 @@ button, input {
 }
 
 p {
-    font-size: 3em;
-    margin: 10px;
+    font-size: 1.5em;
+    margin: 5px;
 }
 
 header img {
-    width: min(30em, 50%);
-    height: min(30em, 50%);
+    width: min(30em, 70%);
+    height: min(30em, 70%);
     object-fit: cover;
     border-radius: 20%;
     display: block;
     margin: auto;
-    box-shadow: 0 8px 20px var(--shadow);
+    box-shadow: 0 8px 0.25em var(--shadow);
 }
 
 .container {
-    width: min(30em, 60%);
+    width: min(30em, 80%);
     margin: 0 auto;
 }
 
 .stacked-buttons {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 5px;
+    margin-bottom: 5px;
 }
 
 @media (hover: hover) and (pointer: fine) {
     .stacked-buttons button {
         width: 100%;
         font-family: 'Rubik', sans-serif;
-        padding: 20px;
-        font-size: 4em;
+        padding: 0.25em;
+        font-size: 2em;
         font-weight: bold;
         border: none;
-        border-radius: 25px;
+        border-radius: 0.5em;
         background-color: rgb(250, 217, 56);
         color: var(--text_inverted);
         cursor: pointer;
-        box-shadow: 0 3px 20px var(--shadow);
+        box-shadow: 0 3px 0.25em var(--shadow);
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
     }
 
@@ -102,15 +102,15 @@ header img {
     .stacked-buttons button {
         width: 100%;
         font-family: 'Rubik', sans-serif;
-        padding: 20px;
-        font-size: 4em;
+        padding: 0.25em;
+        font-size: 2em;
         font-weight: bold;
         border: none;
-        border-radius: 25px;
+        border-radius: 0.5em;
         background-color: rgb(250, 217, 56);
         color: var(--text_inverted);
         cursor: pointer;
-        box-shadow: 0 3px 20px var(--shadow);
+        box-shadow: 0 3px 0.25em var(--shadow);
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
     }
 
@@ -123,40 +123,40 @@ header img {
 
 .custom-input-form {
     display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 5px;
+    margin-bottom: 5px;
 }
 
 .custom-input-form input {
     flex: 1;
     font-family: 'Rubik', sans-serif;
-    padding: 20px;
-    font-size: 4em;
+    padding: 0.25em;
+    font-size: 2em;
     font-weight: bold;
     width: 90px;
     text-align: center;
     border-width: 6px;
-    border-radius: 25px;
+    border-radius: 0.5em;
     border-color: var(--text);
     background-color: var(--bg);
     color: var(--text);
     cursor: text;
-    box-shadow: 0 3px 20px var(--shadow);
+    box-shadow: 0 3px 0.25em var(--shadow);
     transition: background 0.3s;
 }
 
 @media (hover: hover) and (pointer: fine) {
     .custom-input-form button {
         font-family: 'Rubik', sans-serif;
-        padding: 20px 0.5em;
-        font-size: 4em;
+        padding: 0.25em 0.5em;
+        font-size: 2em;
         font-weight: bold;
         border: none;
-        border-radius: 25px;
+        border-radius: 0.5em;
         background-color: rgb(250, 217, 56);
         color: var(--text_inverted);
         cursor: pointer;
-        box-shadow: 0 3px 20px var(--shadow);
+        box-shadow: 0 3px 0.25em var(--shadow);
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
     }
 
@@ -170,15 +170,15 @@ header img {
 @media (hover: none) and (pointer: coarse) {
     .custom-input-form button {
         font-family: 'Rubik', sans-serif;
-        padding: 20px 0.5em;
-        font-size: 4em;
+        padding: 0.25em 0.5em;
+        font-size: 2em;
         font-weight: bold;
         border: none;
-        border-radius: 25px;
+        border-radius: 0.5em;
         background-color: rgb(250, 217, 56);
         color: var(--text_inverted);
         cursor: pointer;
-        box-shadow: 0 3px 20px var(--shadow);
+        box-shadow: 0 3px 0.25em var(--shadow);
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
     }
 
@@ -192,23 +192,23 @@ header img {
 .cancel-button {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 5px;
+    margin-bottom: 5px;
 }
 
 @media (hover: hover) and (pointer: fine) {
     .cancel-button button {
         width: 100%;
         font-family: 'Rubik', sans-serif;
-        padding: 20px;
-        font-size: 4em;
+        padding: 0.25em;
+        font-size: 2em;
         font-weight: bold;
         border: none;
-        border-radius: 25px;
+        border-radius: 0.5em;
         background-color: rgb(228, 98, 86);
         color: var(--text_inverted);
         cursor: pointer;
-        box-shadow: 0 3px 20px var(--shadow);
+        box-shadow: 0 3px 0.25em var(--shadow);
         transition: transform 0.2s ease-out, background-color 0.1s ease-out;
     }
 
@@ -223,15 +223,15 @@ header img {
     .cancel-button button {
         width: 100%;
         font-family: 'Rubik', sans-serif;
-        padding: 20px;
-        font-size: 4em;
+        padding: 0.25em;
+        font-size: 2em;
         font-weight: bold;
         border: none;
-        border-radius: 25px;
+        border-radius: 0.5em;
         background-color: rgb(228, 98, 86);
         color: var(--text_inverted);
         cursor: pointer;
-        box-shadow: 0 3px 20px var(--shadow);
+        box-shadow: 0 3px 0.25em var(--shadow);
         transition: transform 0.5s ease-out, background-color 0.5s ease-out;
     }
 
@@ -249,18 +249,18 @@ header img {
     width: 100%;
     background-color: var(--notification_highlight);
     border: none;
-    border-radius: 25px;
-    box-shadow: 0 8px 20px var(--shadow);
+    border-radius: 0.75em;
+    box-shadow: 0 5px 0.25em var(--shadow);
 }
 
 .notifications h1 {
-    font-size: 2.25em;
-    margin: 10px;
-    padding: 20px;
+    font-size: 1.2em;
+    margin: 5px;
+    padding: 0.25em;
     background-color: rgb(59, 59, 59);
     color: var(--notification_highlight);
     border: none;
-    border-radius: 15px;
+    border-radius: 0.5em;
 }
 
 .notif {
@@ -268,14 +268,14 @@ header img {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
-    margin: 0 10px 10px 10px;
+    padding: 5px 0.75em;
+    margin: 0 5px 5px 5px;
     background-color: var(--notif_background);
-    border-radius: 15px;
+    border-radius: 0.5em;
 }
 
 .notif_data {
-    font-size: 1.75em;
+    font-size: 1em;
     text-align: left;
     padding-right: 1em;
     color: rgb(59, 59, 59);
@@ -284,7 +284,7 @@ header img {
 .notif_age {
     width: 2em;
     padding-left: 0;
-    font-size: 1.5em;
+    font-size: 1em;
     color: rgb(124, 124, 124);
     text-align: right;
 }
@@ -292,15 +292,15 @@ header img {
 @media (hover: hover) and (pointer: fine) {
     .instance_tag {
         position: fixed;
-        top: 30px;
-        right: -10px;
-        max-width: calc(9.5em + 10px);
+        top: -10em;
+        right: 50%;
+        transform: translateX(50%);
         background-color: rgb(250, 217, 56);
-        border-radius: 15px 0px 0px 15px;
-        padding: 0.5em calc(1.5em + 10px) 0.5em 1.5em;
-        box-shadow: 0 3px 20px var(--shadow);
+        border-radius: 0px 0px 0.5em 0.5em;
+        padding: 10.3em 1em 0.3em 1em;
+        box-shadow: 0 3px 0.25em var(--shadow);
         z-index: 10;
-        transition: transform 0.2s ease-out, background-color 0.1s ease-out;
+        transition: background-color 0.1s ease-out;
 
         white-space: normal;
         overflow-wrap: anywhere;
@@ -308,7 +308,6 @@ header img {
     }
 
     .instance_tag:hover {
-        transform: translateX(-10px);
         background-color: rgb(120, 216, 230);
         transition-duration: 0.2s;
     }
@@ -317,15 +316,16 @@ header img {
 @media (hover: none) and (pointer: coarse) {
     .instance_tag {
         position: fixed;
-        top: 30px;
-        right: -10px;
-        max-width: calc(9.5em + 10px);
+        top: 0px;
+        right: 50%;
+        transform: translateX(50%);
+        max-width: calc(9.5em + 5px);
         background-color: rgb(250, 217, 56);
-        border-radius: 15px 0px 0px 15px;
-        padding: 0.5em calc(1.5em + 10px) 0.5em 1.5em;
-        box-shadow: 0 3px 20px var(--shadow);
+        border-radius: 0px 0px 0.5em 0.5em;
+        padding: 0.3em 1em 0.3em 1em;
+        box-shadow: 0 3px 0.25em var(--shadow);
         z-index: 10;
-        transition: transform 0.5s ease-out, background-color 0.5s ease-out;
+        transition: background-color 0.5s ease-out;
 
         white-space: normal;
         overflow-wrap: anywhere;
@@ -333,14 +333,13 @@ header img {
     }
 
     .instance_tag:active {
-        transform: translateX(-10px);
         background-color: rgb(120, 216, 230);
         transition-duration: 0.2s;
     }
 }
 
 .instance_id {
-    font-size: 2em;
+    font-size: 1em;
     color: var(--text_inverted);
 }
 
@@ -351,18 +350,18 @@ header img {
     width: 100%;
     background-color: var(--notification_highlight);
     border: none;
-    border-radius: 25px;
-    box-shadow: 0 8px 20px var(--shadow);
+    border-radius: 0.75em;
+    box-shadow: 0 5px 0.25em var(--shadow);
 }
 
 .exclusions h1 {
-    font-size: 2.25em;
-    margin: 10px;
-    padding: 20px;
+    font-size: 1.2em;
+    margin: 5px;
+    padding: 0.25em;
     background-color: rgb(59, 59, 59);
     color: var(--notification_highlight);
     border: none;
-    border-radius: 15px;
+    border-radius: 0.5em;
 }
 
 .exclusions-form {
@@ -370,7 +369,7 @@ header img {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 0 10px 0 10px;
+    margin: 0 5px 0 5px;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -380,11 +379,11 @@ header img {
         align-items: center;
         justify-content: center;
         width: 100%;
-        padding: 10px 20px;
-        margin: 0 10px 10px 10px;
+        padding: 5px 0.25em;
+        margin: 0 5px 5px 5px;
         background-color: rgb(250, 217, 56);
-        border-radius: 15px;
-        font-size: 1.75em;
+        border-radius: 0.5em;
+        font-size: 1em;
         font-weight: bold;
         color: var(--text_inverted);
         text-align: center;
@@ -407,11 +406,11 @@ header img {
         align-items: center;
         justify-content: center;
         width: 100%;
-        padding: 10px 20px;
-        margin: 0 10px 10px 10px;
+        padding: 5px 0.25em;
+        margin: 0 5px 5px 5px;
         background-color: var(--notif_background);
-        border-radius: 15px;
-        font-size: 1.75em;
+        border-radius: 0.5em;
+        font-size: 1em;
         font-weight: bold;
         color: var(--text_inverted);
         text-align: center;

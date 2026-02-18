@@ -6,6 +6,7 @@ import subprocess
 import utils
 from utils import *
 from configs import *
+from gui import get_gui
 from upgrader import Upgrader
 from attacker import Attacker
 
@@ -25,18 +26,19 @@ class CoC_Bot:
     # ============================================================
     
     def update_status(self, status):
-        if WEB_APP_URL == "": return
-        for _ in range(5):
-            try:
-                requests.post(
-                    f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status",
-                    auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
-                    json={"status": status},
-                    timeout=(10, 20)
-                )
-                return
-            except Exception as e:
-                if configs.DEBUG: print("update_status", e)
+        if WEB_APP_URL != "":
+            for _ in range(5):
+                try:
+                    requests.post(
+                        f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status",
+                        auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+                        json={"status": status},
+                        timeout=(10, 20)
+                    )
+                    break
+                except Exception as e:
+                    if configs.DEBUG: print("update_status", e)
+        if configs.LOCAL_GUI: get_gui().set_status(status)
     
     def start_bluestacks(self):
         if sys.platform == "darwin":

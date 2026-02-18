@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CoC Bot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div id="home">
+        <header>
+            <img src="coc_bot_logo.png" alt="CoC Bot">
+            <h1 class="themed_text">CoC Bot</h1>
+        </header>
+
+        <div class="container">
+            <form method="POST" class="custom-input-form">
+                <input type="text" name="id" placeholder="ID" required title="Instance ID" autofocus>
+                <button type="submit" name="id"><i class="fas fa-arrow-right"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <div id="control" style="display: none;">
+        <header>
+            <div class="instance_tag">
+                <strong class="instance_id" id="instance_id"></strong>
+            </div>
+            
+            <img src="coc_bot_logo.png" alt="CoC Bot">
+            <h1 class="themed_text">CoC Bot</h1>
+        </header>
+
+        <div class="container">
+
+            <div style="margin-bottom:25px;">
+                <p>
+                    <span class="themed_padding" id="left_padding"></span><!--
+                --><strong class="themed_text" id="countdown_title"></strong><!--
+                --><span class="themed_text" id="countdown_time"></span><!--
+                --><span class="themed_padding" id="right_padding">.</span>
+                </p>
+                <strong class="themed_text" id="run_status" style="font-size:1em; padding:0;"></strong>
+            </div>
+
+            <form method="POST" class="stacked-buttons">
+                <button type="submit" name="time" value="5">5 min</button>
+                <button type="submit" name="time" value="15">15 min</button>
+                <button type="submit" name="time" value="30">30 min</button>
+            </form>
+
+            <form method="POST" class="custom-input-form">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" name="custom_time" placeholder="Custom" min="1" required title="Minutes">
+                <button type="submit" name="custom_time"><i class="fas fa-arrow-right"></i></button>
+            </form>
+
+            <form method="POST" class="cancel-button">
+                <button type="submit" name="time" value="0">Cancel</button>
+            </form>
+
+            <!-- <div id="notifications" class="notifications" style="margin-top:30px;">
+                <h1 class="notifications_title">Recent Notifications</h1>
+            </div> -->
+
+            <div id="exclusions" class="exclusions" style="margin-top:30px;">
+                <h1 class="exclusions_title">Task Settings</h1>
+                <form method="POST" class="exclusions-form"></form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let id = null;
+        let start = Date.now();
+        let current_time = start;
+        let end_time = 0;
+        let run_status = "";
+        let notifications = [];
+        let exclusions = [];
+
+        const exclusion_options = ["Heros", "Home Base", "Builder Base", "Home Lab", "Builder Lab", "Home Attacks", "Builder Attacks"];
+        const time_labels = ['d', 'h', 'm', 's'];
+
+        async function fetchExclusions() {
+            try {
+                const data = await window.pywebview.api.get_exclusions();
+                console.log(data)
+                exclusions = data.exclusions;
+            } catch (error) {
+                console.error('Error fetching exclusions:', error);
+            }
+        }
+
+        async function fetchNotifications() {
+            try {
+                const data = await window.pywebview.api.get_notifications();
+                const latest_notif = (notifications.length > 0) ? notifications[0].time_stamp : 0;
+                notifications = data;
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+            }
+        }
+
+        async function fetchCurrentTime() {
+            try {
+                const data = await window.pywebview.api.get_current_time();
+                current_time = data.current_time;
+                start = Date.now();
+            } catch (error) {
+                console.error('Error fetching current time:', error);
+            }
+        }
+
+        async function fetchEndTime() {
+            try {
+                const data = await window.pywebview.api.get_end_time();
+                end_time = data.end_time;
+            } catch (error) {
+                console.error('Error fetching countdown end time:', error);
+            }
+        }
+
+        async function fetchStatus() {
+            try {
+                const data = await window.pywebview.api.get_status();
+                run_status = data.status;
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            }
+        }
+
+        function fetchAll() {
+            if (!id) return;
+            fetchEndTime();
+            fetchStatus();
+            // fetchNotifications();
+            fetchExclusions();
+        }
+
+        setInterval(fetchAll, 1000);
+
+        function get_hms(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            return {hours, minutes, seconds: secs};
+        }
+
+        function updateNotifications() {
+            let currentIndex = 0;
+            while (currentIndex < notifications.length) {
+                const now = Date.now();
+
+                const notif = notifications[currentIndex];
+
+                const age = current_time - notif.time_stamp + (now - start) / 1000;
+                const days = Math.floor(age / 86400);
+                if (days > 7) {
+                    currentIndex++;
+                    continue;
+                }
+                const hours = Math.floor((age % 86400) / 3600);
+                const minutes = Math.floor((age % 3600) / 60);
+                const seconds = Math.floor(age % 60);
+                const time_array = [days, hours, minutes, seconds];
+                let time_index = 0;
+                while (time_index < time_array.length-1 && time_array[time_index]===0) {
+                    time_index++;
+                }
+                const time_string = time_array[time_index] + time_labels[time_index];
+
+                if (document.getElementById(`notif_${currentIndex}`)) {
+                    document.getElementById(`notif_${currentIndex}`).innerHTML = `
+                    <div class="notif">
+                        <div class="notif_data">${notif.data}</div>
+                        <div class="notif_age">${time_string}</div>
+                    </div>
+                    `;
+                } else {
+                    const notifDiv = document.createElement("div");
+                    notifDiv.className = "notification";
+                    notifDiv.id = `notif_${currentIndex}`;
+                    notifDiv.innerHTML = `
+                    <div class="notif">
+                        <div class="notif_data">${notif.data}</div>
+                        <div class="notif_age">${time_string}</div>
+                    </div>
+                    `;
+
+                    document.getElementById("notifications").appendChild(notifDiv);
+                }
+
+                currentIndex++;
+            }
+        }
+        
+        function updateLastChecked() {
+            const now = Date.now();
+            const total_time_left = end_time - current_time;
+            const time_left = Math.max(0, total_time_left - (now - start) / 1000);
+
+            let last_checked_string = "";
+            if (typeof run_status === "number") {
+                const age = current_time - run_status + (now - start) / 1000;
+                const days = Math.floor(age / 86400);
+                if (days < 7) {
+                    const {hours, minutes, seconds} = get_hms(age);
+                    const time_array = [days, hours, minutes, seconds];
+                    let time_index = 0;
+                    while (time_index < time_array.length-1 && time_array[time_index]===0) {
+                        time_index++;
+                    }
+                    last_checked_string = `Checked ${time_array[time_index] + time_labels[time_index]} ago`;
+                }
+            } else if (run_status == "now") {
+                last_checked_string = `Checking now`;
+            } else if (run_status == "error") {
+                last_checked_string = ``;
+            }
+            document.getElementById('run_status').innerText = last_checked_string;
+        }
+
+        function updateCountdown() {
+            const now = Date.now();
+            const total_time_left = end_time - current_time;
+            const time_left = Math.max(0, total_time_left - (now - start) / 1000);
+
+            if (run_status == "error") {
+                document.getElementById('countdown_title').innerText = `Error!`;
+                document.getElementById('countdown_time').innerText = ``;
+                document.getElementById('left_padding').innerText = ``;
+                document.getElementById('right_padding').innerText = ``;
+            } else if (time_left > 0) {
+                const {hours, minutes, seconds} = get_hms(time_left);
+                const time_array = [hours, minutes, seconds];
+                let time_index = 0;
+                while (time_index < time_array.length-2 && time_array[time_index] === 0) {
+                    time_index++;
+                }
+                let time_string = "";
+                if (time_array[time_index] !== 0) {
+                    time_string = `${time_array[time_index] + time_labels[time_index+1]} ${time_array[time_index+1] + time_labels[time_index+2]}`;
+                } else {
+                    time_string = `${time_array[time_index+1] + time_labels[time_index+2]}`;
+                }
+
+                document.getElementById('countdown_title').innerText = `Paused:`;
+                document.getElementById('countdown_time').innerText = ` ${time_string}`;
+                document.getElementById('left_padding').innerText = ``;
+                document.getElementById('right_padding').innerText = ``;
+            } else {
+                const num_dots = Math.floor((now / 500) % 4);
+                const dots = '.'.repeat(num_dots);
+                const padding_dots = '.'.repeat(3 - num_dots);
+
+                document.getElementById('countdown_title').innerText = `Running`;
+                document.getElementById('countdown_time').innerText = dots;
+                document.getElementById('left_padding').innerText = `...`;
+                document.getElementById('right_padding').innerText = padding_dots;
+            }
+        }
+
+        function initExclusions() {
+            const exclusion_form = document.querySelector(".exclusions-form");
+            exclusion_options.forEach(option => {
+                let button = document.createElement("button");
+                button.className = "exclusion";
+                button.name = "exclude";
+                button.type = "submit";
+                let name = option.toLowerCase().replace(" ", "_");
+                button.value = name;
+                button.innerText = option;
+                if (exclusions.includes(name)) {
+                    button.classList.add("active");
+                } else {
+                    button.classList.add("inactive");
+                }
+                exclusion_form.appendChild(button);
+            });
+        }
+
+        function updateExclusions() {
+            document.querySelectorAll(".exclusion").forEach(button => {
+                let name = button.value;
+                if (exclusions.includes(name)) {
+                    button.classList.remove("inactive");
+                    button.classList.add("active");
+                } else {
+                    button.classList.remove("active");
+                    button.classList.add("inactive");
+                }
+            });
+        }
+
+        function updateAll() {
+            updateCountdown();
+            updateLastChecked();
+            // updateNotifications();
+            updateExclusions();
+            requestAnimationFrame(updateAll);
+        }
+
+        initExclusions();
+        updateAll();
+
+        window.addEventListener("pywebviewready", async () => {
+            const id_temp = await window.pywebview.api.get_id();
+            if (id_temp) {
+                id = id_temp;
+                fetchCurrentTime();
+                fetchEndTime();
+                fetchStatus();
+                // fetchNotifications();
+                fetchExclusions();
+                document.getElementById("instance_id").textContent = id;
+                document.getElementById("home").style.display = "none";
+                document.getElementById("control").style.display = "block";
+            }
+        });
+
+        document.getElementsByName("custom_time").forEach(input => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/\D/g, '');
+            });
+        });
+
+        document.querySelectorAll("form").forEach(form => {
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                
+                const submitter = e.submitter;
+                
+                if (submitter.name === "id") {
+                    const id_temp = form.querySelector('input[name="id"]').value;
+                    const res = await window.pywebview.api.set_id(id_temp);
+                    if (res === 0) {
+                        alert("Invalid ID");
+                        return;
+                    } else {
+                        id = id_temp;
+                    }
+                    fetchCurrentTime();
+                    fetchEndTime();
+                    fetchStatus();
+                    // fetchNotifications();
+                    fetchExclusions();
+                    document.getElementById("instance_id").textContent = id;
+                    document.getElementById("home").style.display = "none";
+                    document.getElementById("control").style.display = "block";
+                } else if (submitter.name === "time") {
+                    const time = submitter.value;
+                    const data = await window.pywebview.api.set_end_time(time);
+                    if (data && data.end_time !== undefined) {
+                        end_time = data.end_time;
+                    }
+                    fetchCurrentTime();
+                } else if (submitter.name === "custom_time") {
+                    const time = form.querySelector('input[name="custom_time"]').value;
+                    const data = await window.pywebview.api.set_end_time(time);
+                    if (data && data.end_time !== undefined) {
+                        end_time = data.end_time;
+                    }
+                    fetchCurrentTime();
+                } else if (submitter.name === "exclude") {
+                    let action;
+                    if (submitter.classList.contains("active")) {
+                        submitter.classList.remove("active");
+                        submitter.classList.add("inactive");
+                        action = "remove";
+                    } else {
+                        submitter.classList.remove("inactive");
+                        submitter.classList.add("active");
+                        action = "add";
+                    }
+                    const data = await window.pywebview.api.exclude_item(action, submitter.value);
+                    if (data && data.exclusions !== undefined) {
+                        exclusions = data.exclusions;
+                    }
+                }
+
+                form.reset();
+            });
+        });
+    </script>
+</body>
+</html>
