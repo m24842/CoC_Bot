@@ -2,29 +2,27 @@
 
 PARENT_PID="$1"
 
-displaysleep() {
-    pmset -a displaysleep "$1"
+set_sleep() {
+    pmset -a sleep "$1"
 }
 
 parent_alive() {
-    if kill -0 "$1" 2>/dev/null; then
-        return 0  # true
-    else
-        return 1  # false
-    fi
+    kill -0 "$1" 2>/dev/null
 }
 
 cleanup() {
-    displaysleep 0
+    set_sleep "$ORIGINAL_SLEEP"
     exit 0
 }
 
 trap cleanup SIGTERM SIGINT
 
-displaysleep 1
+ORIGINAL_SLEEP=$(pmset -g | grep ' sleep ' | awk '{print $2}')
 
-while parent_alive "$PARENT_PID"; do
-    sleep 60
-done
+set_sleep 0
+
+if kill -0 "$PARENT_PID" 2>/dev/null; then
+    wait "$PARENT_PID"
+fi
 
 cleanup
