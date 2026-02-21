@@ -41,13 +41,15 @@ class GUI:
         self.shared_dict["status"] = ""
         self.shared_dict["end_time"] = 0
         self.shared_dict["exclude"] = self.manager.dict({
-            "upgrade_heros": not configs.UPGRADE_HEROS,
-            "upgrade_home_base": not configs.UPGRADE_HOME_BASE,
-            "upgrade_builder_base": not configs.UPGRADE_BUILDER_BASE,
-            "upgrade_home_lab": not configs.UPGRADE_HOME_LAB,
-            "upgrade_builder_lab": not configs.UPGRADE_BUILDER_LAB,
-            "attack_home_base": not configs.ATTACK_HOME_BASE,
-            "attack_builder_base": not configs.ATTACK_BUILDER_BASE,
+            "heros": not configs.UPGRADE_HEROS,
+            "home_base": not configs.UPGRADE_HOME_BASE,
+            "builder_base": not configs.UPGRADE_BUILDER_BASE,
+            "home_lab": not configs.UPGRADE_HOME_LAB,
+            "builder_lab": not configs.UPGRADE_BUILDER_LAB,
+            "home_attacks": not configs.ATTACK_HOME_BASE,
+            "builder_attacks": not configs.ATTACK_BUILDER_BASE,
+            "lab_assistant": not configs.ASSIGN_LAB_ASSISTANT,
+            "builder_assistant": not configs.ASSIGN_BUILDER_ASSISTANT,
         })
         self.proc = Process(target=run_gui, args=(self.shared_dict, self.stop_event, self.debug), daemon=True)
     

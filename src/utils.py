@@ -313,6 +313,18 @@ def builder_attacks_excluded():
     except:
         return not configs.ATTACK_BUILDER_BASE
 
+def lab_assistant_excluded():
+    try:
+        return "lab_assistant" in get_exclusions()
+    except:
+        return not configs.ASSIGN_LAB_ASSISTANT
+
+def builder_assistant_excluded():
+    try:
+        return "builder_assistant" in get_exclusions()
+    except:
+        return not configs.ASSIGN_BUILDER_ASSISTANT
+
 def to_home_base():
     try:
         get_home_builders(1)
