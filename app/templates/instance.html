@@ -76,7 +76,17 @@
             let notifications = {{ notifications | tojson }};
             let exclusions = {{ exclusions | tojson }};
 
-            const exclusion_options = ["Heros", "Home Base", "Builder Base", "Home Lab", "Builder Lab", "Home Attacks", "Builder Attacks"];
+            const exclusion_options = [
+                "Heros",
+                "Home Base",
+                "Builder Base",
+                "Home Lab",
+                "Builder Lab",
+                "Home Attacks",
+                "Builder Attacks",
+                "Lab Assistant",
+                "Builder Apprentice",
+            ];
             const time_labels = ['d', 'h', 'm', 's'];
 
             async function fetchExclusions() {

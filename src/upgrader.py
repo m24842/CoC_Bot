@@ -632,7 +632,8 @@ class Upgrader:
                     else: break
                 except:
                     pass
-        self.assign_builder_assistant()
+        if not builder_assistant_excluded():
+            self.assign_builder_assistant()
         
         # Lab upgrades
         lab_upgrades_started = []
@@ -644,7 +645,8 @@ class Upgrader:
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
         except:
             pass
-        self.assign_lab_assistant()
+        if not lab_assistant_excluded():
+            self.assign_lab_assistant()
         
         for upgrade in upgrades_started + lab_upgrades_started:
             send_notification(f"Started upgrading {upgrade}")
