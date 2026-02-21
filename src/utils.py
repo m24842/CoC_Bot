@@ -69,18 +69,14 @@ def init_instance(id):
 
 def disable_sleep():
     if sys.platform == "darwin":
-        if os.geteuid() == 0:
-            subprocess.run(["sudo", "pmset", "-a", "disablesleep", "1"], check=True)
-        else:
-            sleep_helper = Path(__file__).parent / "sleep_helper.sh"
-            subprocess.Popen(["osascript", "-e", f'do shell script "{sleep_helper} {os.getpid()}" with administrator privileges'])
+        sleep_helper = Path(__file__).parent / "sleep_helper.sh"
+        subprocess.Popen(["osascript", "-e", f'do shell script "{sleep_helper} {os.getpid()}" with administrator privileges'])
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 
 def enable_sleep():
     if sys.platform == "darwin":
-        if os.geteuid() == 0:
-            subprocess.run(["sudo", "pmset", "-a", "disablesleep", "0"], check=True)
+        pass
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
 
