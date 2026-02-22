@@ -1,4 +1,3 @@
-import os
 import cv2
 import time
 import scipy
@@ -251,6 +250,8 @@ class Attacker:
                 try:
                     get_home_builders(1)
                     break
+                except KeyboardInterrupt: raise
+                except SystemExit: raise
                 except: pass
             if time.time() - start_time >= timeout: return
             
@@ -270,6 +271,8 @@ class Attacker:
                 try:
                     get_builder_builders(1)
                     break
+                except KeyboardInterrupt: raise
+                except SystemExit: raise
                 except: pass
             if time.time() - start_time >= timeout: return
             

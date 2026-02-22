@@ -10,6 +10,6 @@ pyinstaller \
   --windowed \
   --icon="media/CoC_Bot.icns" \
   --add-data "assets:assets" \
-  --add-data "src/gui:gui" \
+  --add-data "src/gui_server:gui_server" \
   --add-data "src/sleep_helper.sh:." \
   "src/main.py"

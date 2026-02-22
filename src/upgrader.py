@@ -1,4 +1,3 @@
-import os
 import re
 import cv2
 import time
@@ -248,6 +247,8 @@ class Upgrader:
                 try:
                     get_home_builders(1)
                     self.click_home_builders()
+                except KeyboardInterrupt: raise
+                except SystemExit: raise
                 except: pass
                 time.sleep(0.5)
             
@@ -484,6 +485,8 @@ class Upgrader:
                 try:
                     get_builder_builders(1)
                     self.click_builder_builders()
+                except KeyboardInterrupt: raise
+                except SystemExit: raise
                 except: pass
                 time.sleep(0.5)
             
@@ -630,6 +633,8 @@ class Upgrader:
                         if final_builders < initial_builders: upgrades_started.append(upgraded)
                         elif final_builders == initial_builders and upgraded != "wall": break
                     else: break
+                except KeyboardInterrupt: raise
+                except SystemExit: raise
                 except:
                     pass
         if not builder_assistant_excluded():
@@ -643,6 +648,8 @@ class Upgrader:
                 time.sleep(0.5)
                 final_lab_avail = self.home_lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
         except:
             pass
         if not lab_assistant_excluded():
@@ -671,6 +678,8 @@ class Upgrader:
                         if final_builders < initial_builders: upgrades_started.append(upgraded)
                         elif final_builders == initial_builders and upgraded != "wall": break
                     else: break
+                except KeyboardInterrupt: raise
+                except SystemExit: raise
                 except:
                     pass
         
@@ -682,6 +691,8 @@ class Upgrader:
                 time.sleep(0.5)
                 final_lab_avail = self.builder_lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
         except:
             pass
         
