@@ -23,7 +23,7 @@ bot_packages = [
 
 web_app_packages = [
     "flask",
-    "waitress",
+    "flask-cors",
 ]
 
 bot_setup = input("Install bot dependencies? (y/n): ").lower() == 'y'

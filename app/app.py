@@ -8,11 +8,13 @@ import json
 import sqlite3
 from waitress import serve
 from flask import Flask, render_template, jsonify, abort, request
+from flask_cors import CORS
 from configs import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
+CORS(app)
 
 class Instance:
     def __init__(self, id, run_status="", end_time=0, exclusions=set()):
@@ -96,7 +98,15 @@ def home():
 def handle_instance(id):
     instance = instances[id]
     if id not in instances: abort(404)
-    return render_template("instance.html", id=id, end_time=instance.end_time, current_time=time.time(), notifications=instance.get_notifications(), exclusions=sorted(list(instance.exclusions)), run_status=instance.run_status)
+    return render_template(
+        "instance.html",
+        id=id,
+        end_time=instance.end_time,
+        current_time=time.time(),
+        notifications=instance.get_notifications(),
+        exclusions=list(instance.exclusions),
+        run_status=instance.run_status
+    )
 
 @app.route("/<id>/current_time", methods=["GET"])
 def handle_current_time(id):
