@@ -6,14 +6,17 @@ from utils import init_instance
 from gui import init_gui, get_gui
 
 def main_proc(stop_event):
-    args = parse_args()
-    if args.gui:
-        init_gui(args.id, stop_event=stop_event)
-        if args.id is None: args.id = get_gui().get_id()
-    init_instance(args.id)
-    enable_logging(args.id)
-    bot = CoC_Bot()
-    bot.run()
+    try:
+        args = parse_args()
+        if args.gui:
+            init_gui(args.id, stop_event=stop_event)
+            if args.id is None: args.id = get_gui().get_id()
+        init_instance(args.id)
+        enable_logging(args.id)
+        bot = CoC_Bot()
+        bot.run()
+    finally:
+        get_gui().stop()
 
 if __name__ == "__main__":
     freeze_support()

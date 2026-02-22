@@ -15,6 +15,8 @@ class Tee:
             try:
                 s.write(data)
                 s.flush()
+            except KeyboardInterrupt: raise
+            except SystemExit: raise
             except:
                 pass
 
@@ -22,6 +24,8 @@ class Tee:
         for s in self.streams:
             try:
                 s.flush()
+            except KeyboardInterrupt: raise
+            except SystemExit: raise
             except:
                 pass
 

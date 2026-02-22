@@ -93,6 +93,8 @@ def connect_adb():
         device = adbutils.device(ADB_ADDRESS)
         mt_device = MNTDevice(ADB_ADDRESS)
         Exit_Handler.register(mt_device.stop)
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         raise Exception("Failed to get ADB device.")
@@ -206,6 +208,8 @@ def parse_time(text):
         pattern = re.compile(r"(\d+)([dhms])")
         seconds = sum(int(v) * units[u] for v, u in pattern.findall(text))
         return seconds
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return 0
 
@@ -244,6 +248,8 @@ def send_notification(text):
                 json=text,
                 timeout=(10, 20)
             )
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
         except: pass
 
     if TELEGRAM_BOT_TOKEN != "":
@@ -255,6 +261,8 @@ def send_notification(text):
                 data={"chat_id": get_telegram_chat_id(),"text": telegram_text},
                 timeout=(10, 20)
             )
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
         except: pass
 
 def get_exclusions():
@@ -269,59 +277,84 @@ def get_exclusions():
             return exclusions
         return []
     elif configs.LOCAL_GUI:
-        return get_gui().get_exclusions()
+        res = requests.get(
+            f"http://localhost:{get_gui().server_port}/exclude",
+            timeout=(10, 20)
+        )
+        if res.status_code == 200:
+            exclusions = res.json().get("exclusions", [])
+            return exclusions
+        return []
 
 def heros_excluded():
     try:
         return "heros" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return configs.UPGRADE_HEROS
 
 def home_base_excluded():
     try:
         return "home_base" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return configs.UPGRADE_HOME_BASE
 
 def builder_base_excluded():
     try:
         return "builder_base" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return configs.UPGRADE_BUILDER_BASE
 
 def home_lab_excluded():
     try:
         return "home_lab" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return configs.UPGRADE_HOME_LAB
 
 def builder_lab_excluded():
     try:
         return "builder_lab" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return configs.UPGRADE_BUILDER_LAB
 
 def home_attacks_excluded():
     try:
         return "home_attacks" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return not configs.ATTACK_HOME_BASE
 
 def builder_attacks_excluded():
     try:
         return "builder_attacks" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return not configs.ATTACK_BUILDER_BASE
 
 def lab_assistant_excluded():
     try:
         return "lab_assistant" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return not configs.ASSIGN_LAB_ASSISTANT
 
 def builder_assistant_excluded():
     try:
         return "builder_assistant" in get_exclusions()
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return not configs.ASSIGN_BUILDER_ASSISTANT
 
@@ -329,6 +362,8 @@ def to_home_base():
     try:
         get_home_builders(1)
         return
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         pass
     
@@ -367,6 +402,8 @@ def get_home_builders(timeout=60):
             text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
             available = int(text[0])
             return available
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
         except Exception as e:
             if configs.DEBUG: print("get_home_builders", e)
         time.sleep(0.5)
@@ -384,6 +421,8 @@ def start_coc(timeout=60):
             try:
                 get_home_builders(1)
                 break
+            except KeyboardInterrupt: raise
+            except SystemExit: raise
             except:
                 if not running(): return False
                 pass
@@ -391,6 +430,8 @@ def start_coc(timeout=60):
             try:
                 get_builder_builders(1)
                 break
+            except KeyboardInterrupt: raise
+            except SystemExit: raise
             except:
                 if not running(): return False
                 pass
@@ -402,6 +443,8 @@ def start_coc(timeout=60):
             raise Exception("Failed to start CoC")
         print("CoC started", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
         return True
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         return False
 
@@ -414,6 +457,8 @@ def to_builder_base():
     try:
         get_builder_builders(1)
         return
+    except KeyboardInterrupt: raise
+    except SystemExit: raise
     except:
         pass
     
@@ -444,6 +489,8 @@ def get_builder_builders(timeout=60):
             text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
             available = int(text[0])
             return available
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
         except Exception as e:
             if configs.DEBUG: print("get_builder_builders", e)
         time.sleep(0.5)

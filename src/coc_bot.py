@@ -38,7 +38,15 @@ class CoC_Bot:
                     break
                 except Exception as e:
                     if configs.DEBUG: print("update_status", e)
-        if configs.LOCAL_GUI: get_gui().set_status(status)
+        if configs.LOCAL_GUI:
+            try:
+                requests.post(
+                    f"http://localhost:{get_gui().server_port}/status",
+                    json={"status": status},
+                    timeout=(10, 20)
+                )
+            except Exception as e:
+                if configs.DEBUG: print("update_status", e)
     
     def start_bluestacks(self):
         if sys.platform == "darwin":

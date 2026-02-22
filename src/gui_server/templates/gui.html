@@ -2,14 +2,14 @@
 <html>
 <head>
     <title>CoC Bot</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div id="home">
         <header>
-            <img src="coc_bot_logo.png" alt="CoC Bot">
+            <img src="{{ url_for('static', filename='coc_bot_logo.png') }}" alt="CoC Bot">
             <h1 class="themed_text">CoC Bot</h1>
         </header>
 
@@ -27,7 +27,7 @@
                 <strong class="instance_id" id="instance_id"></strong>
             </div>
             
-            <img src="coc_bot_logo.png" alt="CoC Bot">
+            <img src="{{ url_for('static', filename='coc_bot_logo.png') }}" alt="CoC Bot">
             <h1 class="themed_text">CoC Bot</h1>
         </header>
 
@@ -50,7 +50,7 @@
             </form>
 
             <form method="POST" class="custom-input-form">
-                <input type="text" inputmode="numeric" pattern="[0-9]*" name="custom_time" placeholder="Custom" min="1" required title="Minutes">
+                <input type="text" name="custom_time" placeholder="Custom" min="1" required title="Minutes">
                 <button type="submit" name="custom_time"><i class="fas fa-arrow-right"></i></button>
             </form>
 
@@ -70,13 +70,13 @@
     </div>
 
     <script>
-        let id = null;
+        let id = "{{ id }}";
         let start = Date.now();
-        let current_time = start;
-        let end_time = 0;
-        let run_status = "";
-        let notifications = [];
-        let exclusions = [];
+        let current_time = {{ current_time }};
+        let end_time = {{ end_time }};
+        let run_status = {{ run_status | tojson }};
+        let exclusions = {{ exclusions | tojson }};
+        const web_app_url = "{{ web_app_url }}";
 
         const exclusion_options = [
             "Heros",
@@ -93,17 +93,26 @@
 
         async function fetchExclusions() {
             try {
-                const data = await window.pywebview.api.get_exclusions();
-                console.log(data)
+                const url = web_app_url ? `${web_app_url}/${id}/exclude` : `/exclude`;
+                const response = await fetch(url);
+                const data = await response.json();
                 exclusions = data.exclusions;
             } catch (error) {
-                console.error('Error fetching exclusions:', error);
+                console.error('Error fetching exclusions from web app:', error);
             }
         }
 
         async function fetchNotifications() {
             try {
-                const data = await window.pywebview.api.get_notifications();
+                const url = web_app_url ? `${web_app_url}/${id}/notifications` : `/notifications`;
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(3),
+                });
+                const data = await response.json();
                 const latest_notif = (notifications.length > 0) ? notifications[0].time_stamp : 0;
                 notifications = data;
             } catch (error) {
@@ -113,7 +122,9 @@
 
         async function fetchCurrentTime() {
             try {
-                const data = await window.pywebview.api.get_current_time();
+                const url = web_app_url ? `${web_app_url}/${id}/current_time` : `/current_time`;
+                const response = await fetch(url);
+                const data = await response.json();
                 current_time = data.current_time;
                 start = Date.now();
             } catch (error) {
@@ -123,7 +134,9 @@
 
         async function fetchEndTime() {
             try {
-                const data = await window.pywebview.api.get_end_time();
+                const url = web_app_url ? `${web_app_url}/${id}/end_time` : `/end_time`;
+                const response = await fetch(url);
+                const data = await response.json();
                 end_time = data.end_time;
             } catch (error) {
                 console.error('Error fetching countdown end time:', error);
@@ -132,11 +145,86 @@
 
         async function fetchStatus() {
             try {
-                const data = await window.pywebview.api.get_status();
+                url = web_app_url ? `${web_app_url}/${id}/status` : `/status`;
+                const response = await fetch(url);
+                const data = await response.json();
                 run_status = data.status;
             } catch (error) {
                 console.error('Error fetching status:', error);
             }
+        }
+
+        async function setID(new_id) {
+            try {
+                const url = `/id`;
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        id: new_id
+                    })
+                });
+                const res = await response.json();
+                if (res === 0) {
+                    alert("Invalid ID");
+                    return;
+                } else {
+                    id = new_id;
+                }
+            } catch (error) {
+                console.error('Error setting ID:', error);
+            }
+        }
+
+        async function setEndTime(minutes) {
+            try {
+                const url = web_app_url ? `${web_app_url}/${id}/end_time` : `/end_time`;
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        time: minutes
+                    })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    end_time = data.end_time;
+                }
+            } catch (error) {
+                console.error('Error setting end time:', error);
+            }
+        }
+
+        async function setExclusion(item, action) {
+            try {
+                const url = web_app_url ? `${web_app_url}/${id}/exclude` : `/exclude`;
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        item: item
+                    })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    exclusions = data.exclusions;
+                }
+            } catch (error) {
+                console.error('Error updating exclusion:', error);
+            }
+        }
+
+        if (id) {
+            document.getElementById("instance_id").textContent = id;
+            document.getElementById("home").style.display = "none";
+            document.getElementById("control").style.display = "block";
         }
 
         function fetchAll() {
@@ -313,21 +401,6 @@
         initExclusions();
         updateAll();
 
-        window.addEventListener("pywebviewready", async () => {
-            const id_temp = await window.pywebview.api.get_id();
-            if (id_temp) {
-                id = id_temp;
-                fetchCurrentTime();
-                fetchEndTime();
-                fetchStatus();
-                // fetchNotifications();
-                fetchExclusions();
-                document.getElementById("instance_id").textContent = id;
-                document.getElementById("home").style.display = "none";
-                document.getElementById("control").style.display = "block";
-            }
-        });
-
         document.getElementsByName("custom_time").forEach(input => {
             input.addEventListener('input', () => {
                 input.value = input.value.replace(/\D/g, '');
@@ -339,16 +412,10 @@
                 e.preventDefault();
                 
                 const submitter = e.submitter;
-                
+                const formData = new FormData(form);
+
                 if (submitter.name === "id") {
-                    const id_temp = form.querySelector('input[name="id"]').value;
-                    const res = await window.pywebview.api.set_id(id_temp);
-                    if (res === 0) {
-                        alert("Invalid ID");
-                        return;
-                    } else {
-                        id = id_temp;
-                    }
+                    await setID(formData.get("id"));
                     fetchCurrentTime();
                     fetchEndTime();
                     fetchStatus();
@@ -358,18 +425,10 @@
                     document.getElementById("home").style.display = "none";
                     document.getElementById("control").style.display = "block";
                 } else if (submitter.name === "time") {
-                    const time = submitter.value;
-                    const data = await window.pywebview.api.set_end_time(time);
-                    if (data && data.end_time !== undefined) {
-                        end_time = data.end_time;
-                    }
+                    setEndTime(submitter.value);
                     fetchCurrentTime();
                 } else if (submitter.name === "custom_time") {
-                    const time = form.querySelector('input[name="custom_time"]').value;
-                    const data = await window.pywebview.api.set_end_time(time);
-                    if (data && data.end_time !== undefined) {
-                        end_time = data.end_time;
-                    }
+                    setEndTime(formData.get("custom_time"));
                     fetchCurrentTime();
                 } else if (submitter.name === "exclude") {
                     let action;
@@ -382,10 +441,7 @@
                         submitter.classList.add("active");
                         action = "add";
                     }
-                    const data = await window.pywebview.api.exclude_item(action, submitter.value);
-                    if (data && data.exclusions !== undefined) {
-                        exclusions = data.exclusions;
-                    }
+                    setExclusion(submitter.value, action);
                 }
 
                 form.reset();
