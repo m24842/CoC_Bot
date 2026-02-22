@@ -6,7 +6,6 @@ import os
 import time
 import json
 import sqlite3
-from waitress import serve
 from flask import Flask, render_template, jsonify, abort, request
 from flask_cors import CORS
 from configs import *
@@ -197,4 +196,3 @@ def add_cache_headers(response):
 get_known_instances()
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
-    # serve(app, host="0.0.0.0", port=WEB_APP_PORT, threads=8)

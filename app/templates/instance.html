@@ -373,7 +373,7 @@
                     const formData = new FormData(form);
 
                     if (submitter.name === "time") {
-                        setEndTime(formData.get("time"));
+                        setEndTime(submitter.value);
                         fetchCurrentTime();
                     } else if (submitter.name === "custom_time") {
                         setEndTime(formData.get("custom_time"));
