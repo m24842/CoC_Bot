@@ -39,8 +39,8 @@
         </form>
 
         <form method="POST" class="custom-input-form">
-            <input type="number" name="time" placeholder="Custom" min="1" required title="Minutes">
-            <button type="submit"><i class="fas fa-arrow-right"></i></button>
+            <input type="number" name="custom_time" placeholder="Custom" min="1" required title="Minutes">
+            <button type="submit" name="custom_time"><i class="fas fa-arrow-right"></i></button>
         </form>
 
         <form method="POST" class="cancel-button">
@@ -148,6 +148,47 @@
                     run_status = data.status;
                 } catch (error) {
                     console.error('Error fetching status:', error);
+                }
+            }
+
+            async function setEndTime(minutes) {
+                try {
+                    const response = await fetch(`/${id}/end_time`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            time: minutes
+                        })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        end_time = data.end_time;
+                    }
+                } catch (error) {
+                    console.error('Error setting end time:', error);
+                }
+            }
+
+            async function setExclusion(item, action) {
+                try {
+                    const response = await fetch(`/${id}/exclude`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            action: action,
+                            item: item
+                        })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        exclusions = data.exclusions;
+                    }
+                } catch (error) {
+                    console.error('Error updating exclusion:', error);
                 }
             }
 
@@ -329,23 +370,13 @@
                     e.preventDefault();
                     
                     const submitter = e.submitter;
-                    
-                    form.reset();
+                    const formData = new FormData(form);
 
                     if (submitter.name === "time") {
-                        const response = await fetch(`/${id}/end_time`, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify({
-                                time: submitter.value
-                            })
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            end_time = data.end_time;
-                        }
+                        setEndTime(formData.get("time"));
+                        fetchCurrentTime();
+                    } else if (submitter.name === "custom_time") {
+                        setEndTime(formData.get("custom_time"));
                         fetchCurrentTime();
                     } else if (submitter.name === "exclude") {
                         let action;
@@ -358,21 +389,10 @@
                             submitter.classList.add("active");
                             action = "add";
                         }
-                        const response = await fetch(`/${id}/exclude`, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify({
-                                action: action,
-                                item: submitter.value
-                            })
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            exclusions = data.exclusions;
-                        }
+                        setExclusion(submitter.value, action);
                     }
+
+                    form.reset();
                 });
             });
         </script>
