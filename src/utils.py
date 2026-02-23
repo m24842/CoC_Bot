@@ -225,7 +225,6 @@ def get_telegram_chat_id():
     
     res = requests.get(
         f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates",
-        auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
         timeout=(10, 20)
     )
     if res.status_code == 200:
@@ -257,7 +256,6 @@ def send_notification(text):
             telegram_text = f"[{INSTANCE_ID}]\n{text}"
             requests.post(
                 f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-                auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
                 data={"chat_id": get_telegram_chat_id(),"text": telegram_text},
                 timeout=(10, 20)
             )
