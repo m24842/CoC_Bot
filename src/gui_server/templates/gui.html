@@ -169,9 +169,10 @@
                 const res = await response.json();
                 if (res === 0) {
                     alert("Invalid ID");
-                    return;
+                    return false;
                 } else {
                     id = new_id;
+                    return true;
                 }
             } catch (error) {
                 console.error('Error setting ID:', error);
@@ -415,7 +416,8 @@
                 const formData = new FormData(form);
 
                 if (submitter.name === "id") {
-                    await setID(formData.get("id"));
+                    const valid = await setID(formData.get("id"));
+                    if (!valid) return;
                     fetchCurrentTime();
                     fetchEndTime();
                     fetchStatus();

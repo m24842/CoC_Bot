@@ -11,8 +11,8 @@ from upgrader import Upgrader
 from attacker import Attacker
 
 class CoC_Bot:
-    def __init__(self):
-        if DISABLE_DEVICE_SLEEP:
+    def __init__(self, prevent_sleep=DISABLE_DEVICE_SLEEP):
+        if prevent_sleep:
             disable_sleep()
             Exit_Handler.register(enable_sleep)
         
@@ -38,7 +38,7 @@ class CoC_Bot:
                     break
                 except Exception as e:
                     if configs.DEBUG: print("update_status", e)
-        if configs.LOCAL_GUI:
+        if get_gui() is not None:
             try:
                 requests.post(
                     f"http://localhost:{get_gui().server_port}/status",

@@ -4,8 +4,9 @@ from utils import *
 from coc_bot import CoC_Bot
 
 if __name__ == "__main__":
-    parse_args(debug=True, id="main")
-    bot = CoC_Bot()
+    args = parse_args(debug=True, id="main")
+    init_instance(args.id)
+    bot = CoC_Bot(prevent_sleep=False)
     # Frame_Handler.screenshot()
     # start_coc()
     # bot.run()
