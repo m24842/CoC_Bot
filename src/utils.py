@@ -213,8 +213,8 @@ def parse_time(text):
     except:
         return 0
 
-def to_int_tuple(*args):
-    return tuple(map(int, args))
+def to_int_array(*args):
+    return np.array(list(map(int, args)))
 
 def get_telegram_chat_id():
     data = {}
@@ -460,17 +460,26 @@ def to_builder_base():
     except:
         pass
     
-    Input_Handler.zoom(dir="out")
-    Input_Handler.swipe_up()
+    for _ in range(3):
+        Input_Handler.zoom(dir="in")
+    for _ in range(2):
+        Input_Handler.zoom(dir="out", percent=0.75)
+    for _ in range(3):
+        Input_Handler.swipe_right()
+    for _ in range(3):
+        Input_Handler.swipe_up()
     
-    for scale in np.linspace(0.3, 1.0, 10):
-        template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
-        x, y = Frame_Handler.locate(template, grayscale=True, thresh=0.7, ref="cc")
-        if x is None or y is None: continue
-    
-        Input_Handler.click(x, y)
-        time.sleep(2)
-        break
+    for _ in range(5):
+        for scale in np.arange(0.43, 0.47, 0.01):
+            template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+            x, y = Frame_Handler.locate(template, grayscale=True, thresh=0.7, ref="cc")
+            if x is None or y is None: continue
+        
+            print("Optimal", scale)
+            Input_Handler.click(x, y)
+            time.sleep(2)
+            return
+        Input_Handler.swipe(x1=0.5, y1=0.5, x2=0.25, y2=0.75, hold_end_time=100)
 
 def get_builder_builders(timeout=60):
     start = time.time()
@@ -636,16 +645,16 @@ class Input_Handler:
         cls.swipe(x1, y, x2, y, duration=duration, hold_end_time=hold_end_time)
 
     @classmethod
-    def zoom(cls, dir="out"):
+    def zoom(cls, dir="out", percent=1.0):
         builder = CommandBuilder()
         
         MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
         MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
         
-        left_in = to_int_tuple(0.45*MAX_X, 0.5*MAX_Y)
-        left_out = to_int_tuple(0.15*MAX_X, 0.5*MAX_Y)
-        right_in = to_int_tuple(0.55*MAX_X, 0.5*MAX_Y)
-        right_out = to_int_tuple(0.85*MAX_X, 0.5*MAX_Y)
+        left_in = to_int_array((0.15 + 0.30*percent)*MAX_X, 0.5*MAX_Y)
+        left_out = to_int_array(0.15*MAX_X, 0.5*MAX_Y)
+        right_in = to_int_array((0.85 - 0.30*percent)*MAX_X, 0.5*MAX_Y)
+        right_out = to_int_array(0.85*MAX_X, 0.5*MAX_Y)
         
         start = [left_in, right_in] if dir=="in" else [left_out, right_out]
         end = [left_out, right_out] if dir=="in" else [left_in, right_in]
