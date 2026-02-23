@@ -27,8 +27,8 @@ ORIGINAL_SLEEP=$(pmset -g | grep ' sleep ' | awk '{print $2}')
 set_sleep 0
 set_disablesleep 1
 
-if kill -0 "$PARENT_PID" 2>/dev/null; then
-    wait "$PARENT_PID"
-fi
+while kill -0 "$PARENT_PID" 2>/dev/null; do
+    sleep 1
+done
 
 cleanup
