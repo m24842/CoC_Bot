@@ -475,7 +475,6 @@ def to_builder_base():
             x, y = Frame_Handler.locate(template, grayscale=True, thresh=0.7, ref="cc")
             if x is None or y is None: continue
         
-            print("Optimal", scale)
             Input_Handler.click(x, y)
             time.sleep(2)
             return
