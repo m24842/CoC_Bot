@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # bot.run()
     # to_home_base()
     # bot.upgrader.run_home_base()
-    bot.upgrader.home_upgrade()
+    # bot.upgrader.home_upgrade()
     # bot.upgrader.assign_builder_assistant()
     # bot.attacker.run_home_base()
     # bot.attacker.complete_attack(exclude_clan_troops=EXCLUDE_CLAN_TROOPS)
