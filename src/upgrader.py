@@ -3,7 +3,6 @@ import cv2
 import time
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
-import utils
 from utils import *
 import configs
 from configs import *
