@@ -264,99 +264,6 @@ def send_notification(text):
         except SystemExit: raise
         except: pass
 
-def get_exclusions():
-    if WEB_APP_URL != "":
-        res = requests.get(
-            f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
-            auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
-            timeout=(10, 20)
-        )
-        if res.status_code == 200:
-            exclusions = res.json().get("exclusions", [])
-            return exclusions
-        return []
-    elif configs.LOCAL_GUI:
-        res = requests.get(
-            f"http://localhost:{get_gui().server_port}/exclude",
-            timeout=(10, 20)
-        )
-        if res.status_code == 200:
-            exclusions = res.json().get("exclusions", [])
-            return exclusions
-        return []
-
-def heros_excluded():
-    try:
-        return "heros" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return configs.UPGRADE_HEROS
-
-def home_base_excluded():
-    try:
-        return "home_base" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return configs.UPGRADE_HOME_BASE
-
-def builder_base_excluded():
-    try:
-        return "builder_base" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return configs.UPGRADE_BUILDER_BASE
-
-def home_lab_excluded():
-    try:
-        return "home_lab" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return configs.UPGRADE_HOME_LAB
-
-def builder_lab_excluded():
-    try:
-        return "builder_lab" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return configs.UPGRADE_BUILDER_LAB
-
-def home_attacks_excluded():
-    try:
-        return "home_attacks" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return not configs.ATTACK_HOME_BASE
-
-def builder_attacks_excluded():
-    try:
-        return "builder_attacks" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return not configs.ATTACK_BUILDER_BASE
-
-def lab_assistant_excluded():
-    try:
-        return "lab_assistant" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return not configs.ASSIGN_LAB_ASSISTANT
-
-def builder_assistant_excluded():
-    try:
-        return "builder_assistant" in get_exclusions()
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return not configs.ASSIGN_BUILDER_ASSISTANT
-
 def to_home_base():
     try:
         get_home_builders(1)
@@ -518,6 +425,119 @@ def require_exit(n=5, delay=0.1):
             return result
         return wrapper
     return decorator
+
+class Task_Exclusion_Handler:
+    @classmethod
+    def get_exclusions():
+        if WEB_APP_URL != "":
+            res = requests.get(
+                f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
+                auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
+                timeout=(10, 20)
+            )
+            if res.status_code == 200:
+                exclusions = res.json().get("exclusions", [])
+                return exclusions
+            return []
+        elif configs.LOCAL_GUI:
+            res = requests.get(
+                f"http://localhost:{get_gui().server_port}/exclude",
+                timeout=(10, 20)
+            )
+            if res.status_code == 200:
+                exclusions = res.json().get("exclusions", [])
+                return exclusions
+            return []
+
+    @classmethod
+    def prioritize_heros_excluded(cls):
+        try:
+            return "prioritize_heros" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return not configs.PRIORITIZE_HEROS
+
+    @classmethod
+    def heros_excluded(cls):
+        try:
+            return "heros" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return configs.UPGRADE_HEROS
+
+    @classmethod
+    def home_base_excluded(cls):
+        try:
+            return "home_base" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return configs.UPGRADE_HOME_BASE
+
+    @classmethod
+    def builder_base_excluded(cls):
+        try:
+            return "builder_base" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return configs.UPGRADE_BUILDER_BASE
+
+    @classmethod
+    def home_lab_excluded(cls):
+        try:
+            return "home_lab" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return configs.UPGRADE_HOME_LAB
+
+    @classmethod
+    def builder_lab_excluded(cls):
+        try:
+            return "builder_lab" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return configs.UPGRADE_BUILDER_LAB
+
+    @classmethod
+    def home_attacks_excluded(cls):
+        try:
+            return "home_attacks" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return not configs.ATTACK_HOME_BASE
+
+    @classmethod
+    def builder_attacks_excluded(cls):
+        try:
+            return "builder_attacks" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return not configs.ATTACK_BUILDER_BASE
+
+    @classmethod
+    def lab_assistant_excluded(cls):
+        try:
+            return "lab_assistant" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return not configs.ASSIGN_LAB_ASSISTANT
+
+    @classmethod
+    def builder_assistant_excluded(cls):
+        try:
+            return "builder_assistant" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return not configs.ASSIGN_BUILDER_ASSISTANT
 
 class OCR_Handler:
     @classmethod
