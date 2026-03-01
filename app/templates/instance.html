@@ -75,20 +75,19 @@
             let run_status = {{ run_status | tojson }};
             let notifications = {{ notifications | tojson }};
             let exclusions = {{ exclusions | tojson }};
-
-            const exclusion_options = [
-                "Prioritize Heros",
-                "Heros",
-                "Home Base",
-                "Builder Base",
-                "Home Lab",
-                "Builder Lab",
-                "Home Attacks",
-                "Builder Attacks",
-                "Lab Assistant",
-                "Builder Apprentice",
-            ];
             const time_labels = ['d', 'h', 'm', 's'];
+
+            const exclusion_options = new Map()
+            exclusion_options.set("Prioritize Heros", ["Will always upgrade heros if possible over buildings", "Will choose upgrades at random"]);
+            exclusion_options.set("Heros", ["Hero upgrades ENABLED", "Hero upgrades DISABLED"]);
+            exclusion_options.set("Home Base", ["Home base building upgrades ENABLED", "Home base building upgrades DISABLED"]);
+            exclusion_options.set("Builder Base", ["Builder base building upgrades ENABLED", "Builder base building upgrades DISABLED"]);
+            exclusion_options.set("Home Lab", ["Home lab upgrades ENABLED", "Home lab upgrades DISABLED"]);
+            exclusion_options.set("Builder Lab", ["Builder lab upgrades ENABLED", "Builder lab upgrades DISABLED"]);
+            exclusion_options.set("Home Attacks", ["Home attacks ENABLED", "Home attacks DISABLED"]);
+            exclusion_options.set("Builder Attacks", ["Builder attacks ENABLED", "Builder attacks DISABLED"]);
+            exclusion_options.set("Lab Assistant", ["Lab assistant ENABLED", "Lab assistant DISABLED"]);
+            exclusion_options.set("Builder Apprentice", ["Builder apprentice ENABLED", "Builder apprentice DISABLED"]);
 
             async function fetchExclusions() {
                 try {
@@ -325,18 +324,20 @@
 
             function initExclusions() {
                 const exclusion_form = document.querySelector(".exclusions-form");
-                exclusion_options.forEach(option => {
+                exclusion_options.forEach((option_desc, option_name) => {
                     let button = document.createElement("button");
                     button.className = "exclusion";
                     button.name = "exclude";
                     button.type = "submit";
-                    let name = option.toLowerCase().replace(" ", "_");
-                    button.value = name;
-                    button.innerText = option;
-                    if (exclusions.includes(name)) {
+                    let value = option_name.toLowerCase().replace(" ", "_");
+                    button.value = value;
+                    button.innerText = option_name;
+                    if (exclusions.includes(value)) {
                         button.classList.add("active");
+                        button.title = option_desc[1];
                     } else {
                         button.classList.add("inactive");
+                        button.title = option_desc[0];
                     }
                     exclusion_form.appendChild(button);
                 });
@@ -348,9 +349,11 @@
                     if (exclusions.includes(name)) {
                         button.classList.remove("inactive");
                         button.classList.add("active");
+                        button.title = exclusion_options.get(button.innerText)[1];
                     } else {
                         button.classList.remove("active");
                         button.classList.add("inactive");
+                        button.title = exclusion_options.get(button.innerText)[0];
                     }
                 });
             }

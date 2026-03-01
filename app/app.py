@@ -95,6 +95,7 @@ def home():
 
 @app.route("/<id>", methods=["GET"])
 def handle_instance(id):
+    print(id)
     instance = instances[id]
     if id not in instances: abort(404)
     return render_template(
