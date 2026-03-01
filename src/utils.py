@@ -426,7 +426,7 @@ def require_exit(n=5, delay=0.1):
         return wrapper
     return decorator
 
-class Task_Exclusion_Handler:
+class Task_Handler:
     @classmethod
     def get_exclusions():
         if WEB_APP_URL != "":
