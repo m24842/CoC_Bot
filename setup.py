@@ -12,6 +12,7 @@ bot_packages = [
     "scipy",
     "nltk",
     "beautifulsoup4",
+    "uiautomator2",
     "lxml",
     "portalocker",
     "pure-python-adb",
