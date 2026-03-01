@@ -80,7 +80,7 @@
         const time_labels = ['d', 'h', 'm', 's'];
 
         const exclusion_options = new Map()
-            exclusion_options.set("Prioritize Heros", ["Will always upgrade heros if possible over buildings", "Will choose upgrades at random"]);
+            exclusion_options.set("Prioritize Heros", ["Will always upgrade heros when possible over buildings", "Will choose upgrades at random"]);
             exclusion_options.set("Heros", ["Hero upgrades ENABLED", "Hero upgrades DISABLED"]);
             exclusion_options.set("Home Base", ["Home base building upgrades ENABLED", "Home base building upgrades DISABLED"]);
             exclusion_options.set("Builder Base", ["Builder base building upgrades ENABLED", "Builder base building upgrades DISABLED"]);
@@ -88,8 +88,8 @@
             exclusion_options.set("Builder Lab", ["Builder lab upgrades ENABLED", "Builder lab upgrades DISABLED"]);
             exclusion_options.set("Home Attacks", ["Home attacks ENABLED", "Home attacks DISABLED"]);
             exclusion_options.set("Builder Attacks", ["Builder attacks ENABLED", "Builder attacks DISABLED"]);
-            exclusion_options.set("Lab Assistant", ["Lab assistant ENABLED", "Lab assistant DISABLED"]);
-            exclusion_options.set("Builder Apprentice", ["Builder apprentice ENABLED", "Builder apprentice DISABLED"]);
+            exclusion_options.set("Lab Assistant", ["Lab assistant assignment ENABLED", "Lab assistant assignment DISABLED"]);
+            exclusion_options.set("Builder Apprentice", ["Builder apprentice assignment ENABLED", "Builder apprentice assignment DISABLED"]);
 
         async function fetchExclusions() {
             try {
