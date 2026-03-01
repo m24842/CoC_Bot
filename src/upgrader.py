@@ -165,7 +165,7 @@ class Upgrader:
             if other_upgrades_avail:
                 y_diff = abs(y_sug - y_other)
                 n_sug = round(y_diff / label_height) - 1
-                if PRIORITIZE_HEROS and not heros_excluded(): idx, alt_idx = n_sug-1, n_sug-1
+                if Task_Exclusion_Handler.prioritize_heros_excluded() and not Task_Exclusion_Handler.heros_excluded(): idx, alt_idx = n_sug-1, n_sug-1
                 elif n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
                 else: alt_idx = 0
             if configs.DEBUG: print(f"upgrade: n_sug={n_sug}, idx={idx}, alt_idx={alt_idx}")
@@ -190,7 +190,7 @@ class Upgrader:
             if len(other_upgrade_text) > 0: other_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", other_upgrade_text[0].lower()))
             
             # Choose one upgrade from suggested and other upgrades
-            if PRIORITIZE_HEROS and not heros_excluded():
+            if Task_Exclusion_Handler.prioritize_heros_excluded() and not Task_Exclusion_Handler.heros_excluded():
                 chosen_upgrade = "none"
             else:
                 upgrade_options = ["none"]
@@ -255,7 +255,7 @@ class Upgrader:
             x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
             xy_hero = Frame_Handler.locate(self.assets["hero_upgrade"], thresh=0.97, grayscale=False, return_all=True)
             if len(xy_hero) > 0:
-                if heros_excluded(): return None
+                if Task_Exclusion_Handler.heros_excluded(): return None
                 idx = np.random.randint(0, len(xy_hero))
                 x, y = xy_hero[idx]
             if x is None or y is None: return None
@@ -636,7 +636,7 @@ class Upgrader:
                 except SystemExit: raise
                 except:
                     pass
-        if not builder_assistant_excluded():
+        if not Task_Exclusion_Handler.builder_assistant_excluded():
             self.assign_builder_assistant()
         
         # Lab upgrades
@@ -651,7 +651,7 @@ class Upgrader:
         except SystemExit: raise
         except:
             pass
-        if not lab_assistant_excluded():
+        if not Task_Exclusion_Handler.lab_assistant_excluded():
             self.assign_lab_assistant()
         
         for upgrade in upgrades_started + lab_upgrades_started:
