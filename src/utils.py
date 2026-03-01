@@ -15,6 +15,7 @@ import subprocess
 import numpy as np
 import portalocker
 from pathlib import Path
+import uiautomator2 as u2
 from datetime import datetime
 from bs4 import BeautifulSoup
 from rapidfuzz import process, distance
@@ -438,6 +439,7 @@ def start_coc(timeout=60):
             time.sleep(1)
         if time.time() - start > timeout:
             stop_coc()
+            update_coc()
             raise Exception("Failed to start CoC")
         print("CoC started", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
         return True
@@ -450,6 +452,10 @@ def stop_coc():
     print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
     ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
+
+def update_coc(timeout=10):
+    ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
+    u2.connect(ADB_ADDRESS)(text="Update").click(timeout=timeout)
 
 def to_builder_base():
     try:

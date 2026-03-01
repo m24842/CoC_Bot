@@ -21,6 +21,7 @@
 * Resume / pause bot execution from desktop or web app ⏯️
 * iPhone shortcut to auto resume / pause bot when CoC is opened by user ⏯️
 * Telegram and web app notifications 🔔
+* Automatic CoC app updates 🔼
 
 ## Dependencies
 1. Install python packages with [setup.py](setup.py)
