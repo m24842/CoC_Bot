@@ -100,15 +100,15 @@ class CoC_Bot:
                 if start_coc():
                     self.update_status("now")
                     
-                    exclude_home_base = Task_Exclusion_Handler.home_base_excluded()
-                    exclude_home_lab = Task_Exclusion_Handler.home_lab_excluded()
+                    exclude_home_base = Task_Handler.home_base_excluded()
+                    exclude_home_lab = Task_Handler.home_lab_excluded()
                     skip_home_base_upgrades = exclude_home_base and exclude_home_lab
-                    exclude_home_attacks = Task_Exclusion_Handler.home_attacks_excluded()
+                    exclude_home_attacks = Task_Handler.home_attacks_excluded()
                     
-                    exclude_builder_base = Task_Exclusion_Handler.builder_base_excluded()
-                    exclude_builder_lab = Task_Exclusion_Handler.builder_lab_excluded()
+                    exclude_builder_base = Task_Handler.builder_base_excluded()
+                    exclude_builder_lab = Task_Handler.builder_lab_excluded()
                     skip_builder_base_upgrades = exclude_builder_base and exclude_builder_lab
-                    exclude_builder_attacks = Task_Exclusion_Handler.builder_attacks_excluded()
+                    exclude_builder_attacks = Task_Handler.builder_attacks_excluded()
                     
                     # Check home base
                     if not skip_home_base_upgrades or not exclude_home_attacks:
