@@ -119,10 +119,10 @@ class CoC_Bot:
                     if not exclude_home_attacks:
                         self.attacker.run_home_base(restart=not skip_home_base_upgrades or not skip_builder_base_upgrades)
                     
+                    # Check builder base
                     if not skip_builder_base_upgrades or not exclude_builder_attacks:
                         to_builder_base()
                     
-                    # Check builder base
                     if not skip_builder_base_upgrades:
                         self.upgrader.collect_builder_attack_elixir()
                         self.upgrader.run_builder_base(exclude_builder_base, exclude_builder_lab)
