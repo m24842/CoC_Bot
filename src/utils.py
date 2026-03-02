@@ -81,6 +81,9 @@ def enable_sleep():
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
 
+def to_system_home():
+    ADB_DEVICE.shell("input keyevent KEYCODE_HOME")
+
 def connect_adb():
     global ADB_DEVICE, MINITOUCH_DEVICE, ADB_WINDOW_DIMS
     if ADB_ABS_DIR != "": os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
@@ -318,6 +321,7 @@ def get_home_builders(timeout=60):
 
 def start_coc(timeout=60):
     try:
+        to_system_home()
         print("Starting CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
         i = 0
         start = time.time()
@@ -358,11 +362,13 @@ def start_coc(timeout=60):
 def stop_coc():
     print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
     ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
+    to_system_home()
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
 def update_coc(timeout=10):
     ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
     u2.connect(ADB_ADDRESS)(text="Update").click(timeout=timeout)
+    to_system_home()
 
 def to_builder_base():
     try:
@@ -428,7 +434,7 @@ def require_exit(n=5, delay=0.1):
 
 class Task_Handler:
     @classmethod
-    def get_exclusions():
+    def get_exclusions(cls):
         if WEB_APP_URL != "":
             res = requests.get(
                 f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
@@ -465,7 +471,7 @@ class Task_Handler:
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
-            return configs.UPGRADE_HEROS
+            return not configs.UPGRADE_HEROS
 
     @classmethod
     def home_base_excluded(cls):
@@ -474,7 +480,7 @@ class Task_Handler:
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
-            return configs.UPGRADE_HOME_BASE
+            return not configs.UPGRADE_HOME_BASE
 
     @classmethod
     def builder_base_excluded(cls):
@@ -483,7 +489,7 @@ class Task_Handler:
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
-            return configs.UPGRADE_BUILDER_BASE
+            return not configs.UPGRADE_BUILDER_BASE
 
     @classmethod
     def home_lab_excluded(cls):
@@ -492,7 +498,7 @@ class Task_Handler:
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
-            return configs.UPGRADE_HOME_LAB
+            return not configs.UPGRADE_HOME_LAB
 
     @classmethod
     def builder_lab_excluded(cls):
@@ -501,7 +507,7 @@ class Task_Handler:
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
-            return configs.UPGRADE_BUILDER_LAB
+            return not configs.UPGRADE_BUILDER_LAB
 
     @classmethod
     def home_attacks_excluded(cls):
