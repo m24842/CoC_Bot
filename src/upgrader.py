@@ -624,7 +624,7 @@ class Upgrader:
                 counter += 1
                 try:
                     initial_builders = get_home_builders(1)
-                    if initial_builders == 0: break
+                    if initial_builders <= max(0, OPEN_HOME_BUILDERS): break
                     upgraded = self.home_upgrade()
                     time.sleep(0.5)
                     final_builders = get_home_builders(1)
@@ -669,7 +669,7 @@ class Upgrader:
                 counter += 1
                 try:
                     initial_builders = get_builder_builders(1)
-                    if initial_builders == 0: break
+                    if initial_builders <= max(0, OPEN_BUILDER_BUILDERS): break
                     upgraded = self.builder_upgrade()
                     time.sleep(0.5)
                     final_builders = get_builder_builders(1)
