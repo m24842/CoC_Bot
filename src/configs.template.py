@@ -20,7 +20,11 @@ LOCAL_GUI = True # web app not required
 CHECK_INTERVAL = 5 * 60 # seconds
 
 # REQUIRED: Upgrade settings
+OPEN_HOME_BUILDERS = 0 # number of home base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
+OPEN_BUILDER_BUILDERS = 0 # number of builder base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
+
 MAX_UPGRADES_PER_CHECK = 10 # applies to both home and builder base
+
 PRIORITIZE_HEROS = False # will always upgrade heros when possible over buildings if true
 UPGRADE_HEROS = True # can be overridden on desktop or web app
 UPGRADE_HOME_BASE = True # can be overridden on desktop or web app
@@ -32,7 +36,7 @@ ASSIGN_BUILDER_ASSISTANT = True # can be overridden on desktop or web app
 
 # REQUIRED: Attack Settings
 TROOP_DEPLOY_TIME = 3 # seconds
-ATTACK_SLOT_RANGE = (0, 100) # inclusive first slot is index 0
+ATTACK_SLOT_RANGE = (0, 100) # inclusive, first slot is index 0
 EXCLUDE_CLAN_TROOPS = True
 ATTACK_HOME_BASE = True # can be overridden on desktop or web app
 ATTACK_BUILDER_BASE = True # can be overridden on desktop or web app
