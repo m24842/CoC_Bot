@@ -14,6 +14,7 @@
 * Laboratory upgrades 🔬
 * Assistant assignment ⏩️
 * Normal attacks ⚔️
+* Full upgrade priority control 🚦
 * Multiple accounts 👥
 
 ## Quality of Life Features
