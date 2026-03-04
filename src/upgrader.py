@@ -151,7 +151,8 @@ class Upgrader:
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
-            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            time.sleep(0.1)
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
             
@@ -301,7 +302,7 @@ class Upgrader:
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
-            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str:
@@ -311,8 +312,8 @@ class Upgrader:
                 np.random.shuffle(templates)
             
             def locate_template(templates):
-                for template in templates:
-                    x, y = Frame_Handler.locate(template, thresh=0.80)
+                xys = Frame_Handler.multi_locate(templates, thresh=0.80)
+                for x, y in xys:
                     if x is not None and y is not None: return x, y
                 return None, None
             
@@ -322,10 +323,11 @@ class Upgrader:
                 for _ in range(20):
                     if y_sug > 0.2:
                         # Faster scrolling if upgrade menu is known to be larger
-                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=100, inter_points=10)
+                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=0, inter_points=10)
                     else:
                         # Slower but always works
-                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=100, inter_points=10)
+                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=0, inter_points=10)
+                    time.sleep(0.1)
                     
                     # Check if at bottom of upgrade menu
                     section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
@@ -437,7 +439,8 @@ class Upgrader:
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
-            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            time.sleep(0.1)
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
             
@@ -495,7 +498,7 @@ class Upgrader:
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
-            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str:
@@ -505,8 +508,8 @@ class Upgrader:
                 np.random.shuffle(templates)
             
             def locate_template(templates):
-                for template in templates:
-                    x, y = Frame_Handler.locate(template, thresh=0.80)
+                xys = Frame_Handler.multi_locate(templates, thresh=0.80)
+                for x, y in xys:
                     if x is not None and y is not None: return x, y
                 return None, None
             
@@ -516,15 +519,16 @@ class Upgrader:
                 for _ in range(20):
                     if y_sug > 0.2:
                         # Faster scrolling if upgrade menu is known to be larger
-                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=100, inter_points=10)
+                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=0, inter_points=10)
                     else:
                         # Slower but always works
-                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=100, inter_points=10)
+                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=0, inter_points=10)
+                    time.sleep(0.1)
                     
                     # Check if at bottom of upgrade menu
                     section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                     diff = np.abs(section - prev_section).mean() / 255
-                    if diff < 0.01: break
+                    if diff < 0.02: break
                     prev_section = section
                     
                     x, y = locate_template(templates)
@@ -608,7 +612,8 @@ class Upgrader:
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
-            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            time.sleep(0.1)
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
             
@@ -747,7 +752,7 @@ class Upgrader:
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
-            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str:
@@ -758,11 +763,10 @@ class Upgrader:
                 np.random.shuffle(combined)
             
             upgrade_name = None
-            def locate_template(combined):
-                for template, text in combined:
-                    x, y = Frame_Handler.locate(template, thresh=0.80)
-                    if x is not None and y is not None:
-                        return x, y, text
+            def locate_template(templates):
+                xys = Frame_Handler.multi_locate(templates, thresh=0.80)
+                for x, y, _, name in zip(xys, combined):
+                    if x is not None and y is not None: return x, y, name
                 return None, None, None
             
             x, y, upgrade_name = locate_template(combined)
@@ -771,15 +775,16 @@ class Upgrader:
                 for _ in range(20):
                     if y_sug > 0.2:
                         # Faster scrolling if upgrade menu is known to be larger
-                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=100, inter_points=10)
+                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=0, inter_points=10)
                     else:
                         # Slower but always works
-                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=100, inter_points=10)
+                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=0, inter_points=10)
+                    time.sleep(0.1)
                     
                     # Check if at bottom of upgrade menu
                     section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                     diff = np.abs(section - prev_section).mean() / 255
-                    if diff < 0.01: break
+                    if diff < 0.02: break
                     prev_section = section
                     
                     x, y, upgrade_name = locate_template(combined)
@@ -860,7 +865,8 @@ class Upgrader:
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
-            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            time.sleep(0.1)
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
             
@@ -936,7 +942,7 @@ class Upgrader:
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
-            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str:
@@ -947,11 +953,10 @@ class Upgrader:
                 np.random.shuffle(combined)
             
             upgrade_name = None
-            def locate_template(combined):
-                for template, text in combined:
-                    x, y = Frame_Handler.locate(template, thresh=0.80)
-                    if x is not None and y is not None:
-                        return x, y, text
+            def locate_template(templates):
+                xys = Frame_Handler.multi_locate(templates, thresh=0.80)
+                for x, y, _, name in zip(xys, combined):
+                    if x is not None and y is not None: return x, y, name
                 return None, None, None
             
             x, y, upgrade_name = locate_template(combined)
@@ -960,15 +965,16 @@ class Upgrader:
                 for _ in range(20):
                     if y_sug > 0.2:
                         # Faster scrolling if upgrade menu is known to be larger
-                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=100, inter_points=10)
+                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=0, inter_points=10)
                     else:
                         # Slower but always works
-                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=100, inter_points=10)
+                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=0, inter_points=10)
+                    time.sleep(0.1)
                     
                     # Check if at bottom of upgrade menu
                     section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                     diff = np.abs(section - prev_section).mean() / 255
-                    if diff < 0.01: break
+                    if diff < 0.02: break
                     prev_section = section
                     
                     x, y, upgrade_name = locate_template(combined)
