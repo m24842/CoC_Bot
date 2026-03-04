@@ -22,6 +22,7 @@ from functools import lru_cache
 from rapidfuzz import process, distance
 from PIL import Image, ImageDraw, ImageFont
 from curl_cffi import requests as curl_requests
+from concurrent.futures import ThreadPoolExecutor
 from pyminitouch import MNTDevice, CommandBuilder
 import configs
 from configs import *
@@ -304,14 +305,19 @@ def to_home_base():
             x1=1.0,
             x2=0.0,
         )
-    for scale in np.linspace(0.3, 1.0, 10):
-        template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
-        x, y = Frame_Handler.locate(template, grayscale=True, thresh=0.7, ref="cc")
-        if x is None or y is None: continue
     
-        Input_Handler.click(x, y)
-        time.sleep(2)
-        break
+    scale_templates = []
+    for scale in np.arange(0.43, 0.47, 0.01):
+        template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+        scale_templates.append(template)
+    
+    for _ in range(5):
+        xys = Frame_Handler.multi_locate(scale_templates, grayscale=True, thresh=0.7, ref="cc")
+        for x, y in xys:
+            if x is None or y is None: continue
+            Input_Handler.click(x, y)
+            time.sleep(2)
+            return
 
 def get_home_builders(timeout=60, return_amount=True, raise_exception=True):
     start = time.time()
@@ -407,12 +413,15 @@ def to_builder_base():
     for _ in range(3):
         Input_Handler.swipe_up()
     
+    scale_templates = []
+    for scale in np.arange(0.43, 0.47, 0.01):
+        template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+        scale_templates.append(template)
+    
     for _ in range(5):
-        for scale in np.arange(0.43, 0.47, 0.01):
-            template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
-            x, y = Frame_Handler.locate(template, grayscale=True, thresh=0.7, ref="cc")
+        xys = Frame_Handler.multi_locate(scale_templates, grayscale=True, thresh=0.7, ref="cc")
+        for x, y in xys:
             if x is None or y is None: continue
-        
             Input_Handler.click(x, y)
             time.sleep(2)
             return
@@ -452,6 +461,34 @@ def require_exit(n=5, delay=0.1):
             return result
         return wrapper
     return decorator
+
+class Exit_Handler:
+    RUN_AT_EXIT = []
+    
+    @classmethod
+    def register(cls, func):
+        atexit.register(func)
+        cls.RUN_AT_EXIT.append(func)
+        return func
+
+    @classmethod
+    def handle_sig(cls, sig, frame):
+        for func in cls.RUN_AT_EXIT:
+            try: func()
+            except: pass
+        if sig == signal.SIGINT:
+            raise KeyboardInterrupt
+        sys.exit(0)
+
+    @classmethod
+    def setup_signal_handlers(cls):
+        signals = [signal.SIGINT, signal.SIGTERM]
+        if sys.platform != "win32":
+            signals.append(signal.SIGHUP)
+        for sig in signals:
+            signal.signal(sig, cls.handle_sig)
+
+Exit_Handler.setup_signal_handlers()
 
 class Task_Handler:
     @classmethod
@@ -715,9 +752,9 @@ class Input_Handler:
         for x, y in zip(x_points, y_points):
             builder.move(0, x, y, pressure=100)
             builder.publish(MINITOUCH_DEVICE.connection)
-            time.sleep(dt / 1000)
+            if dt > 0: time.sleep(dt / 1000)
         builder.publish(MINITOUCH_DEVICE.connection)
-        time.sleep(hold_end_time / 1000)
+        if hold_end_time > 0: time.sleep(hold_end_time / 1000)
         builder.up(0)
         builder.publish(MINITOUCH_DEVICE.connection)
 
@@ -764,6 +801,9 @@ class Input_Handler:
         builder.publish(MINITOUCH_DEVICE.connection)
 
 class Frame_Handler:
+    pool = ThreadPoolExecutor()
+    Exit_Handler.register(pool.shutdown)
+    
     @classmethod
     def get_frame(cls, grayscale=True):
         frame = np.array(ADB_DEVICE.screenshot())
@@ -838,30 +878,11 @@ class Frame_Handler:
             return None, None, max_val
         return None, None
 
-class Exit_Handler:
-    RUN_AT_EXIT = []
-    
     @classmethod
-    def register(cls, func):
-        atexit.register(func)
-        cls.RUN_AT_EXIT.append(func)
-        return func
-
-    @classmethod
-    def handle_sig(cls, sig, frame):
-        for func in cls.RUN_AT_EXIT:
-            try: func()
-            except: pass
-        if sig == signal.SIGINT:
-            raise KeyboardInterrupt
-        sys.exit(0)
-
-    @classmethod
-    def setup_signal_handlers(cls):
-        signals = [signal.SIGINT, signal.SIGTERM]
-        if sys.platform != "win32":
-            signals.append(signal.SIGHUP)
-        for sig in signals:
-            signal.signal(sig, cls.handle_sig)
-
-Exit_Handler.setup_signal_handlers()
+    def multi_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False):
+        frame = cls.get_frame(grayscale) if frame is None else frame
+        
+        threads = []
+        for template in templates:
+            threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, return_confidence))
+        return [thread.result() for thread in threads]

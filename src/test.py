@@ -9,7 +9,7 @@ if __name__ == "__main__":
     bot = CoC_Bot(prevent_sleep=False)
     # Frame_Handler.screenshot()
     # start_coc()
-    # bot.run()
+    bot.run()
     # to_home_base()
     # bot.upgrader.run_home_base()
     # bot.upgrader.home_upgrade()
