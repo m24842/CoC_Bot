@@ -312,7 +312,7 @@ def to_home_base():
         scale_templates.append(template)
     
     for _ in range(5):
-        xys = Frame_Handler.multi_locate(scale_templates, grayscale=True, thresh=0.7, ref="cc")
+        xys = Frame_Handler.batch_locate(scale_templates, grayscale=True, thresh=0.7, ref="cc")
         for x, y in xys:
             if x is None or y is None: continue
             Input_Handler.click(x, y)
@@ -419,7 +419,7 @@ def to_builder_base():
         scale_templates.append(template)
     
     for _ in range(5):
-        xys = Frame_Handler.multi_locate(scale_templates, grayscale=True, thresh=0.7, ref="cc")
+        xys = Frame_Handler.batch_locate(scale_templates, grayscale=True, thresh=0.7, ref="cc")
         for x, y in xys:
             if x is None or y is None: continue
             Input_Handler.click(x, y)
@@ -879,7 +879,7 @@ class Frame_Handler:
         return None, None
 
     @classmethod
-    def multi_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False):
+    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False):
         frame = cls.get_frame(grayscale) if frame is None else frame
         
         threads = []
