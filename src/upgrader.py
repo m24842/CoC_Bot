@@ -388,9 +388,10 @@ class Upgrader:
     
     @require_exit()
     def home_upgrade(self):
-        for priority_level in configs.HOME_BASE_UPGRADE_PRIORITY:
-            upgrade_name = self.home_specified_upgrade(priority_level)
-            if upgrade_name is not None: return upgrade_name
+        if not Task_Handler.home_base_priority_excluded():
+            for priority_level in configs.HOME_BASE_UPGRADE_PRIORITY:
+                upgrade_name = self.home_specified_upgrade(priority_level)
+                if upgrade_name is not None: return upgrade_name
         return self.home_random_upgrade()
     
     @require_exit()
@@ -558,9 +559,10 @@ class Upgrader:
     
     @require_exit()
     def home_lab_upgrade(self):
-        for priority_level in configs.HOME_LAB_UPGRADE_PRIORITY:
-            upgrade_name = self.home_lab_specified_upgrade(priority_level)
-            if upgrade_name is not None: return upgrade_name
+        if not Task_Handler.home_lab_priority_excluded():
+            for priority_level in configs.HOME_LAB_UPGRADE_PRIORITY:
+                upgrade_name = self.home_lab_specified_upgrade(priority_level)
+                if upgrade_name is not None: return upgrade_name
         return self.home_lab_random_upgrade()
 
     @require_exit()
@@ -841,9 +843,10 @@ class Upgrader:
     
     @require_exit()
     def builder_upgrade(self):
-        for priority_level in configs.BUILDER_BASE_UPGRADE_PRIORITY:
-            upgrade_name = self.builder_specified_upgrade(priority_level)
-            if upgrade_name is not None: return upgrade_name
+        if not Task_Handler.builder_base_priority_excluded():
+            for priority_level in configs.BUILDER_BASE_UPGRADE_PRIORITY:
+                upgrade_name = self.builder_specified_upgrade(priority_level)
+                if upgrade_name is not None: return upgrade_name
         return self.builder_random_upgrade()
     
     @require_exit()
@@ -1013,9 +1016,10 @@ class Upgrader:
     
     @require_exit()
     def builder_lab_upgrade(self):
-        for priority_level in configs.BUILDER_LAB_UPGRADE_PRIORITY:
-            upgrade_name = self.builder_lab_specified_upgrade(priority_level)
-            if upgrade_name is not None: return upgrade_name
+        if not Task_Handler.builder_lab_priority_excluded():
+            for priority_level in configs.BUILDER_LAB_UPGRADE_PRIORITY:
+                upgrade_name = self.builder_lab_specified_upgrade(priority_level)
+                if upgrade_name is not None: return upgrade_name
         return self.builder_lab_random_upgrade()
     
     # ============================================================
