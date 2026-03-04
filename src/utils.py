@@ -18,7 +18,9 @@ from pathlib import Path
 import uiautomator2 as u2
 from datetime import datetime
 from bs4 import BeautifulSoup
+from functools import lru_cache
 from rapidfuzz import process, distance
+from PIL import Image, ImageDraw, ImageFont
 from curl_cffi import requests as curl_requests
 from pyminitouch import MNTDevice, CommandBuilder
 import configs
@@ -220,6 +222,21 @@ def parse_time(text):
 def to_int_array(*args):
     return np.array(list(map(int, args)))
 
+def render_text(text, font, font_size, color=(255, 255, 255)):
+    @lru_cache(maxsize=32)
+    def get_font(font, font_size):
+        font_path = Asset_Manager.fonts.get(font)
+        return ImageFont.truetype(font_path, font_size)
+    font = get_font(font, font_size)
+    temp = Image.new("RGB", (1, 1))
+    bbox = ImageDraw.Draw(temp).textbbox((0, 0), text, font=font)
+    w = bbox[2] - bbox[0]
+    h = bbox[3] - bbox[1]
+    render = Image.new("RGB", (w, h), (0, 0, 0))
+    ImageDraw.Draw(render).text((-bbox[0], -bbox[1]), text, font=font, fill=color)
+    render = np.array(render)
+    return render
+
 def get_telegram_chat_id():
     data = {}
     if CACHE_PATH.exists():
@@ -296,7 +313,7 @@ def to_home_base():
         time.sleep(2)
         break
 
-def get_home_builders(timeout=60):
+def get_home_builders(timeout=60, return_amount=True, raise_exception=True):
     start = time.time()
     while True:
         try:
@@ -306,7 +323,9 @@ def get_home_builders(timeout=60):
             slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
             res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
-            if max_val < 0.9: raise Exception("Slash not found")
+            if raise_exception and max_val < 0.9: raise Exception("Slash not found")
+            
+            if not return_amount: return max_val >= 0.9
             
             text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
             available = int(text[0])
@@ -329,7 +348,7 @@ def start_coc(timeout=60):
             ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
             Input_Handler.click_exit(4, 0.1)
             try:
-                get_home_builders(1)
+                get_home_builders(1, return_amount=False)
                 break
             except KeyboardInterrupt: raise
             except SystemExit: raise
@@ -338,7 +357,7 @@ def start_coc(timeout=60):
                 pass
             
             try:
-                get_builder_builders(1)
+                get_builder_builders(1, return_amount=False)
                 break
             except KeyboardInterrupt: raise
             except SystemExit: raise
@@ -399,7 +418,7 @@ def to_builder_base():
             return
         Input_Handler.swipe(x1=0.5, y1=0.5, x2=0.25, y2=0.75, hold_end_time=100)
 
-def get_builder_builders(timeout=60):
+def get_builder_builders(timeout=60, return_amount=True, raise_exception=True):
     start = time.time()
     while True:
         try:
@@ -409,7 +428,9 @@ def get_builder_builders(timeout=60):
             slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
             res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
-            if max_val < 0.9: raise Exception("Slash not found")
+            if raise_exception and max_val < 0.9: raise Exception("Slash not found")
+            
+            if not return_amount: return max_val >= 0.9
             
             text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
             available = int(text[0])
@@ -456,13 +477,40 @@ class Task_Handler:
             return []
 
     @classmethod
-    def prioritize_heros_excluded(cls):
+    def home_base_priority_excluded(cls):
         try:
-            return "prioritize_heros" in cls.get_exclusions()
+            return "home_base_priority" in cls.get_exclusions()
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
-            return not configs.PRIORITIZE_HEROS
+            return not configs.PRIORITY_HOME_BASE_UPGRADES
+
+    @classmethod
+    def home_lab_priority_excluded(cls):
+        try:
+            return "home_lab_priority" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return not configs.PRIORITY_HOME_LAB_UPGRADES
+    
+    @classmethod
+    def builder_base_priority_excluded(cls):
+        try:
+            return "builder_base_priority" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return not configs.PRIORITY_BUILDER_BASE_UPGRADES
+    
+    @classmethod
+    def builder_lab_priority_excluded(cls):
+        try:
+            return "builder_lab_priority" in cls.get_exclusions()
+        except KeyboardInterrupt: raise
+        except SystemExit: raise
+        except:
+            return not configs.PRIORITY_BUILDER_LAB_UPGRADES
 
     @classmethod
     def heros_excluded(cls):
@@ -568,6 +616,7 @@ class OCR_Handler:
             return [res['text'] for res in result if res['text'].strip()]
 
 class Asset_Manager:
+    fonts = {}
     misc_assets = {}
     upgrader_assets = {}
     attacker_assets = {}
@@ -580,6 +629,13 @@ class Asset_Manager:
             base_path = Path(__file__).parent.parent.resolve()
         return base_path / rel_path
     
+    @classmethod
+    def load_fonts(cls):
+        cls.fonts = {}
+        path = cls.resource_path("assets/fonts")
+        for file in os.listdir(path):
+            cls.fonts[file.replace('.ttf', '')] = str(path / file)
+
     @classmethod
     def load_misc_assets(cls):
         assets = {}
@@ -607,6 +663,7 @@ class Asset_Manager:
 Asset_Manager.load_misc_assets()
 Asset_Manager.load_upgrader_assets()
 Asset_Manager.load_attacker_assets()
+Asset_Manager.load_fonts()
 
 class Input_Handler:
     @classmethod
@@ -633,7 +690,7 @@ class Input_Handler:
         MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
 
     @classmethod
-    def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0):
+    def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0):
         if x1 < 0: x1 = 1 + x1
         if y1 < 0: y1 = 1 + y1
         if x2 < 0: x2 = 1 + x2
@@ -649,31 +706,36 @@ class Input_Handler:
         x2 = int(x2 * MAX_X)
         y2 = int(y2 * MAX_Y)
         
+        x_points = np.linspace(x1, x2, inter_points + 2, dtype=int)
+        y_points = np.linspace(y1, y2, inter_points + 2, dtype=int)
+        dt = duration / (inter_points + 1)
+        
         builder.down(0, x1, y1, pressure=100)
         builder.publish(MINITOUCH_DEVICE.connection)
-        builder.move(0, x2, y2, pressure=100)
-        builder.wait(duration)
-        builder.commit()
+        for x, y in zip(x_points, y_points):
+            builder.move(0, x, y, pressure=100)
+            builder.publish(MINITOUCH_DEVICE.connection)
+            time.sleep(dt / 1000)
         builder.publish(MINITOUCH_DEVICE.connection)
         time.sleep(hold_end_time / 1000)
         builder.up(0)
         builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
-    def swipe_up(cls, y1=0.5, y2=0.0, x=1.0, duration=100, hold_end_time=0):
-        cls.swipe(x, y1, x, y2, duration=duration, hold_end_time=hold_end_time)
+    def swipe_up(cls, y1=0.5, y2=0.0, x=1.0, **kwargs):
+        cls.swipe(x, y1, x, y2, **kwargs)
 
     @classmethod
-    def swipe_down(cls, y1=0.5, y2=1.0, x=1.0, duration=100, hold_end_time=0):
-        cls.swipe(x, y1, x, y2, duration=duration, hold_end_time=hold_end_time)
+    def swipe_down(cls, y1=0.5, y2=1.0, x=1.0, **kwargs):
+        cls.swipe(x, y1, x, y2, **kwargs)
 
     @classmethod
-    def swipe_left(cls, x1=0.5, x2=0.0, y=1.0, duration=100, hold_end_time=0):
-        cls.swipe(x1, y, x2, y, duration=duration, hold_end_time=hold_end_time)
+    def swipe_left(cls, x1=0.5, x2=0.0, y=1.0, **kwargs):
+        cls.swipe(x1, y, x2, y, **kwargs)
 
     @classmethod
-    def swipe_right(cls, x1=0.5, x2=1.0, y=1.0, duration=100, hold_end_time=0):
-        cls.swipe(x1, y, x2, y, duration=duration, hold_end_time=hold_end_time)
+    def swipe_right(cls, x1=0.5, x2=1.0, y=1.0, **kwargs):
+        cls.swipe(x1, y, x2, y, **kwargs)
 
     @classmethod
     def zoom(cls, dir="out", percent=1.0):

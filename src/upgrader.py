@@ -141,19 +141,24 @@ class Upgrader:
     # ============================================================
 
     @require_exit()
-    def home_upgrade(self):
+    def home_random_upgrade(self):
         try:
             # Open upgrade list menu
             self.click_home_builders()
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            x_sug, y_sug = Frame_Handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
+            sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
+            if x_sug is None or y_sug is None: return None
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
             
             # Find other upgrades label
             other_upgrades_avail = True
-            x_other, y_other = Frame_Handler.locate(self.assets["other_upgrades"], thresh=0.70)
+            other_template = render_text("Other upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70)
             if x_other is None or y_other is None: other_upgrades_avail = False
             
             # Determine amount of suggested upgrades
@@ -165,8 +170,7 @@ class Upgrader:
             if other_upgrades_avail:
                 y_diff = abs(y_sug - y_other)
                 n_sug = round(y_diff / label_height) - 1
-                if Task_Handler.prioritize_heros_excluded() and not Task_Handler.heros_excluded(): idx, alt_idx = n_sug-1, n_sug-1
-                elif n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
+                if n_sug > 1: idx, alt_idx = np.random.choice(range(n_sug), size=2, replace=False)
                 else: alt_idx = 0
             if configs.DEBUG: print(f"upgrade: n_sug={n_sug}, idx={idx}, alt_idx={alt_idx}")
             y_pot = y_sug + label_height * (idx + 1)
@@ -190,17 +194,14 @@ class Upgrader:
             if len(other_upgrade_text) > 0: other_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", other_upgrade_text[0].lower()))
             
             # Choose one upgrade from suggested and other upgrades
-            if Task_Handler.prioritize_heros_excluded() and not Task_Handler.heros_excluded():
-                chosen_upgrade = "none"
-            else:
-                upgrade_options = ["none"]
-                if alt_upgrade_name and "town hall" not in alt_upgrade_name: upgrade_options.append("suggested")
-                if other_upgrade_name and "town hall" not in other_upgrade_name: upgrade_options.append("other")
-                chosen_upgrade = np.random.choice(upgrade_options)
+            upgrade_options = ["default"]
+            if alt_upgrade_name and "town hall" not in alt_upgrade_name: upgrade_options.append("suggested")
+            if other_upgrade_name and "town hall" not in other_upgrade_name: upgrade_options.append("other")
+            chosen_upgrade = np.random.choice(upgrade_options)
             if configs.DEBUG: print(f"chosen_upgrade: {chosen_upgrade}")
             
             # Click on the chosen upgrade
-            if chosen_upgrade == "none":
+            if chosen_upgrade == "default":
                 Input_Handler.click(x_sug, y_pot)
             elif chosen_upgrade == "suggested":
                 Input_Handler.click(x_sug, y_alt)
@@ -210,8 +211,8 @@ class Upgrader:
             
             # If suggested upgrades disappears, then there was a misclick, unless hero hall is found
             x_sug_test, y_sug_test = Frame_Handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
-            x_hero, y_hero = Frame_Handler.locate(self.assets["hero_hall"], thresh=0.8)
-            if (x_sug_test is None or y_sug_test is None) and (x_hero is None or y_hero is None):
+            in_hero_hall = not get_home_builders(1, return_amount=False, raise_exception=False)
+            if (x_sug_test is None or y_sug_test is None) and not in_hero_hall:
                 # Look for upgrade button
                 x_upgrade, y_upgrade = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
                 if x_upgrade is None and y_upgrade is None:
@@ -242,22 +243,25 @@ class Upgrader:
                 self.click_home_builders()
                 Input_Handler.click(x_sug, y_sug + label_height)
             else:
-                # Close the upgrade list menu
-                try:
-                    get_home_builders(1)
+                if in_hero_hall:
+                    if not configs.UPGRADE_HEROS:
+                        # Default to the first suggested upgrade
+                        self.click_home_builders()
+                        Input_Handler.click(x_sug, y_sug + label_height)
+                    if np.random.rand() < 0.5: Input_Handler.swipe_left(y=0.5)
+                else:
                     self.click_home_builders()
-                except KeyboardInterrupt: raise
-                except SystemExit: raise
-                except: pass
                 time.sleep(0.5)
             
             # Find upgrade button
-            x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
-            xy_hero = Frame_Handler.locate(self.assets["hero_upgrade"], thresh=0.97, grayscale=False, return_all=True)
-            if len(xy_hero) > 0:
-                if Task_Handler.heros_excluded(): return None
-                idx = np.random.randint(0, len(xy_hero))
-                x, y = xy_hero[idx]
+            upgrade_template = render_text("Upgrade", "SupercellMagic", 24)
+            x, y = Frame_Handler.locate(upgrade_template, thresh=0.70)
+            if in_hero_hall:
+                hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
+                xy_hero = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
+                if len(xy_hero) > 0:
+                    idx = np.random.randint(0, len(xy_hero))
+                    x, y = xy_hero[idx]
             if x is None or y is None: return None
             
             # Click upgrade
@@ -283,8 +287,111 @@ class Upgrader:
                 return upgrade_name
             return None
         except Exception as e:
-            if configs.DEBUG: print("home_upgrade", e)
+            if configs.DEBUG: print("home_random_upgrade", e)
             return None
+    
+    @require_exit()
+    def home_specified_upgrade(self, upgrade_text):
+        try:
+            # Open upgrade list menu
+            self.click_home_builders()
+            time.sleep(0.5)
+            
+            # Find suggested upgrades label
+            sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
+            if x_sug is None or y_sug is None: return None
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            
+            # Find upgrade text
+            if type(upgrade_text) == str:
+                templates = render_text(upgrade_text, "CCBackBeat", 27)
+            elif type(upgrade_text) == list:
+                templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+                np.random.shuffle(templates)
+            
+            def locate_template(templates):
+                for template in templates:
+                    x, y = Frame_Handler.locate(template, thresh=0.80)
+                    if x is not None and y is not None: return x, y
+                return None, None
+            
+            x, y = locate_template(templates)
+            if x is None or y is None:
+                prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
+                for _ in range(20):
+                    if y_sug > 0.2:
+                        # Faster scrolling if upgrade menu is known to be larger
+                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=100, inter_points=10)
+                    else:
+                        # Slower but always works
+                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=100, inter_points=10)
+                    
+                    # Check if at bottom of upgrade menu
+                    section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
+                    diff = np.abs(section - prev_section).mean() / 255
+                    if diff < 0.02: break
+                    prev_section = section
+                    
+                    x, y = locate_template(templates)
+                    if x is not None and y is not None:
+                        break
+            
+            if x is None or y is None: return None
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            in_hero_hall = not get_home_builders(1, return_amount=False, raise_exception=False)
+            if in_hero_hall:
+                if not configs.UPGRADE_HEROS: return None
+                if np.random.rand() < 0.5: Input_Handler.swipe_left(y=0.5)
+            else:
+                self.click_home_builders()
+            time.sleep(0.5)
+            
+            # Find upgrade button
+            upgrade_template = render_text("Upgrade", "SupercellMagic", 24)
+            x, y = Frame_Handler.locate(upgrade_template, thresh=0.70)
+            if in_hero_hall:
+                hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
+                xy_hero = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
+                if len(xy_hero) > 0:
+                    idx = np.random.randint(0, len(xy_hero))
+                    x, y = xy_hero[idx]
+            if x is None or y is None: return None
+            
+            # Click upgrade
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            # Get upgrade name
+            x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
+            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
+            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
+            
+            # Find confirm button
+            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
+            if x is None or y is None: return None
+            
+            # Ensure sufficient resources for upgrade and confirm upgrade
+            section = Frame_Handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False)
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_cost.png")
+            if not check_color([255, 136, 127], section, tol=10):
+                Input_Handler.click(x, y+0.05)
+                time.sleep(0.5)
+                return upgrade_name
+            return None
+        except Exception as e:
+            if configs.DEBUG: print("home_specified_upgrade", e)
+            return None
+    
+    @require_exit()
+    def home_upgrade(self):
+        for priority_level in configs.HOME_BASE_UPGRADE_PRIORITY:
+            upgrade_name = self.home_specified_upgrade(priority_level)
+            if upgrade_name is not None: return upgrade_name
+        return self.home_random_upgrade()
     
     @require_exit()
     def assign_builder_assistant(self):
@@ -319,19 +426,24 @@ class Upgrader:
             if configs.DEBUG: print("assign_builder_assistant", e)
     
     @require_exit()
-    def home_lab_upgrade(self):
+    def home_lab_random_upgrade(self):
         try:
             # Open lab upgrade list menu
             self.click_home_lab()
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            x_sug, y_sug = Frame_Handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
+            sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
+            if x_sug is None or y_sug is None: return None
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
             
             # Find other upgrades label
             other_upgrades_avail = True
-            x_other, y_other = Frame_Handler.locate(self.assets["other_upgrades"], thresh=0.70)
+            other_template = render_text("Other upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70)
             if x_other is None or y_other is None: other_upgrades_avail = False
             
             # Choose a random suggested upgrade
@@ -370,6 +482,86 @@ class Upgrader:
         except Exception as e:
             if configs.DEBUG: print("home_lab_upgrade", e)
             return None
+    
+    @require_exit()
+    def home_lab_specified_upgrade(self, upgrade_text):
+        try:
+            # Open lab upgrade list menu
+            self.click_home_lab()
+            time.sleep(0.5)
+            
+            # Find suggested upgrades label
+            sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
+            if x_sug is None or y_sug is None: return None
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            
+            # Find upgrade text
+            if type(upgrade_text) == str:
+                templates = render_text(upgrade_text, "CCBackBeat", 27)
+            elif type(upgrade_text) == list:
+                templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+                np.random.shuffle(templates)
+            
+            def locate_template(templates):
+                for template in templates:
+                    x, y = Frame_Handler.locate(template, thresh=0.80)
+                    if x is not None and y is not None: return x, y
+                return None, None
+            
+            x, y = locate_template(templates)
+            if x is None or y is None:
+                prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
+                for _ in range(20):
+                    if y_sug > 0.2:
+                        # Faster scrolling if upgrade menu is known to be larger
+                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=100, inter_points=10)
+                    else:
+                        # Slower but always works
+                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=100, inter_points=10)
+                    
+                    # Check if at bottom of upgrade menu
+                    section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
+                    diff = np.abs(section - prev_section).mean() / 255
+                    if diff < 0.01: break
+                    prev_section = section
+                    
+                    x, y = locate_template(templates)
+                    if x is not None and y is not None:
+                        break
+            
+            if x is None or y is None: return None
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            # Get upgrade name
+            x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
+            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True)
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_name.png")
+            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
+            
+            # Find confirm button
+            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
+            if x is None or y is None: return None
+            
+            # Ensure sufficient resources for upgrade and confirm upgrade
+            section = Frame_Handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False)
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_cost.png")
+            if not check_color([255, 136, 127], section, tol=10):
+                Input_Handler.click(x, y+0.05)
+                time.sleep(0.5)
+                return upgrade_name
+            return None
+        except Exception as e:
+            if configs.DEBUG: print("home_lab_specified_upgrade", e)
+            return None
+    
+    @require_exit()
+    def home_lab_upgrade(self):
+        for priority_level in configs.HOME_LAB_UPGRADE_PRIORITY:
+            upgrade_name = self.home_lab_specified_upgrade(priority_level)
+            if upgrade_name is not None: return upgrade_name
+        return self.home_lab_random_upgrade()
 
     @require_exit()
     def assign_lab_assistant(self):
@@ -404,19 +596,24 @@ class Upgrader:
             if configs.DEBUG: print("assign_lab_assistant", e)
 
     @require_exit()
-    def builder_upgrade(self):
+    def builder_random_upgrade(self):
         try:
             # Open upgrade list menu
             self.click_builder_builders()
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            x_sug, y_sug = Frame_Handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
+            sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
+            if x_sug is None or y_sug is None: return None
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
             
             # Find other upgrades label
             other_upgrades_avail = True
-            x_other, y_other = Frame_Handler.locate(self.assets["other_upgrades"], thresh=0.70)
+            other_template = render_text("Other upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70)
             if x_other is None or y_other is None: other_upgrades_avail = False
             
             # Determine amount of suggested upgrades
@@ -442,14 +639,14 @@ class Upgrader:
             if len(alt_upgrade_text) > 0: alt_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", alt_upgrade_text[0].lower()))
             
             # Choose one upgrade from suggested and other upgrades
-            upgrade_options = ["none"]
+            upgrade_options = ["default"]
             if alt_upgrade_name: upgrade_options.append("suggested")
             if other_upgrades_avail: upgrade_options.append("other")
             chosen_upgrade = np.random.choice(upgrade_options)
             if configs.DEBUG: print(f"chosen_upgrade: {chosen_upgrade}")
             
             # Click on the chosen upgrade and get upgrade name
-            if chosen_upgrade == "none":
+            if chosen_upgrade == "default":
                 name_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
                 upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(name_section)[0].lower()))
                 Input_Handler.click(x_sug, y_pot)
@@ -461,7 +658,7 @@ class Upgrader:
                 upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(name_section)[0].lower()))
                 Input_Handler.click(x_sug, y_other+0.055)
             time.sleep(0.5)
-                        
+            
             # If suggested upgrades disappears, then there was a misclick
             x_sug, y_sug = Frame_Handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
             if x_sug is None or y_sug is None:
@@ -534,23 +731,140 @@ class Upgrader:
                 return upgrade_name
             return None
         except Exception as e:
-            if configs.DEBUG: print("builder_upgrade", e)
+            if configs.DEBUG: print("builder_random_upgrade", e)
             return None
     
     @require_exit()
-    def builder_lab_upgrade(self):
+    def builder_specified_upgrade(self, upgrade_text):
+        try:
+            # Open upgrade list menu
+            self.click_builder_builders()
+            time.sleep(0.5)
+            
+            # Find suggested upgrades label
+            sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
+            if x_sug is None or y_sug is None: return None
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            
+            # Find upgrade text
+            if type(upgrade_text) == str:
+                templates = render_text(upgrade_text, "CCBackBeat", 27)
+            elif type(upgrade_text) == list:
+                templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+                combined = list(zip(templates, upgrade_text))
+                np.random.shuffle(combined)
+            
+            upgrade_name = None
+            def locate_template(combined):
+                for template, text in combined:
+                    x, y = Frame_Handler.locate(template, thresh=0.80)
+                    if x is not None and y is not None:
+                        return x, y, text
+                return None, None, None
+            
+            x, y, upgrade_name = locate_template(combined)
+            if x is None or y is None:
+                prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
+                for _ in range(20):
+                    if y_sug > 0.2:
+                        # Faster scrolling if upgrade menu is known to be larger
+                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=100, inter_points=10)
+                    else:
+                        # Slower but always works
+                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=100, inter_points=10)
+                    
+                    # Check if at bottom of upgrade menu
+                    section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
+                    diff = np.abs(section - prev_section).mean() / 255
+                    if diff < 0.01: break
+                    prev_section = section
+                    
+                    x, y, upgrade_name = locate_template(combined)
+                    if x is not None and y is not None:
+                        break
+            
+            if x is None or y is None: return None
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            self.click_builder_builders()
+            time.sleep(0.5)
+            
+            # Find upgrade button
+            upgrade_template = render_text("Upgrade", "SupercellMagic", 24)
+            x, y = Frame_Handler.locate(upgrade_template, thresh=0.70)
+            if x is None or y is None: return None
+            
+            # Click upgrade
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            # # Get upgrade name
+            # section = Frame_Handler.get_frame_section(0.15, 0.1, 0.43, 0.35, high_contrast=True, thresh=240)
+            # if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
+            # upgrade_name = spell_check("".join(OCR_Handler.get_text(section)).lower())
+            
+            # Find confirm button
+            thresh = 0.2
+            section = Frame_Handler.get_frame_section(0.0, 0.9, 1.0, 0.92, grayscale=False)
+            section = cv2.cvtColor(section, cv2.COLOR_BGR2LAB)
+            avg_color = cv2.mean(cv2.cvtColor(self.assets["blank_green_button"], cv2.COLOR_BGR2LAB))[:3]
+            diff = np.linalg.norm((section - avg_color)/255, axis=2).mean(0)
+            diff = gaussian_filter1d(diff, sigma=10)
+            min_loc = np.argmin(diff)
+            x = min_loc / section.shape[1]
+            if diff[min_loc] > thresh: return None
+            x1 = x
+            i = min_loc
+            while i > 0 and diff[i] < thresh:
+                x1 = i / section.shape[1]
+                i -= 1
+            x2 = x
+            i = min_loc
+            while i < section.shape[1]-1 and diff[i] < thresh:
+                x2 = i / section.shape[1]
+                i += 1
+            x = (x1 + x2) / 2
+            y = 0.85
+            
+            # Ensure sufficient resources for upgrade and confirm upgrade
+            section = Frame_Handler.get_frame_section(x1-0.02, y-0.05, x2+0.05, y+0.09, grayscale=False)
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_cost.png")
+            if not check_color([255, 136, 127], section, tol=10):
+                Input_Handler.click(x, y)
+                time.sleep(0.5)
+                return upgrade_name
+            return None
+        except Exception as e:
+            if configs.DEBUG: print("builder_specified_upgrade", e)
+            return None
+    
+    @require_exit()
+    def builder_upgrade(self):
+        for priority_level in configs.BUILDER_BASE_UPGRADE_PRIORITY:
+            upgrade_name = self.builder_specified_upgrade(priority_level)
+            if upgrade_name is not None: return upgrade_name
+        return self.builder_random_upgrade()
+    
+    @require_exit()
+    def builder_lab_random_upgrade(self):
         try:
             # Open lab upgrade list menu
             self.click_builder_lab()
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            x_sug, y_sug = Frame_Handler.locate(self.assets["suggested_upgrades"], thresh=0.70)
+            sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
+            if x_sug is None or y_sug is None: return None
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
             
             # Find other upgrades label
             other_upgrades_avail = True
-            x_other, y_other = Frame_Handler.locate(self.assets["other_upgrades"], thresh=0.70)
+            other_template = render_text("Other upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70)
             if x_other is None or y_other is None: other_upgrades_avail = False
             
             # Choose a random suggested upgrade
@@ -605,8 +919,104 @@ class Upgrader:
                 return upgrade_name
             return None
         except Exception as e:
-            if configs.DEBUG: print("home_lab_upgrade", e)
+            if configs.DEBUG: print("builder_lab_random_upgrade", e)
             return None
+    
+    @require_exit()
+    def builder_lab_specified_upgrade(self, upgrade_text):
+        try:
+            # Open lab upgrade list menu
+            self.click_builder_lab()
+            time.sleep(0.5)
+            
+            # Find suggested upgrades label
+            sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
+            if x_sug is None or y_sug is None: return None
+            Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+            
+            # Find upgrade text
+            if type(upgrade_text) == str:
+                templates = render_text(upgrade_text, "CCBackBeat", 27)
+            elif type(upgrade_text) == list:
+                templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+                combined = list(zip(templates, upgrade_text))
+                np.random.shuffle(combined)
+            
+            upgrade_name = None
+            def locate_template(combined):
+                for template, text in combined:
+                    x, y = Frame_Handler.locate(template, thresh=0.80)
+                    if x is not None and y is not None:
+                        return x, y, text
+                return None, None, None
+            
+            x, y, upgrade_name = locate_template(combined)
+            if x is None or y is None:
+                prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
+                for _ in range(20):
+                    if y_sug > 0.2:
+                        # Faster scrolling if upgrade menu is known to be larger
+                        Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.2, duration=0, hold_end_time=100, inter_points=10)
+                    else:
+                        # Slower but always works
+                        Input_Handler.swipe_up(x=0.5, y1=0.2, y2=0.0, duration=0, hold_end_time=100, inter_points=10)
+                    
+                    # Check if at bottom of upgrade menu
+                    section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
+                    diff = np.abs(section - prev_section).mean() / 255
+                    if diff < 0.01: break
+                    prev_section = section
+                    
+                    x, y, upgrade_name = locate_template(combined)
+                    if x is not None and y is not None:
+                        break
+            
+            if x is None or y is None: return None
+            Input_Handler.click(x, y)
+            time.sleep(0.5)
+            
+            # Find confirm button
+            thresh = 0.2
+            section = Frame_Handler.get_frame_section(0.0, 0.9, 1.0, 0.92, grayscale=False)
+            section = cv2.cvtColor(section, cv2.COLOR_BGR2LAB)
+            avg_color = cv2.mean(cv2.cvtColor(self.assets["blank_green_button"], cv2.COLOR_BGR2LAB))[:3]
+            diff = np.linalg.norm((section - avg_color)/255, axis=2).mean(0)
+            diff = gaussian_filter1d(diff, sigma=10)
+            min_loc = np.argmin(diff)
+            x = min_loc / section.shape[1]
+            if diff[min_loc] > thresh: return None
+            x1 = x
+            i = min_loc
+            while i > 0 and diff[i] < thresh:
+                x1 = i / section.shape[1]
+                i -= 1
+            x2 = x
+            i = min_loc
+            while i < section.shape[1]-1 and diff[i] < thresh:
+                x2 = i / section.shape[1]
+                i += 1
+            x = (x1 + x2) / 2
+            y = 0.85
+            
+            # Ensure sufficient resources for upgrade and confirm upgrade
+            section = Frame_Handler.get_frame_section(x1-0.02, y-0.05, x2+0.05, y+0.09, grayscale=False)
+            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_cost.png")
+            if not check_color([255, 136, 127], section, tol=10):
+                Input_Handler.click(x, y)
+                time.sleep(0.5)
+                return upgrade_name
+            return None
+        except Exception as e:
+            if configs.DEBUG: print("builder_lab_specified_upgrade", e)
+            return None
+    
+    @require_exit()
+    def builder_lab_upgrade(self):
+        for priority_level in configs.BUILDER_LAB_UPGRADE_PRIORITY:
+            upgrade_name = self.builder_lab_specified_upgrade(priority_level)
+            if upgrade_name is not None: return upgrade_name
+        return self.builder_lab_random_upgrade()
     
     # ============================================================
     # 📡 Upgrade Monitoring

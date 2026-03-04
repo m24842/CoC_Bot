@@ -20,19 +20,53 @@ LOCAL_GUI = True # web app not required
 CHECK_INTERVAL = 5 * 60 # seconds
 
 # REQUIRED: Upgrade settings
-OPEN_HOME_BUILDERS = 0 # number of home base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
-OPEN_BUILDER_BUILDERS = 0 # number of builder base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
-
 MAX_UPGRADES_PER_CHECK = 10 # applies to both home and builder base
 
-PRIORITIZE_HEROS = False # will always upgrade heros when possible over buildings if true
+#   Home base upgrade settings
+OPEN_HOME_BUILDERS = 0 # number of home base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
+
 UPGRADE_HEROS = True # can be overridden on desktop or web app
 UPGRADE_HOME_BASE = True # can be overridden on desktop or web app
-UPGRADE_BUILDER_BASE = True # can be overridden on desktop or web app
 UPGRADE_HOME_LAB = True # can be overridden on desktop or web app
-UPGRADE_BUILDER_LAB = True # can be overridden on desktop or web app
 ASSIGN_LAB_ASSISTANT = True # can be overridden on desktop or web app
 ASSIGN_BUILDER_ASSISTANT = True # can be overridden on desktop or web app
+
+PRIORITY_HOME_BASE_UPGRADES = True # if false, will upgrade in random order regardless of priority settings (can be overridden on desktop or web app)
+PRIORITY_HOME_LAB_UPGRADES = True # if false, will upgrade in random order regardless of priority settings (can be overridden on desktop or web app)
+
+#   Every row is a priority level, with the first row being the highest priority
+#   Within each row, upgrades are of equal priority and will be randomly chosen between
+#   If no listed upgrades are available, will default to random upgrades
+#   IMPORTANT: Capitalization and spacing must match exactly with in-game text
+HOME_BASE_UPGRADE_PRIORITY = [
+    ["Barbarian King", "Archer Queen", "Minion Prince", "Grand Warden", "Royal Champion", "Dragon Duke"],
+    ["Army Camp", "Barracks", "Dark Barracks", "Spell Factory", "Dark Spell Factory", "Workshop", "Clan Castle"],
+]
+HOME_LAB_UPGRADE_PRIORITY = [
+    ["Balloon", "Dragon", "Lightning Spell", "Rage Spell", "Freeze Spell", "Poison Spell", "Earthquake Spell"],
+]
+
+#   Builder base upgrade settings
+OPEN_BUILDER_BUILDERS = 0 # number of builder base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
+
+UPGRADE_BUILDER_BASE = True # can be overridden on desktop or web app
+UPGRADE_BUILDER_LAB = True # can be overridden on desktop or web app
+
+PRIORITY_BUILDER_BASE_UPGRADES = True # if false, will upgrade in random order regardless of priority settings (can be overridden on desktop or web app)
+PRIORITY_BUILDER_LAB_UPGRADES = True # if false, will upgrade in random order regardless of priority settings (can be overridden on desktop or web app)
+
+#   Every row is a priority level, with the first row being the highest priority
+#   Within each row, upgrades are of equal priority and will be randomly chosen between
+#   If no listed upgrades are available, will default to random upgrades
+#   IMPORTANT: Capitalization and spacing must match exactly with in-game text
+BUILDER_BASE_UPGRADE_PRIORITY = [
+    ["Builder Hall", "Multi Mortar", "Builder Barracks", "Battle Machine", "Battle Copter", "Star Laboratory"],
+    ["Gold Storage", "Elixir Storage", "Double Cannon", "Archer Tower"],
+]
+BUILDER_LAB_UPGRADE_PRIORITY = [
+    ["Boxer Giant", "Night Witch"],
+    ["Baby Dragon", "Power P.E.K.K.A"]
+]
 
 # REQUIRED: Attack Settings
 TROOP_DEPLOY_TIME = 3 # seconds
