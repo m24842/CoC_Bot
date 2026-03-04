@@ -15,6 +15,7 @@ bot_packages = [
     "uiautomator2",
     "lxml",
     "portalocker",
+    "pillow",
     "pure-python-adb",
     "pyminitouch",
     "pywebview",

@@ -224,13 +224,13 @@ class Attacker:
             while time.time() - start_time < timeout:
                 Input_Handler.click_exit(5, 0.1)
                 try:
-                    get_home_builders(1)
+                    get_home_builders(1, return_amount=False)
                     return
                 except Exception as e:
                     if configs.DEBUG: print("end_attack", e)
                 
                 try:
-                    get_builder_builders(1)
+                    get_builder_builders(1, return_amount=False)
                     return
                 except Exception as e:
                     if configs.DEBUG: print("end_attack", e)
