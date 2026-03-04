@@ -57,6 +57,8 @@
 
     > ❗️ __Important__: By default, all capabilities are enabled. Many configurations can be overridden in real time if using the desktop or web app.
 
+    > __Note__: If using priority upgrades, instructions for defining upgrade priorities can be found in `configs.py`.
+
     > __Note__: To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send `/start`. Enter the API token generated during the setup process for `TELEGRAM_BOT_TOKEN`.
 
 3. Start web app: `python app/app.py`
