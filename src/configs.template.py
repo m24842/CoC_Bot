@@ -41,6 +41,7 @@ PRIORITY_HOME_LAB_UPGRADES = True # if false, will upgrade in random order regar
 HOME_BASE_UPGRADE_PRIORITY = [
     ["Barbarian King", "Archer Queen", "Minion Prince", "Grand Warden", "Royal Champion", "Dragon Duke"],
     ["Army Camp", "Barracks", "Dark Barracks", "Spell Factory", "Dark Spell Factory", "Workshop", "Clan Castle"],
+    ["Wall"],
 ]
 HOME_LAB_UPGRADE_PRIORITY = [
     ["Balloon", "Dragon", "Lightning Spell", "Rage Spell", "Freeze Spell", "Poison Spell", "Earthquake Spell"],
@@ -65,7 +66,7 @@ BUILDER_BASE_UPGRADE_PRIORITY = [
 ]
 BUILDER_LAB_UPGRADE_PRIORITY = [
     ["Boxer Giant", "Night Witch"],
-    ["Baby Dragon", "Power P.E.K.K.A"]
+    ["Baby Dragon", "Power P.E.K.K.A"],
 ]
 
 # REQUIRED: Attack Settings
