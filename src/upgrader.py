@@ -316,14 +316,11 @@ class Upgrader:
             def locate_template(templates):
                 xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
                 for x, y in xys:
-                    if x is not None and y is not None: return x, y
+                    if x is not None and y is not None and abs(x - menu_left) < 0.01: return x, y
                 return None, None
             
-            def properly_aligned(x):
-                return abs(x - menu_left) < 0.01
-            
             x, y = locate_template(templates)
-            if x is None or y is None or not properly_aligned(x):
+            if x is None or y is None:
                 prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                 for _ in range(20):
                     if y_sug > 0.2:
@@ -341,10 +338,10 @@ class Upgrader:
                     prev_section = section
                     
                     x, y = locate_template(templates)
-                    if x is not None and y is not None and properly_aligned(x):
+                    if x is not None and y is not None:
                         break
             
-            if x is None or y is None or not properly_aligned(x): return None
+            if x is None or y is None: return None
             Input_Handler.click(x_sug, y)
             time.sleep(0.5)
             
@@ -517,14 +514,11 @@ class Upgrader:
             def locate_template(templates):
                 xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
                 for x, y in xys:
-                    if x is not None and y is not None: return x, y
+                    if x is not None and y is not None and abs(x - menu_left) < 0.01: return x, y
                 return None, None
-
-            def properly_aligned(x):
-                return abs(x - menu_left) < 0.01
             
             x, y = locate_template(templates)
-            if x is None or y is None or not properly_aligned(x):
+            if x is None or y is None:
                 prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                 for _ in range(20):
                     if y_sug > 0.2:
@@ -542,10 +536,10 @@ class Upgrader:
                     prev_section = section
                     
                     x, y = locate_template(templates)
-                    if x is not None and y is not None and properly_aligned(x):
+                    if x is not None and y is not None:
                         break
             
-            if x is None or y is None or not properly_aligned(x): return None
+            if x is None or y is None: return None
             Input_Handler.click(x, y)
             time.sleep(0.5)
             
@@ -778,14 +772,11 @@ class Upgrader:
             def locate_template(templates):
                 xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
                 for x, y, _, name in zip(xys, combined):
-                    if x is not None and y is not None: return x, y, name
+                    if x is not None and y is not None and abs(x - menu_left) < 0.01: return x, y, name
                 return None, None, None
             
-            def properly_aligned(x):
-                return abs(x - menu_left) < 0.01
-            
             x, y, upgrade_name = locate_template(combined)
-            if x is None or y is None or not properly_aligned(x):
+            if x is None or y is None:
                 prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                 for _ in range(20):
                     if y_sug > 0.2:
@@ -803,10 +794,10 @@ class Upgrader:
                     prev_section = section
                     
                     x, y, upgrade_name = locate_template(combined)
-                    if x is not None and y is not None and properly_aligned(x):
+                    if x is not None and y is not None:
                         break
             
-            if x is None or y is None or not properly_aligned(x): return None
+            if x is None or y is None: return None
             Input_Handler.click(x, y)
             time.sleep(0.5)
             self.click_builder_builders()
@@ -973,14 +964,11 @@ class Upgrader:
             def locate_template(templates):
                 xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
                 for x, y, _, name in zip(xys, combined):
-                    if x is not None and y is not None: return x, y, name
+                    if x is not None and y is not None and abs(x - menu_left) < 0.01: return x, y, name
                 return None, None, None
-
-            def properly_aligned(x):
-                return abs(x - menu_left) < 0.01
             
             x, y, upgrade_name = locate_template(combined)
-            if x is None or y is None or not properly_aligned(x):
+            if x is None or y is None:
                 prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                 for _ in range(20):
                     if y_sug > 0.2:
@@ -998,10 +986,10 @@ class Upgrader:
                     prev_section = section
                     
                     x, y, upgrade_name = locate_template(combined)
-                    if x is not None and y is not None and properly_aligned(x):
+                    if x is not None and y is not None:
                         break
             
-            if x is None or y is None or not properly_aligned(x): return None
+            if x is None or y is None: return None
             Input_Handler.click(x, y)
             time.sleep(0.5)
             
