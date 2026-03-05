@@ -300,8 +300,10 @@ class Upgrader:
             
             # Find suggested upgrades label
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            sug_width = sug_template.shape[1] / WINDOW_DIMS[0]
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
+            menu_left = x_sug - 0.5*sug_width
             Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
@@ -312,13 +314,16 @@ class Upgrader:
                 np.random.shuffle(templates)
             
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.85)
+                xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
                 for x, y in xys:
                     if x is not None and y is not None: return x, y
                 return None, None
             
+            def properly_aligned(x):
+                return abs(x - menu_left) < 0.01
+            
             x, y = locate_template(templates)
-            if x is None or y is None:
+            if x is None or y is None or not properly_aligned(x):
                 prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                 for _ in range(20):
                     if y_sug > 0.2:
@@ -336,11 +341,11 @@ class Upgrader:
                     prev_section = section
                     
                     x, y = locate_template(templates)
-                    if x is not None and y is not None:
+                    if x is not None and y is not None and properly_aligned(x):
                         break
             
-            if x is None or y is None: return None
-            Input_Handler.click(x, y)
+            if x is None or y is None or not properly_aligned(x): return None
+            Input_Handler.click(x_sug, y)
             time.sleep(0.5)
             
             in_hero_hall = not get_home_builders(1, return_amount=False, raise_exception=False)
@@ -496,8 +501,10 @@ class Upgrader:
             
             # Find suggested upgrades label
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            sug_width = sug_template.shape[1] / WINDOW_DIMS[0]
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
+            menu_left = x_sug - 0.5*sug_width
             Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
@@ -508,13 +515,16 @@ class Upgrader:
                 np.random.shuffle(templates)
             
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.85)
+                xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
                 for x, y in xys:
                     if x is not None and y is not None: return x, y
                 return None, None
+
+            def properly_aligned(x):
+                return abs(x - menu_left) < 0.01
             
             x, y = locate_template(templates)
-            if x is None or y is None:
+            if x is None or y is None or not properly_aligned(x):
                 prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                 for _ in range(20):
                     if y_sug > 0.2:
@@ -532,10 +542,10 @@ class Upgrader:
                     prev_section = section
                     
                     x, y = locate_template(templates)
-                    if x is not None and y is not None:
+                    if x is not None and y is not None and properly_aligned(x):
                         break
             
-            if x is None or y is None: return None
+            if x is None or y is None or not properly_aligned(x): return None
             Input_Handler.click(x, y)
             time.sleep(0.5)
             
@@ -750,8 +760,10 @@ class Upgrader:
             
             # Find suggested upgrades label
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            sug_width = sug_template.shape[1] / WINDOW_DIMS[0]
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
+            menu_left = x_sug - 0.5*sug_width
             Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
@@ -764,13 +776,16 @@ class Upgrader:
             
             upgrade_name = None
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.85)
+                xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
                 for x, y, _, name in zip(xys, combined):
                     if x is not None and y is not None: return x, y, name
                 return None, None, None
             
+            def properly_aligned(x):
+                return abs(x - menu_left) < 0.01
+            
             x, y, upgrade_name = locate_template(combined)
-            if x is None or y is None:
+            if x is None or y is None or not properly_aligned(x):
                 prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                 for _ in range(20):
                     if y_sug > 0.2:
@@ -788,10 +803,10 @@ class Upgrader:
                     prev_section = section
                     
                     x, y, upgrade_name = locate_template(combined)
-                    if x is not None and y is not None:
+                    if x is not None and y is not None and properly_aligned(x):
                         break
             
-            if x is None or y is None: return None
+            if x is None or y is None or not properly_aligned(x): return None
             Input_Handler.click(x, y)
             time.sleep(0.5)
             self.click_builder_builders()
@@ -940,8 +955,10 @@ class Upgrader:
             
             # Find suggested upgrades label
             sug_template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
+            sug_width = sug_template.shape[1] / WINDOW_DIMS[0]
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70)
             if x_sug is None or y_sug is None: return None
+            menu_left = x_sug - 0.5*sug_width
             Input_Handler.swipe_up(x=0.5, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
@@ -954,13 +971,16 @@ class Upgrader:
             
             upgrade_name = None
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.85)
+                xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
                 for x, y, _, name in zip(xys, combined):
                     if x is not None and y is not None: return x, y, name
                 return None, None, None
+
+            def properly_aligned(x):
+                return abs(x - menu_left) < 0.01
             
             x, y, upgrade_name = locate_template(combined)
-            if x is None or y is None:
+            if x is None or y is None or not properly_aligned(x):
                 prev_section = Frame_Handler.get_frame_section(x_sug-0.1, y_sug-0.04, x_sug+0.1, y_sug+0.035, high_contrast=True)
                 for _ in range(20):
                     if y_sug > 0.2:
@@ -978,10 +998,10 @@ class Upgrader:
                     prev_section = section
                     
                     x, y, upgrade_name = locate_template(combined)
-                    if x is not None and y is not None:
+                    if x is not None and y is not None and properly_aligned(x):
                         break
             
-            if x is None or y is None: return None
+            if x is None or y is None or not properly_aligned(x): return None
             Input_Handler.click(x, y)
             time.sleep(0.5)
             
