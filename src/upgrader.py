@@ -314,7 +314,7 @@ class Upgrader:
                 np.random.shuffle(templates)
             
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
+                xys = Frame_Handler.batch_locate(templates, thresh=0.80, ref="lc")
                 for x, y in xys:
                     if x is not None and y is not None and abs(x - menu_left) < 0.01: return x, y
                 return None, None
@@ -512,7 +512,7 @@ class Upgrader:
                 np.random.shuffle(templates)
             
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
+                xys = Frame_Handler.batch_locate(templates, thresh=0.80, ref="lc")
                 for x, y in xys:
                     if x is not None and y is not None and abs(x - menu_left) < 0.01: return x, y
                 return None, None
@@ -770,7 +770,7 @@ class Upgrader:
             
             upgrade_name = None
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
+                xys = Frame_Handler.batch_locate(templates, thresh=0.80, ref="lc")
                 for x, y, _, name in zip(xys, combined):
                     if x is not None and y is not None and abs(x - menu_left) < 0.01: return x, y, name
                 return None, None, None
@@ -962,7 +962,7 @@ class Upgrader:
             
             upgrade_name = None
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.85, ref="lc")
+                xys = Frame_Handler.batch_locate(templates, thresh=0.80, ref="lc")
                 for x, y, _, name in zip(xys, combined):
                     if x is not None and y is not None and abs(x - menu_left) < 0.01: return x, y, name
                 return None, None, None
