@@ -255,8 +255,8 @@ class Upgrader:
                 time.sleep(0.5)
             
             # Find upgrade button
-            upgrade_template = render_text("Upgrade", "SupercellMagic", 24)
-            x, y = Frame_Handler.locate(upgrade_template, thresh=0.70)
+            upgrade_template = self.assets["upgrade"]
+            x, y = Frame_Handler.locate(upgrade_template, thresh=0.90)
             if in_hero_hall:
                 hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
                 xy_hero = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
@@ -306,13 +306,13 @@ class Upgrader:
             
             # Find upgrade text
             if type(upgrade_text) == str:
-                templates = render_text(upgrade_text, "CCBackBeat", 27)
+                templates = [render_text(upgrade_text, "CCBackBeat", 27)]
             elif type(upgrade_text) == list:
                 templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
                 np.random.shuffle(templates)
             
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.80)
+                xys = Frame_Handler.batch_locate(templates, thresh=0.85)
                 for x, y in xys:
                     if x is not None and y is not None: return x, y
                 return None, None
@@ -352,8 +352,8 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find upgrade button
-            upgrade_template = render_text("Upgrade", "SupercellMagic", 24)
-            x, y = Frame_Handler.locate(upgrade_template, thresh=0.70)
+            upgrade_template = self.assets["upgrade"]
+            x, y = Frame_Handler.locate(upgrade_template, thresh=0.90)
             if in_hero_hall:
                 hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
                 xy_hero = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
@@ -502,13 +502,13 @@ class Upgrader:
             
             # Find upgrade text
             if type(upgrade_text) == str:
-                templates = render_text(upgrade_text, "CCBackBeat", 27)
+                templates = [render_text(upgrade_text, "CCBackBeat", 27)]
             elif type(upgrade_text) == list:
                 templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
                 np.random.shuffle(templates)
             
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.80)
+                xys = Frame_Handler.batch_locate(templates, thresh=0.85)
                 for x, y in xys:
                     if x is not None and y is not None: return x, y
                 return None, None
@@ -756,7 +756,7 @@ class Upgrader:
             
             # Find upgrade text
             if type(upgrade_text) == str:
-                templates = render_text(upgrade_text, "CCBackBeat", 27)
+                templates = [render_text(upgrade_text, "CCBackBeat", 27)]
             elif type(upgrade_text) == list:
                 templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
                 combined = list(zip(templates, upgrade_text))
@@ -764,7 +764,7 @@ class Upgrader:
             
             upgrade_name = None
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.80)
+                xys = Frame_Handler.batch_locate(templates, thresh=0.85)
                 for x, y, _, name in zip(xys, combined):
                     if x is not None and y is not None: return x, y, name
                 return None, None, None
@@ -798,8 +798,8 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find upgrade button
-            upgrade_template = render_text("Upgrade", "SupercellMagic", 24)
-            x, y = Frame_Handler.locate(upgrade_template, thresh=0.70)
+            upgrade_template = self.assets["upgrade"]
+            x, y = Frame_Handler.locate(upgrade_template, thresh=0.90)
             if x is None or y is None: return None
             
             # Click upgrade
@@ -946,7 +946,7 @@ class Upgrader:
             
             # Find upgrade text
             if type(upgrade_text) == str:
-                templates = render_text(upgrade_text, "CCBackBeat", 27)
+                templates = [render_text(upgrade_text, "CCBackBeat", 27)]
             elif type(upgrade_text) == list:
                 templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
                 combined = list(zip(templates, upgrade_text))
@@ -954,7 +954,7 @@ class Upgrader:
             
             upgrade_name = None
             def locate_template(templates):
-                xys = Frame_Handler.batch_locate(templates, thresh=0.80)
+                xys = Frame_Handler.batch_locate(templates, thresh=0.85)
                 for x, y, _, name in zip(xys, combined):
                     if x is not None and y is not None: return x, y, name
                 return None, None, None
