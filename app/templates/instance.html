@@ -262,13 +262,9 @@
             }
             
             function updateLastChecked() {
-                const now = Date.now();
-                const total_time_left = end_time - current_time;
-                const time_left = Math.max(0, total_time_left - (now - start) / 1000);
-
                 let last_checked_string = "";
                 if (typeof run_status === "number") {
-                    const age = current_time - run_status + (now - start) / 1000;
+                    const age = Math.max(0, current_time - run_status + (now - start) / 1000);
                     const days = Math.floor(age / 86400);
                     if (days < 7) {
                         const {hours, minutes, seconds} = get_hms(age);
