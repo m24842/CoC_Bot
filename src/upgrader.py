@@ -406,9 +406,11 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find assistant available label
-            x, y = Frame_Handler.locate(self.assets["assistant_available"], thresh=0.8)
-            if x is None or y is None: return
-            
+            xys = Frame_Handler.locate(self.assets["assistant_available"], thresh=0.8, return_all=True)
+            xys = sorted(xys, key=lambda pair: pair[1])
+            if len(xys) == 0: return
+            x, y = xys[0]
+
             Input_Handler.click(x, y)
             time.sleep(0.5)
             
@@ -581,8 +583,10 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find assistant available label
-            x, y = Frame_Handler.locate(self.assets["assistant_available"], thresh=0.7)
-            if x is None or y is None: return
+            xys = Frame_Handler.locate(self.assets["assistant_available"], thresh=0.8, return_all=True)
+            xys = sorted(xys, key=lambda pair: pair[1])
+            if len(xys) == 0: return
+            x, y = xys[0]
             
             Input_Handler.click(x, y)
             time.sleep(0.5)
