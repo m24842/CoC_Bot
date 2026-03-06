@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # bot.upgrader.run_home_base()
     # bot.upgrader.home_upgrade()
     # bot.upgrader.home_random_upgrade()
-    bot.upgrader.home_specified_upgrade("Minion Prince")
+    # bot.upgrader.home_specified_upgrade("Barbarian King")
     # bot.upgrader.home_specified_upgrade(HOME_BASE_UPGRADE_PRIORITY[0])
     # bot.upgrader.home_lab_upgrade()
     # bot.upgrader.home_lab_random_upgrade()

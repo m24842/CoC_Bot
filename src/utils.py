@@ -886,3 +886,14 @@ class Frame_Handler:
         for template in templates:
             threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, return_confidence))
         return [thread.result() for thread in threads]
+
+class Dev_Tools:
+    @classmethod
+    def optimal_template_font_size(cls, frame, text, font, font_size_range=(1, 100), color=(255, 255, 255), return_results=False):
+        templates = [render_text(text, font, size, color) for size in range(font_size_range[0], font_size_range[1] + 1)]
+        results = Frame_Handler.batch_locate(templates, frame=frame, grayscale=True, return_confidence=True)
+        confidences = [res[2] for res in results]
+        optimal_size = confidences.index(max(confidences)) + font_size_range[0]
+        if return_results:
+            return optimal_size, results
+        return optimal_size

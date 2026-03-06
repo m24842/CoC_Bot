@@ -249,7 +249,6 @@ class Upgrader:
                         # Default to the first suggested upgrade
                         self.click_home_builders()
                         Input_Handler.click(x_sug, y_sug + label_height)
-                    if np.random.rand() < 0.5: Input_Handler.swipe_left(y=0.5)
                 else:
                     self.click_home_builders()
                 time.sleep(0.5)
@@ -259,10 +258,17 @@ class Upgrader:
             x, y = Frame_Handler.locate(upgrade_template, thresh=0.90)
             if in_hero_hall:
                 hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
+                aligned = "left"
+                if np.random.rand() < 0.5:
+                    aligned = "right"
+                    Input_Handler.swipe_left(y=0.5)
                 xy_hero = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
-                if len(xy_hero) > 0:
-                    idx = np.random.randint(0, len(xy_hero))
-                    x, y = xy_hero[idx]
+                if len(xy_hero) > 0: x, y = np.random.choice(xy_hero)
+                else:
+                    if aligned == "left": Input_Handler.swipe_left(y=0.5)
+                    else: Input_Handler.swipe_right(y=0.5)
+                    xy_hero = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
+                    if len(xy_hero) > 0: x, y = np.random.choice(xy_hero)
             if x is None or y is None: return None
             
             # Click upgrade
@@ -348,7 +354,6 @@ class Upgrader:
             in_hero_hall = not get_home_builders(1, return_amount=False, raise_exception=False)
             if in_hero_hall:
                 if not configs.UPGRADE_HEROS: return None
-                if np.random.rand() < 0.5: Input_Handler.swipe_left(y=0.5)
             else:
                 self.click_home_builders()
             time.sleep(0.5)
@@ -357,11 +362,18 @@ class Upgrader:
             upgrade_template = self.assets["upgrade"]
             x, y = Frame_Handler.locate(upgrade_template, thresh=0.90)
             if in_hero_hall:
+                hero_name_template = render_text(upgrade_text, "SupercellMagic", 19)
+                xy_hero = Frame_Handler.locate(hero_name_template, thresh=0.60)
+                if xy_hero[0] is None or xy_hero[1] is None:
+                    Input_Handler.swipe_left(y=0.5)
+                    time.sleep(0.5)
+                    xy_hero = Frame_Handler.locate(hero_name_template, thresh=0.60)
+                if xy_hero[0] is None or xy_hero[1] is None: return None
+                
                 hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
-                xy_hero = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
-                if len(xy_hero) > 0:
-                    idx = np.random.randint(0, len(xy_hero))
-                    x, y = xy_hero[idx]
+                xy_hero_upgrade = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
+                xy_hero_upgrade = sorted(xy_hero_upgrade, key=lambda pair: abs(pair[0] - xy_hero[0]))
+                if len(xy_hero_upgrade) > 0: x, y = xy_hero_upgrade[0]
             if x is None or y is None: return None
             
             # Click upgrade
