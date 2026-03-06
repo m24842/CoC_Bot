@@ -6,7 +6,7 @@ source .venv/bin/activate
 rm -rf build dist *.spec
 
 pyinstaller \
-  --name "CoC_Bot" \
+  --name "CoC Bot" \
   --windowed \
   --icon="media/CoC_Bot.icns" \
   --add-data "assets:assets" \
