@@ -1112,6 +1112,7 @@ class Upgrader:
                     time.sleep(0.5)
                     final_builders = get_home_builders(1)
                     if upgraded is not None:
+                        upgraded = upgraded.lower()
                         if final_builders < initial_builders: upgrades_started.append(upgraded)
                         elif final_builders == initial_builders and upgraded != "wall": break
                     else: break
@@ -1129,7 +1130,7 @@ class Upgrader:
                 upgraded = self.home_lab_upgrade()
                 time.sleep(0.5)
                 final_lab_avail = self.home_lab_available(1)
-                if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
+                if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded.lower())
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
@@ -1157,6 +1158,7 @@ class Upgrader:
                     time.sleep(0.5)
                     final_builders = get_builder_builders(1)
                     if upgraded is not None:
+                        upgraded = upgraded.lower()
                         if final_builders < initial_builders: upgrades_started.append(upgraded)
                         elif final_builders == initial_builders and upgraded != "wall": break
                     else: break
@@ -1172,7 +1174,7 @@ class Upgrader:
                 upgraded = self.builder_lab_upgrade()
                 time.sleep(0.5)
                 final_lab_avail = self.builder_lab_available(1)
-                if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded)
+                if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded.lower())
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
