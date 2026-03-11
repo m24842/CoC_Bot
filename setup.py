@@ -11,6 +11,8 @@ bot_packages = [
     "numpy",
     "scipy",
     "nltk",
+    "flask",
+    "rapidfuzz",
     "beautifulsoup4",
     "uiautomator2",
     "lxml",
