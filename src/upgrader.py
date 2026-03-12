@@ -323,6 +323,7 @@ class Upgrader:
             # Find upgrade text
             if type(upgrade_text) == str:
                 templates = [render_text(upgrade_text, "CCBackBeat", 27)]
+                Frame_Handler.save_frame(templates[0], "debug/upgrade_template.png")
                 combined = [(templates[0], upgrade_text)]
             elif type(upgrade_text) == list:
                 templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]

@@ -23,7 +23,7 @@ class Instance:
         self.run_status = ""
         self.end_time = 0
         task_settings = {
-            "heros": not UPGRADE_HEROS,
+            "heroes": not UPGRADE_HEROS,
             "home_base": not UPGRADE_HOME_BASE,
             "builder_base": not UPGRADE_BUILDER_BASE,
             "home_lab": not UPGRADE_HOME_LAB,

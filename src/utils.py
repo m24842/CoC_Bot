@@ -550,9 +550,9 @@ class Task_Handler:
             return not configs.PRIORITY_BUILDER_LAB_UPGRADES
 
     @classmethod
-    def heros_excluded(cls):
+    def heroes_excluded(cls):
         try:
-            return "heros" in cls.get_exclusions()
+            return "heroes" in cls.get_exclusions()
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
