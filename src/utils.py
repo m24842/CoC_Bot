@@ -828,7 +828,6 @@ class Frame_Handler:
     def get_frame(cls, grayscale=True):
         frame = np.array(ADB_DEVICE.screenshot())
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
         if configs.DEBUG: cls.save_frame(frame, "debug/frame.png")
         if grayscale: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
