@@ -245,7 +245,7 @@ class Upgrader:
                 Input_Handler.click(x_sug, y_sug + label_height)
             else:
                 if in_hero_hall:
-                    if not configs.UPGRADE_HEROS:
+                    if not configs.UPGRADE_HEROES:
                         # Default to the first suggested upgrade
                         self.click_home_builders()
                         Input_Handler.click(x_sug, y_sug + label_height)
@@ -367,7 +367,7 @@ class Upgrader:
             
             in_hero_hall = not get_home_builders(1, return_amount=False, raise_exception=False)
             if in_hero_hall:
-                if not configs.UPGRADE_HEROS: return None
+                if not configs.UPGRADE_HEROES: return None
             else:
                 self.click_home_builders()
             time.sleep(0.5)
