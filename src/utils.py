@@ -725,6 +725,26 @@ class Input_Handler:
         MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
         MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
         MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
+    
+    @classmethod
+    def cond_multi_click(cls, event, x1, y1, x2, y2, duration=0):
+        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        points = [list(map(int, p)) for p in [(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)]]
+
+        builder = CommandBuilder()
+        for i, point in enumerate(points):
+            x, y = point
+            builder.down(i, x, y, 100)
+        builder.publish(MINITOUCH_DEVICE.connection)
+
+        end_time = time.monotonic() + duration / 1000
+        while time.monotonic() < end_time and not event.is_set():
+            time.sleep(0.01)
+
+        for i in range(len(points)):
+            builder.up(i)
+        builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
     def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0):
@@ -807,6 +827,7 @@ class Frame_Handler:
     @classmethod
     def get_frame(cls, grayscale=True):
         frame = np.array(ADB_DEVICE.screenshot())
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
         if configs.DEBUG: cls.save_frame(frame, "debug/frame.png")
