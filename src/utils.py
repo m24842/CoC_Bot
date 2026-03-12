@@ -556,7 +556,7 @@ class Task_Handler:
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
-            return not configs.UPGRADE_HEROS
+            return not configs.UPGRADE_HEROES
 
     @classmethod
     def home_base_excluded(cls):

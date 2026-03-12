@@ -25,7 +25,7 @@ MAX_UPGRADES_PER_CHECK = 10 # applies to both home and builder base
 #   Home base upgrade settings
 OPEN_HOME_BUILDERS = 0 # number of home base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
 
-UPGRADE_HEROS = True # can be overridden on desktop or web app
+UPGRADE_HEROES = True # can be overridden on desktop or web app
 UPGRADE_HOME_BASE = True # can be overridden on desktop or web app
 UPGRADE_HOME_LAB = True # can be overridden on desktop or web app
 ASSIGN_LAB_ASSISTANT = True # can be overridden on desktop or web app
