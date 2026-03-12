@@ -108,16 +108,19 @@ class Attacker:
         
         # Compute distances between edges and discretize
         dists = np.diff(peaks_norm)
-        min_dist = dists.min()
-        max_dist = dists.max()
         dist_categories = np.array([0.007, 0.015, 0.068])
-        dists_discrete = dist_categories[np.argmin(np.abs(dists[:, None] - dist_categories), axis=1)]
+        tol = 0.005
+        diffs = np.abs(dists[:, None] - dist_categories)
+        closest_idx = np.argmin(diffs, axis=1)
+        closest_dist = diffs[np.arange(len(dists)), closest_idx]
+        dists_discrete = dist_categories[closest_idx]
+        dists_discrete[closest_dist > tol] = np.nan
         
         # Remove partially visible card edges
-        if abs(dists[0] - min_dist) < abs(dists[0] - max_dist):
+        if dists_discrete[0] != dist_categories[2]: # First should be a card
             peaks = peaks[1:]
             peaks_norm = peaks_norm[1:]
-        if abs(dists[-1] - min_dist) < abs(dists[-1] - max_dist):
+        if dists_discrete[-1] != dist_categories[2]: # Last should be a card
             peaks = peaks[:-1]
             peaks_norm = peaks_norm[:-1]
         
