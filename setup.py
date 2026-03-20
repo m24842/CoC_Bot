@@ -2,43 +2,19 @@ import os
 import sys
 import shutil
 
-bot_packages = [
-    "opencv-python",
-    "easyocr",
-    "adbutils",
-    "requests",
-    "curl-cffi",
-    "numpy",
-    "scipy",
-    "nltk",
-    "flask",
-    "rapidfuzz",
-    "beautifulsoup4",
-    "uiautomator2",
-    "lxml",
-    "portalocker",
-    "pillow",
-    "pure-python-adb",
-    "pyminitouch",
-    "pywebview",
-    "psutil",
-    "pyinstaller",
-]
+bot_packages = "src/requirements.txt"
 
-web_app_packages = [
-    "flask",
-    "flask-cors",
-]
+web_app_packages = "app/requirements.txt"
 
 bot_setup = input("Install bot dependencies? (y/n): ").lower() == 'y'
 web_app_setup = input("Install web app dependencies? (y/n): ").lower() == 'y'
 
-packages = []
-if bot_setup: packages += bot_packages
-if web_app_setup: packages += web_app_packages
-
 if not os.path.exists(".venv"): os.system(f"{sys.executable} -m venv .venv")
-if len(packages): os.system(f"{sys.executable} -m pip install " + " ".join(packages))
+
+if bot_setup:
+    os.system(f"{sys.executable} -m pip install -r {bot_packages}")
+if web_app_setup:
+    os.system(f"{sys.executable} -m pip install -r {web_app_packages}")
 
 if not os.path.exists("src/configs.py"):
     shutil.copy("src/configs.template.py", "src/configs.py")
