@@ -2,7 +2,7 @@ import time
 import webview
 import requests
 from multiprocessing import Process, Pipe, Event
-from gui_server.gui_server import start_server
+from .gui_server.gui_server import start_server
 import configs
 
 COC_BOT_GUI = None

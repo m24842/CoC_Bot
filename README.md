@@ -67,7 +67,7 @@
     
     > ❗️ __Important__: If you enable password protection on pythonanywhere, you'll need to enter the credentials into `WEB_APP_AUTH_USERNAME` and `WEB_APP_AUTH_PASSWORD` in `configs.py`
     
-    > ❗️ __Important__: If hosting from a personal device, open port 1234 (or whatever port `WEB_APP_PORT` is set to in `configs.py`) and configure port forwarding as necessary
+    > ❗️ __Important__: If hosting from a personal device, configure port forwarding as necessary
     
     * Each bot instance can be accessed at `WEB_APP_ADDRESS/<instance_name>` (the default instance name is `main`)
 
