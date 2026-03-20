@@ -90,9 +90,8 @@ def home():
 
 @app.route("/<id>", methods=["GET"])
 def handle_instance(id):
-    print(id)
-    instance = instances[id]
-    if id not in instances: abort(404)
+    instance = instances.get(id)
+    if not instance: abort(404)
     return render_template(
         "instance.html",
         id=id,
@@ -110,7 +109,8 @@ def handle_current_time(id):
 @app.route("/<id>/end_time", methods=["GET", "POST"])
 def handle_end_time(id):
     global instances
-    instance = instances[id]
+    instance = instances.get(id)
+    if not instance: abort(404)
     if request.method == "POST":
         data = request.json.get("time", 0)
         instance.end_time = int(data) * 60 + time.time()
@@ -120,13 +120,15 @@ def handle_end_time(id):
 
 @app.route("/<id>/running", methods=["GET"])
 def handle_running(id):
-    instance = instances[id]
+    instance = instances.get(id)
+    if not instance: abort(404)
     return {"running": instance.end_time == 0 or instance.end_time < time.time()}
 
 @app.route("/<id>/status", methods=["GET", "POST"])
 def handle_status(id):
     global instances
-    instance = instances[id]
+    instance = instances.get(id)
+    if not instance: abort(404)
     if request.method == "POST":
         data = request.json
         instance.run_status = data.get("status", "")
@@ -137,7 +139,8 @@ def handle_status(id):
 @app.route("/<id>/exclude", methods=["GET", "POST"])
 def handle_exclude(id):
     global instances
-    instance = instances[id]
+    instance = instances.get(id)
+    if not instance: abort(404)
     if request.method == "POST":
         data = request.json
         action = data.get("action", "")
@@ -152,13 +155,17 @@ def handle_exclude(id):
 def handle_notify(id):
     global instances
     data = request.json
-    instances[id].add_notification(data)
+    instance = instances.get(id)
+    if not instance: abort(404)
+    instance.add_notification(data)
     return jsonify({"status": "success", "received": data})
 
 @app.route("/<id>/notifications", methods=["POST"])
 def handle_notifications(id):
     n = request.json
-    return jsonify(instances[id].get_notifications(n))
+    instance = instances.get(id)
+    if not instance: abort(404)
+    return jsonify(instance.get_notifications(n))
 
 @app.route("/instances", methods=["GET", "POST"])
 def handle_instances():
