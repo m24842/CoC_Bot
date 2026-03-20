@@ -63,7 +63,7 @@
     > __Note__: To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send `/start`. Enter the API token generated during the setup process for `TELEGRAM_BOT_TOKEN`.
 
 3. Start web app: `python app/app.py`
-    > 💡 __Tip__: It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) using the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 1 month.
+    > 💡 __Tip__: It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) or [Render](https://render.com/). For pythonanywhere, use the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 1 month. For Render, follow [this tutorial](https://render.com/docs/deploy-flask).
     
     > ❗️ __Important__: If you enable password protection on pythonanywhere, you'll need to enter the credentials into `WEB_APP_AUTH_USERNAME` and `WEB_APP_AUTH_PASSWORD` in `configs.py`
     
