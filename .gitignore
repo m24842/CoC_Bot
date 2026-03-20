@@ -6,6 +6,7 @@ dist
 debug
 *.pyc
 *.log
+*.ctl
 *.spec
 src/cache.json
 src/configs.py

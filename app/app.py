@@ -1,14 +1,9 @@
-import sys
-
-sys.path.append("src")
-
 import os
 import time
 import json
 import sqlite3
 from flask import Flask, render_template, jsonify, abort, request
 from flask_cors import CORS
-from configs import *
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -196,4 +191,4 @@ def add_cache_headers(response):
 
 get_known_instances()
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=WEB_APP_PORT, debug=True)
+    app.run(host="0.0.0.0", port=1234, debug=True)
