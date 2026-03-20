@@ -34,6 +34,7 @@ class Instance:
         }
     
     def init_db(self, id):
+        os.makedirs(self.data_path, exist_ok=True)
         notifications_path = os.path.join(self.data_path, f"{id}_notifications.db")
         if not os.path.exists(notifications_path):
             with sqlite3.connect(notifications_path) as conn:
