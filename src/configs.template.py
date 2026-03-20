@@ -37,6 +37,7 @@ PRIORITY_HOME_LAB_UPGRADES = True # if false, will upgrade in random order regar
 #   Within each row, upgrades are of equal priority and will be randomly chosen between
 #   If no listed upgrades are available, will default to random upgrades
 #   IMPORTANT: Capitalization and spacing must match exactly with in-game text
+#   TIP: It is recommended to minimize the number of priority levels to keep check time reasonable (all upgrades in the same priority are checked in parallel)
 HOME_BASE_UPGRADE_PRIORITY = [
     ["Barbarian King", "Archer Queen", "Minion Prince", "Grand Warden", "Royal Champion", "Dragon Duke"],
     ["Army Camp", "Barracks", "Dark Barracks", "Spell Factory", "Dark Spell Factory", "Workshop", "Clan Castle"],
@@ -59,6 +60,7 @@ PRIORITY_BUILDER_LAB_UPGRADES = True # if false, will upgrade in random order re
 #   Within each row, upgrades are of equal priority and will be randomly chosen between
 #   If no listed upgrades are available, will default to random upgrades
 #   IMPORTANT: Capitalization and spacing must match exactly with in-game text
+#   TIP: It is recommended to minimize the number of priority levels to keep check time reasonable (all upgrades in the same priority are checked in parallel)
 BUILDER_BASE_UPGRADE_PRIORITY = [
     ["Builder Hall", "Multi Mortar", "Builder Barracks", "Battle Machine", "Battle Copter", "Star Laboratory"],
     ["Gold Storage", "Elixir Storage", "Double Cannon", "Archer Tower"],
