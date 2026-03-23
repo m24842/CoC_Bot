@@ -704,17 +704,38 @@ Asset_Manager.load_fonts()
 
 class Input_Handler:
     @classmethod
-    def click(cls, x, y, n=1, delay=0):
+    def down(cls, x, y, i=0):
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        command = [f"input tap {int(x*ADB_WINDOW_DIMS[0])} {int(y*ADB_WINDOW_DIMS[1])}"] * n
-        if delay == 0:
-            command = " && ".join(command) + ";"
-            ADB_DEVICE.shell(command)
-        else:
-            for c in command:
-                ADB_DEVICE.shell(c)
-                time.sleep(delay)
+        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        x = int(x * MAX_X)
+        y = int(y * MAX_Y)
+        builder = CommandBuilder()
+        builder.down(i, x, y, 100)
+        builder.publish(MINITOUCH_DEVICE.connection)
+
+    @classmethod
+    def up(cls, i=0):
+        builder = CommandBuilder()
+        builder.up(i)
+        builder.publish(MINITOUCH_DEVICE.connection)
+
+    @classmethod
+    def click(cls, x, y, n=1, delay=0, i=0):
+        if x < 0: x = 1 + x
+        if y < 0: y = 1 + y
+        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
+        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        x = int(x * MAX_X)
+        y = int(y * MAX_Y)
+        builder = CommandBuilder()
+        for _ in range(n):
+            builder.down(i, x, y, 100)
+            builder.publish(MINITOUCH_DEVICE.connection)
+            builder.up(i)
+            builder.publish(MINITOUCH_DEVICE.connection)
+            time.sleep(delay)
 
     @classmethod
     def click_exit(cls, n=1, delay=0):
@@ -725,26 +746,6 @@ class Input_Handler:
         MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
         MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
         MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
-    
-    @classmethod
-    def cond_multi_click(cls, event, x1, y1, x2, y2, duration=0):
-        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
-        points = [list(map(int, p)) for p in [(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)]]
-
-        builder = CommandBuilder()
-        for i, point in enumerate(points):
-            x, y = point
-            builder.down(i, x, y, 100)
-        builder.publish(MINITOUCH_DEVICE.connection)
-
-        end_time = time.monotonic() + duration / 1000
-        while time.monotonic() < end_time and not event.is_set():
-            time.sleep(0.01)
-
-        for i in range(len(points)):
-            builder.up(i)
-        builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
     def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0):

@@ -71,7 +71,7 @@ BUILDER_LAB_UPGRADE_PRIORITY = [
 ]
 
 # REQUIRED: Attack Settings
-TROOP_DEPLOY_TIME = 3 # seconds
+TROOP_DEPLOY_TIME = 2 # seconds
 ATTACK_SLOT_RANGE = (0, 100) # inclusive, first slot is index 0
 EXCLUDE_CLAN_TROOPS = True
 ATTACK_HOME_BASE = True # can be overridden on desktop or web app
