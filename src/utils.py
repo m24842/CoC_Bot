@@ -732,7 +732,7 @@ class Input_Handler:
         builder = CommandBuilder()
         for _ in range(n):
             builder.down(i, x, y, 100)
-            builder.publish(MINITOUCH_DEVICE.connection)
+            builder.commit()
             builder.up(i)
             builder.publish(MINITOUCH_DEVICE.connection)
             time.sleep(delay)
