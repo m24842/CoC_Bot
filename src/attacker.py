@@ -238,22 +238,6 @@ class Attacker:
         # Close and reopen CoC to auto complete battle
         if restart:
             start_coc()
-
-            # Wait until back in one of the villages before returning
-            start_time = time.time()
-            while time.time() - start_time < timeout:
-                Input_Handler.click_exit(5, 0.1)
-                try:
-                    get_home_builders(1, return_amount=False)
-                    return
-                except Exception as e:
-                    if configs.DEBUG: print("end_attack", e)
-                
-                try:
-                    get_builder_builders(1, return_amount=False)
-                    return
-                except Exception as e:
-                    if configs.DEBUG: print("end_attack", e)
         else:
             stop_coc()
     
