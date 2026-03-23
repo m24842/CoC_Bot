@@ -346,11 +346,13 @@ def get_home_builders(timeout=60, return_amount=True, raise_exception=True):
 
 def start_coc(timeout=60):
     try:
+        if not running(): return False
         to_system_home()
         print("Starting CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
         i = 0
         start = time.time()
         while time.time() - start < timeout:
+            if not running(): return False
             ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
             Input_Handler.click_exit(4, 0.1)
             try:
@@ -359,7 +361,6 @@ def start_coc(timeout=60):
             except KeyboardInterrupt: raise
             except SystemExit: raise
             except:
-                if not running(): return False
                 pass
             
             try:
@@ -368,7 +369,6 @@ def start_coc(timeout=60):
             except KeyboardInterrupt: raise
             except SystemExit: raise
             except:
-                if not running(): return False
                 pass
             
             i += 1
@@ -410,7 +410,6 @@ def to_builder_base():
         Input_Handler.zoom(dir="out", percent=0.75)
     for _ in range(3):
         Input_Handler.swipe_right()
-    for _ in range(3):
         Input_Handler.swipe_up()
     
     scale_templates = []
