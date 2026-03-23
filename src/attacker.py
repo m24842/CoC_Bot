@@ -1,9 +1,7 @@
 import cv2
 import time
 import scipy
-import threading
 import numpy as np
-from concurrent.futures import ThreadPoolExecutor, wait
 from utils import *
 import configs
 from configs import *
@@ -170,27 +168,31 @@ class Attacker:
             section = Frame_Handler.get_frame_section(card_center-0.01, 0.89, card_center+0.01, 0.91, grayscale=False)
             return np.all(section[:, :, 0] == section[:, :, 1]) and np.all(section[:, :, 1] == section[:, :, 2])
         
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            for i in range(len(card_centers)):
-                if available_slots[i]:
-                    # Select troop
-                    Input_Handler.click(card_centers[i], 0.9)
-                    
-                    # Random deployment for spells
-                    n = 11
-                    rxs = np.random.uniform(0.35, 0.65, n)
-                    rys = np.random.uniform(0.45, 0.55, n)
-                    for coord in zip(rxs, rys):
-                        Input_Handler.click(*coord)
-                    
-                    # Deploy troop
-                    Input_Handler.click(0.5, 0.8, 3)
-                    lift = threading.Event()
-                    future = executor.submit(Input_Handler.cond_multi_click, lift, 0.5, 0.8, 0.5, 0.8, duration=TROOP_DEPLOY_TIME * 1000)
-                    while not future.done() and not card_gray(card_centers[i]): time.sleep(0.01)
-                    lift.set()
-                    wait([future])
-                    
+        # Start holding deploy position w/ secondary touch pointer
+        Input_Handler.down(0.5, 0.8, i=1)
+        
+        for i in range(len(card_centers)):
+            if available_slots[i]:
+                # Select troop
+                Input_Handler.click(card_centers[i], 0.9)
+                
+                # Random deployment for spells
+                n = 11
+                rxs = np.random.uniform(0.35, 0.65, n)
+                rys = np.random.uniform(0.45, 0.55, n)
+                for coord in zip(rxs, rys):
+                    Input_Handler.click(*coord)
+                
+                # Deploy troop
+                Input_Handler.down(0.5, 0.8, i=0)
+                end_time = time.monotonic() + TROOP_DEPLOY_TIME
+                while time.monotonic() < end_time and not card_gray(card_centers[i]): time.sleep(0.01)
+                Input_Handler.up(i=0)
+        
+        # Release secondary pointer
+        Input_Handler.up(i=1)
+        
+        # Unselect last card
         Input_Handler.click(0.01, 0.9)
     
     def complete_attack(self, timeout=10, restart=True, exclude_clan_troops=False):
