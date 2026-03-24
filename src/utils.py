@@ -19,11 +19,13 @@ import uiautomator2 as u2
 from datetime import datetime
 from bs4 import BeautifulSoup
 from functools import lru_cache
+from urllib.parse import urlparse
 from rapidfuzz import process, distance
 from PIL import Image, ImageDraw, ImageFont
 from curl_cffi import requests as curl_requests
 from concurrent.futures import ThreadPoolExecutor
 from pyminitouch import MNTDevice, CommandBuilder
+from apscheduler.schedulers.background import BackgroundScheduler
 import configs
 from configs import *
 from gui import get_gui
@@ -64,6 +66,9 @@ def init_instance(id):
     INSTANCE_ID = id
     ADB_ADDRESS = configs.ADB_ADDRESSES[configs.INSTANCE_IDS.index(INSTANCE_ID)]
     if WEB_APP_URL != "":
+        if "pythonanywhere.com" in WEB_APP_URL:
+            Scheduler.add_job(extend_pythonanywhere_hosting, "interval", hours=24)
+        
         requests.post(
             f"{WEB_APP_URL}/instances",
             auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
@@ -284,6 +289,23 @@ def send_notification(text):
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except: pass
+
+def extend_pythonanywhere_hosting():
+    assert "pythonanywhere.com" in WEB_APP_URL
+    username = urlparse(WEB_APP_URL).hostname.split('.')[0]
+    base_url = "https://www.pythonanywhere.com"
+    action = "extend"
+    action_url = f"{base_url}/user/{username}/webapps/{username}.pythonanywhere.com/{action}"
+
+    session = requests.Session()
+    res = session.get(base_url)
+    assert res.status_code != 200
+    headers = {
+        "Referer": base_url,
+        "X-CSRFToken": session.cookies.get("csrftoken"),
+    }
+    res = session.post(action_url, headers=headers)
+    assert res.status_code == 200
 
 def to_home_base():
     try:
@@ -906,6 +928,13 @@ class Frame_Handler:
         for template in templates:
             threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, return_confidence))
         return [thread.result() for thread in threads]
+
+class Scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.start()
+    Exit_Handler.register(scheduler.shutdown)
+    
+    add_job = scheduler.add_job
 
 class Dev_Tools:
     @classmethod
