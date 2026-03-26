@@ -19,7 +19,6 @@ import uiautomator2 as u2
 from datetime import datetime
 from bs4 import BeautifulSoup
 from functools import lru_cache
-from urllib.parse import urlparse
 from rapidfuzz import process, distance
 from PIL import Image, ImageDraw, ImageFont
 from curl_cffi import requests as curl_requests
@@ -67,11 +66,10 @@ def init_instance(id):
     ADB_ADDRESS = configs.ADB_ADDRESSES[configs.INSTANCE_IDS.index(INSTANCE_ID)]
     if WEB_APP_URL != "":
         if "pythonanywhere.com" in WEB_APP_URL:
-            Scheduler.add_job(extend_pythonanywhere_hosting, "interval", hours=24)
+            Scheduler.add_job(extend_pythonanywhere_hosting, args=(configs.PA_USERNAME, configs.PA_PASSWORD), trigger="interval", hours=24)
         
         requests.post(
             f"{WEB_APP_URL}/instances",
-            auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
             json={"id": INSTANCE_ID},
             timeout=(10, 20)
         )
@@ -118,7 +116,6 @@ def running():
     try:
         response = requests.get(
             f"{WEB_APP_URL}/{INSTANCE_ID}/running",
-            auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
             timeout=(10, 20)
         )
         if response.status_code == 200:
@@ -270,7 +267,6 @@ def send_notification(text):
         try:
             requests.post(
                 f"{WEB_APP_URL}/{INSTANCE_ID}/notify",
-                auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
                 json=text,
                 timeout=(10, 20)
             )
@@ -290,22 +286,39 @@ def send_notification(text):
         except SystemExit: raise
         except: pass
 
-def extend_pythonanywhere_hosting():
+def extend_pythonanywhere_hosting(username, password):
     assert "pythonanywhere.com" in WEB_APP_URL
-    username = urlparse(WEB_APP_URL).hostname.split('.')[0]
     base_url = "https://www.pythonanywhere.com"
-    action = "extend"
-    action_url = f"{base_url}/user/{username}/webapps/{username}.pythonanywhere.com/{action}"
+    login_url = f"{base_url}/login/"
+    webapps_url = f"{base_url}/user/{username}/webapps/"
+    extend_url = f"{base_url}/user/{username}/webapps/{username}.pythonanywhere.com/extend"
+    
+    headers = {"Referer": base_url}
 
     session = requests.Session()
-    res = session.get(base_url)
-    assert res.status_code != 200
-    headers = {
-        "Referer": base_url,
-        "X-CSRFToken": session.cookies.get("csrftoken"),
-    }
-    res = session.post(action_url, headers=headers)
-    assert res.status_code == 200
+    
+    # Login
+    session.get(login_url)
+    session.post(
+        login_url,
+        data={
+            "csrfmiddlewaretoken": session.cookies.get_dict().get("csrftoken"),
+            "auth-username": username,
+            "auth-password": password,
+            "login_view-current_step": "auth",
+        },
+        headers=headers,
+    )
+    assert "Log out" in session.get(base_url).text
+    
+    # Extend hosting
+    session.get(webapps_url)
+    res = session.post(
+        extend_url,
+        headers=headers,
+        data={"csrfmiddlewaretoken": session.cookies.get_dict().get("csrftoken")},
+    )
+    assert res.url == webapps_url
 
 def to_home_base():
     try:
@@ -517,7 +530,6 @@ class Task_Handler:
         if WEB_APP_URL != "":
             res = requests.get(
                 f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
-                auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
                 timeout=(10, 20)
             )
             if res.status_code == 200:
@@ -929,7 +941,7 @@ class Frame_Handler:
             threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, return_confidence))
         return [thread.result() for thread in threads]
 
-class Scheduler():
+class Scheduler:
     scheduler = BackgroundScheduler()
     scheduler.start()
     Exit_Handler.register(scheduler.shutdown)

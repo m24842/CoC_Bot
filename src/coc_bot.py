@@ -31,7 +31,6 @@ class CoC_Bot:
                 try:
                     requests.post(
                         f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status",
-                        auth=(WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD),
                         json={"status": status},
                         timeout=(10, 20)
                     )

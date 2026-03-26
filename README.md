@@ -63,9 +63,7 @@
     > __Note__: To configure Telegram notifications, first set up a [Telegram bot](https://marketplace.creatio.com/sites/marketplace/files/app-guide/Instructions._Telegram_bot_1.pdf?utm_source=chatgpt.com) and send `/start`. Enter the API token generated during the setup process for `TELEGRAM_BOT_TOKEN`.
 
 3. Start web app: `python app/app.py`
-    > 💡 __Tip__: It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) using the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 1 month (the bot will automatically extend hosting so there's no need to do so manually).
-    
-    > ❗️ __Important__: If you enable password protection on pythonanywhere, you'll need to enter the credentials into `WEB_APP_AUTH_USERNAME` and `WEB_APP_AUTH_PASSWORD` in `configs.py`
+    > 💡 __Tip__: It is recommended to host the web app on [pythonanywhere](https://www.pythonanywhere.com) using the provided [wsgi.py](app/wsgi.py) template and [this tutorial](https://medium.com/@cssjhnnamae/how-to-deploy-a-python-app-on-pythonanywhere-cf399f4bbc01). Free accounts can host a single web app for an extendable period of 1 month (the bot can automatically extend hosting). If you want to enable automatic pythonanywhere hosting extension, enter your pythonanywhere username and passowrd into `PA_USERNAME` and `PA_PASSWORD` respectively in `configs.py`.
     
     > ❗️ __Important__: If hosting from a personal device, configure port forwarding as necessary
     
@@ -77,7 +75,6 @@
     * Download [Scriptable](https://apps.apple.com/us/app/scriptable/id1405459188) and create a new script named "CoC Bot Script" with the contents of [CoC_Bot_Script.js](<shortcut/Scriptable.js>)
     * Open the [provided shortcut](<shortcut/CoC Bot Auto Pause.shortcut>)
     * Enter your `WEB_APP_URL` into the `url` item of the Dictionary
-    * If applicable, enter your web app auth credentials into the `auth` item as `WEB_APP_AUTH_USERNAME:WEB_APP_AUTH_PASSWORD`
     * Adjust the `id` item containing an array of instance names as necessary
     * Create an Automation task that runs when CoC opens and is set to run immediately
 
