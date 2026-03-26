@@ -7,7 +7,7 @@ TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 
 # OPTIONAL: Web app (enter empty string to disable)
 WEB_APP_URL = "" # (e.g. 12.34.567.890:1234)
-WEB_APP_AUTH_USERNAME, WEB_APP_AUTH_PASSWORD = "", "" # (leave empty if not applicable)
+PA_USERNAME, PA_PASSWORD = "", "" # only if using pythonanywhere to auto extend hosting
 
 # REQUIRED: Instance Settings
 INSTANCE_IDS = ["main"]
