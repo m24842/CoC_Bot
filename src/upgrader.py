@@ -425,7 +425,7 @@ class Upgrader:
         return self.home_random_upgrade()
     
     @require_exit()
-    def assign_builder_assistant(self):
+    def assign_builder_apprentice(self):
         try:
             # Open upgrade list menu
             self.click_home_builders()
@@ -456,7 +456,7 @@ class Upgrader:
             Input_Handler.click(x, y)
             time.sleep(0.5)
         except Exception as e:
-            if configs.DEBUG: print("assign_builder_assistant", e)
+            if configs.DEBUG: print("assign_builder_apprentice", e)
     
     @require_exit()
     def home_lab_random_upgrade(self):
@@ -1121,8 +1121,8 @@ class Upgrader:
                 except SystemExit: raise
                 except:
                     pass
-        if not Task_Handler.builder_assistant_excluded():
-            self.assign_builder_assistant()
+        if not Task_Handler.builder_apprentice_excluded():
+            self.assign_builder_apprentice()
         
         # Lab upgrades
         lab_upgrades_started = []
