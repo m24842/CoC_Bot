@@ -655,13 +655,13 @@ class Task_Handler:
             return not configs.ASSIGN_LAB_ASSISTANT
 
     @classmethod
-    def builder_assistant_excluded(cls):
+    def builder_apprentice_excluded(cls):
         try:
-            return "builder_assistant" in cls.get_exclusions()
+            return "builder_apprentice" in cls.get_exclusions()
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
-            return not configs.ASSIGN_BUILDER_ASSISTANT
+            return not configs.ASSIGN_BUILDER_APPRENTICE
 
 class OCR_Handler:
     @classmethod
