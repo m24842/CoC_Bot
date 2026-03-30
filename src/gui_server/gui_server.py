@@ -31,7 +31,7 @@ class Instance:
             "home_attacks": not ATTACK_HOME_BASE,
             "builder_attacks": not ATTACK_BUILDER_BASE,
             "lab_assistant": not ASSIGN_LAB_ASSISTANT,
-            "builder_assistant": not ASSIGN_BUILDER_ASSISTANT,
+            "builder_apprentice": not ASSIGN_BUILDER_APPRENTICE,
         }
         self.exclusions = set(k for k, v in task_settings.items() if v)
 
