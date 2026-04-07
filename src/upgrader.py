@@ -180,7 +180,7 @@ class Upgrader:
             # Get potential upgrade names
             pot_section = Frame_Handler.get_frame_section(x_sug-0.13, y_pot-0.035, x_sug+0.03, y_pot+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(pot_section, "debug/upgrade_name.png")
-            # pot_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(pot_section)[0].lower()))
+            pot_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(pot_section)[0].lower()))
             
             alt_section = Frame_Handler.get_frame_section(x_sug-0.13, y_alt-0.035, x_sug+0.03, y_alt+0.025, high_contrast=True)
             if configs.DEBUG: Frame_Handler.save_frame(alt_section, "debug/upgrade_name.png")
@@ -195,9 +195,12 @@ class Upgrader:
             if len(other_upgrade_text) > 0: other_upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", other_upgrade_text[0].lower()))
             
             # Choose one upgrade from suggested and other upgrades
-            upgrade_options = ["default"]
+            upgrade_options = []
+            if pot_upgrade_name and "town hall" not in pot_upgrade_name: upgrade_options.append("default")
             if alt_upgrade_name and "town hall" not in alt_upgrade_name: upgrade_options.append("suggested")
             if other_upgrade_name and "town hall" not in other_upgrade_name: upgrade_options.append("other")
+            if len(upgrade_options) == 0 and pot_upgrade_name is not None: upgrade_options.append("default")
+            else: return None
             chosen_upgrade = np.random.choice(upgrade_options)
             if configs.DEBUG: print(f"chosen_upgrade: {chosen_upgrade}")
             
