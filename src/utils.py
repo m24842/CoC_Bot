@@ -678,6 +678,7 @@ class OCR_Handler:
             client = Groq(api_key=configs.GROQ_API_KEY)
             chat_completion = client.chat.completions.create(
                 model="meta-llama/llama-4-scout-17b-16e-instruct",
+                timeout=10,
                 messages=[
                     {
                         "role": "user",
