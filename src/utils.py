@@ -527,139 +527,141 @@ class Exit_Handler:
 Exit_Handler.setup_signal_handlers()
 
 class Task_Handler:
+    
+    cached_exclusions = []
+    
     @classmethod
-    def get_exclusions(cls):
+    def get_exclusions(cls, use_cached=False):
+        if use_cached:
+            return cls.cached_exclusions
         if WEB_APP_URL != "":
             res = requests.get(
                 f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
                 timeout=(10, 20)
             )
             if res.status_code == 200:
-                exclusions = res.json().get("exclusions", [])
-                return exclusions
-            return []
+                cls.cached_exclusions = res.json().get("exclusions", [])
         elif configs.LOCAL_GUI:
             res = requests.get(
                 f"http://localhost:{get_gui().server_port}/exclude",
                 timeout=(10, 20)
             )
             if res.status_code == 200:
-                exclusions = res.json().get("exclusions", [])
-                return exclusions
-            return []
+                cls.cached_exclusions = res.json().get("exclusions", [])
+        return cls.cached_exclusions
 
     @classmethod
-    def home_base_priority_excluded(cls):
+    def home_base_priority_excluded(cls, **kwargs):
         try:
-            return "home_base_priority" in cls.get_exclusions()
+            return "home_base_priority" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.PRIORITY_HOME_BASE_UPGRADES
 
     @classmethod
-    def home_lab_priority_excluded(cls):
+    def home_lab_priority_excluded(cls, **kwargs):
         try:
-            return "home_lab_priority" in cls.get_exclusions()
+            return "home_lab_priority" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.PRIORITY_HOME_LAB_UPGRADES
     
     @classmethod
-    def builder_base_priority_excluded(cls):
+    def builder_base_priority_excluded(cls, **kwargs):
         try:
-            return "builder_base_priority" in cls.get_exclusions()
+            return "builder_base_priority" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.PRIORITY_BUILDER_BASE_UPGRADES
     
     @classmethod
-    def builder_lab_priority_excluded(cls):
+    def builder_lab_priority_excluded(cls, **kwargs):
         try:
-            return "builder_lab_priority" in cls.get_exclusions()
+            return "builder_lab_priority" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.PRIORITY_BUILDER_LAB_UPGRADES
 
     @classmethod
-    def heroes_excluded(cls):
+    def heroes_excluded(cls, **kwargs):
         try:
-            return "heroes" in cls.get_exclusions()
+            return "heroes" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.UPGRADE_HEROES
 
     @classmethod
-    def home_base_excluded(cls):
+    def home_base_excluded(cls, **kwargs):
         try:
-            return "home_base" in cls.get_exclusions()
+            return "home_base" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.UPGRADE_HOME_BASE
 
     @classmethod
-    def builder_base_excluded(cls):
+    def builder_base_excluded(cls, **kwargs):
         try:
-            return "builder_base" in cls.get_exclusions()
+            return "builder_base" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.UPGRADE_BUILDER_BASE
 
     @classmethod
-    def home_lab_excluded(cls):
+    def home_lab_excluded(cls, **kwargs):
         try:
-            return "home_lab" in cls.get_exclusions()
+            return "home_lab" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.UPGRADE_HOME_LAB
 
     @classmethod
-    def builder_lab_excluded(cls):
+    def builder_lab_excluded(cls, **kwargs):
         try:
-            return "builder_lab" in cls.get_exclusions()
+            return "builder_lab" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.UPGRADE_BUILDER_LAB
 
     @classmethod
-    def home_attacks_excluded(cls):
+    def home_attacks_excluded(cls, **kwargs):
         try:
-            return "home_attacks" in cls.get_exclusions()
+            return "home_attacks" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.ATTACK_HOME_BASE
 
     @classmethod
-    def builder_attacks_excluded(cls):
+    def builder_attacks_excluded(cls, **kwargs):
         try:
-            return "builder_attacks" in cls.get_exclusions()
+            return "builder_attacks" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.ATTACK_BUILDER_BASE
 
     @classmethod
-    def lab_assistant_excluded(cls):
+    def lab_assistant_excluded(cls, **kwargs):
         try:
-            return "lab_assistant" in cls.get_exclusions()
+            return "lab_assistant" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
             return not configs.ASSIGN_LAB_ASSISTANT
 
     @classmethod
-    def builder_apprentice_excluded(cls):
+    def builder_apprentice_excluded(cls, **kwargs):
         try:
-            return "builder_apprentice" in cls.get_exclusions()
+            return "builder_apprentice" in cls.get_exclusions(**kwargs)
         except KeyboardInterrupt: raise
         except SystemExit: raise
         except:
