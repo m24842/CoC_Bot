@@ -667,22 +667,22 @@ class Task_Handler:
 
 class OCR_Handler:
     @classmethod
-    def get_text(cls, frame, local=True):
-        if local:
+    def get_text(cls, frame):
+        if configs.GROQ_API_KEY == "":
             if not hasattr(cls, 'reader'):
                 cls.reader = easyocr.Reader(['en'], gpu=True)
             result = cls.reader.readtext(frame)
             return [text for _, text, _ in result if text.strip()]
         else:
             base64_img = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode("utf-8")
-            client = Groq(api_key=GROQ_API_KEY)
+            client = Groq(api_key=configs.GROQ_API_KEY)
             chat_completion = client.chat.completions.create(
                 model="meta-llama/llama-4-scout-17b-16e-instruct",
                 messages=[
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": "what text is in this image? respond ONLY with the text"},
+                            {"type": "text", "text": "what text is in this image? respond ONLY with the text. if there is no text respond with ~"},
                             {
                                 "type": "image_url",
                                 "image_url": {
@@ -693,7 +693,7 @@ class OCR_Handler:
                     }
                 ],
             )
-            return chat_completion.choices[0].message.content
+            return chat_completion.choices[0].message.content.replace('~', '').splitlines()
 
 class Asset_Manager:
     fonts = {}
