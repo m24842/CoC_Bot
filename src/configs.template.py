@@ -9,6 +9,9 @@ TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 WEB_APP_URL = "" # (e.g. 12.34.567.890:1234)
 PA_USERNAME, PA_PASSWORD = "", "" # only if using pythonanywhere to auto extend hosting
 
+# OPTIONAL: Groq API key for faster/more accurate OCR (enter empty string to disable)
+GROQ_API_KEY = ""
+
 # REQUIRED: Instance Settings
 INSTANCE_IDS = ["main"]
 ADB_ADDRESSES = ["127.0.0.1:5555"] # Bluestacks ADB addresses in order of instance IDs
