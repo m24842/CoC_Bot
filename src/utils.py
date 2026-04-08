@@ -7,6 +7,7 @@ import time
 import signal
 import atexit
 import ctypes
+import base64
 import easyocr
 import adbutils
 import requests
@@ -14,6 +15,7 @@ import argparse
 import subprocess
 import numpy as np
 import portalocker
+from groq import Groq
 from pathlib import Path
 import uiautomator2 as u2
 from datetime import datetime
@@ -672,18 +674,26 @@ class OCR_Handler:
             result = cls.reader.readtext(frame)
             return [text for _, text, _ in result if text.strip()]
         else:
-            w, h = frame.shape[1], frame.shape[0]
-            if w < 1024 or h < 1024:
-                scale = max(1024 / w, 1024 / h)
-                frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_CUBIC)
-            _, img_encoded = cv2.imencode('.png', frame)
-            response = requests.post(
-                "https://api.easyocr.org/ocr",
-                files={"file": ("image.png", img_encoded.tobytes())},
-                timeout=(10, 20)
+            base64_img = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode("utf-8")
+            client = Groq(api_key=GROQ_API_KEY)
+            chat_completion = client.chat.completions.create(
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "what text is in this image? respond ONLY with the text"},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpg;base64,{base64_img}",
+                                },
+                            },
+                        ],
+                    }
+                ],
             )
-            result = response.json()['words']
-            return [res['text'] for res in result if res['text'].strip()]
+            return chat_completion.choices[0].message.content
 
 class Asset_Manager:
     fonts = {}

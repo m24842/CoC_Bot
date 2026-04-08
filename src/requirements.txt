@@ -4,6 +4,7 @@ beautifulsoup4
 curl-cffi
 easyocr
 flask
+groq
 lxml
 nltk
 numpy

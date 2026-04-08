@@ -200,7 +200,7 @@ class Upgrader:
             if alt_upgrade_name and "town hall" not in alt_upgrade_name: upgrade_options.append("suggested")
             if other_upgrade_name and "town hall" not in other_upgrade_name: upgrade_options.append("other")
             if len(upgrade_options) == 0 and pot_upgrade_name is not None: upgrade_options.append("default")
-            else: return None
+            elif len(upgrade_options) == 0: return None
             chosen_upgrade = np.random.choice(upgrade_options)
             if configs.DEBUG: print(f"chosen_upgrade: {chosen_upgrade}")
             
