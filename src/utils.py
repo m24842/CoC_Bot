@@ -668,35 +668,46 @@ class Task_Handler:
             return not configs.ASSIGN_BUILDER_APPRENTICE
 
 class OCR_Handler:
+    
+    backoff_time = 0
+    
     @classmethod
     def get_text(cls, frame):
-        if configs.GROQ_API_KEY == "":
-            if not hasattr(cls, 'reader'):
-                cls.reader = easyocr.Reader(['en'], gpu=True)
-            result = cls.reader.readtext(frame)
-            return [text for _, text, _ in result if text.strip()]
-        else:
-            base64_img = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode("utf-8")
-            client = Groq(api_key=configs.GROQ_API_KEY)
-            chat_completion = client.chat.completions.create(
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
-                timeout=10,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": "what text is in this image? respond ONLY with the text. if there is no text respond with ~"},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpg;base64,{base64_img}",
-                                },
+        if configs.GROQ_API_KEY != "":
+            if time.time() > cls.backoff_time:
+                try: return cls.external_ocr(frame)
+                except: cls.backoff_time = time.time() + 600
+        return cls.local_ocr(frame)
+
+    @classmethod
+    def local_ocr(cls, frame):
+        if not hasattr(cls, 'reader'):
+            cls.reader = easyocr.Reader(['en'], gpu=True)
+        result = cls.reader.readtext(frame)
+        return [text for _, text, _ in result if text.strip()]
+
+    @classmethod
+    def external_ocr(cls, frame):
+        base64_img = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode("utf-8")
+        client = Groq(api_key=configs.GROQ_API_KEY, timeout=10, max_retries=0)
+        chat_completion = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "what text is in this image? respond ONLY with the text. if there is no text respond with ~"},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpg;base64,{base64_img}",
                             },
-                        ],
-                    }
-                ],
-            )
-            return chat_completion.choices[0].message.content.replace('~', '').splitlines()
+                        },
+                    ],
+                }
+            ],
+        )
+        return chat_completion.choices[0].message.content.replace('~', '').splitlines()
 
 class Asset_Manager:
     fonts = {}
