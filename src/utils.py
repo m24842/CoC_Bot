@@ -8,6 +8,7 @@ import signal
 import atexit
 import ctypes
 import base64
+import shutil
 import easyocr
 import adbutils
 import requests
@@ -78,8 +79,11 @@ def init_instance(id):
 
 def disable_sleep():
     if sys.platform == "darwin":
-        sleep_helper = Path(__file__).parent / "sleep_helper.sh"
-        subprocess.Popen(["osascript", "-e", f'do shell script "{sleep_helper} {os.getpid()}" with administrator privileges'])
+        sleep_helper_temp = Path(__file__).parent / "sleep_helper.sh"
+        sleep_helper_permanent = APP_DATA_DIR / "sleep_helper.sh"
+        shutil.copyfile(sleep_helper_temp, sleep_helper_permanent)
+        os.chmod(sleep_helper_permanent, 0o755)
+        subprocess.Popen(["osascript", "-e", f'do shell script "{sleep_helper_permanent} {os.getpid()}" with administrator privileges'])
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 
