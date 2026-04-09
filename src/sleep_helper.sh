@@ -3,11 +3,11 @@
 PARENT_PID="$1"
 
 set_sleep() {
-    /usr/bin/pmset -a sleep "$1"
+    pmset -a sleep "$1"
 }
 
 set_disablesleep() {
-    /usr/bin/pmset -a disablesleep "$1"
+    pmset -a disablesleep "$1"
 }
 
 parent_alive() {
@@ -22,7 +22,7 @@ cleanup() {
 
 trap cleanup SIGTERM SIGINT
 
-ORIGINAL_SLEEP=$(/usr/bin/pmset -g | grep ' sleep ' | awk '{print $2}')
+ORIGINAL_SLEEP=$(pmset -g | grep ' sleep ' | awk '{print $2}')
 
 set_sleep 0
 set_disablesleep 1
