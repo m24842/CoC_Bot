@@ -6,7 +6,7 @@ easyocr
 flask
 groq
 lxml
-nltk
+matplotlib
 numpy
 opencv-python
 pillow

@@ -1,12 +1,6 @@
-import sys
-import time
-import psutil
-import requests
-import subprocess
 import utils
 from utils import *
 from configs import *
-from gui import get_gui
 from upgrader import Upgrader
 from attacker import Attacker
 
@@ -26,6 +20,9 @@ class CoC_Bot:
     # ============================================================
     
     def update_status(self, status):
+        import requests
+        from gui import get_gui
+        
         if WEB_APP_URL != "":
             for _ in range(5):
                 try:
@@ -48,6 +45,8 @@ class CoC_Bot:
                 if configs.DEBUG: print("update_status", e)
     
     def start_bluestacks(self):
+        import sys, subprocess, time
+        
         if sys.platform == "darwin":
             subprocess.Popen([
                 "osascript", "-e",
@@ -69,12 +68,14 @@ class CoC_Bot:
         raise Exception("BlueStacks failed to start.")
     
     def check_bluestacks(self):
+        import psutil
         for proc in psutil.process_iter(['name']):
             if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
                 return True
         return False
 
     def connect_adb(self):
+        import time
         for _ in range(120):
             try:
                 connect_adb()
@@ -90,6 +91,8 @@ class CoC_Bot:
     # ============================================================
     
     def run(self):
+        import time
+        
         while True:
             try:
                 if not running():

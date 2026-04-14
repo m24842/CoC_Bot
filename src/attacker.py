@@ -1,7 +1,3 @@
-import cv2
-import time
-import scipy
-import numpy as np
 from utils import *
 import configs
 from configs import *
@@ -43,6 +39,8 @@ class Attacker:
         return False
     
     def start_normal_attack(self, timeout=60):
+        import time
+        
         # Click attack
         Input_Handler.click(0.07, 0.9)
         
@@ -74,6 +72,8 @@ class Attacker:
         return False
     
     def start_builder_attack(self, timeout=60):
+        import time
+        
         # Click attack
         Input_Handler.click(0.07, 0.9)
         
@@ -95,6 +95,8 @@ class Attacker:
         return False
     
     def detect_troop_positions(self, frame, clip_left=0.0, clip_right=1.0, type_gaps_seen=0, return_boundaries=False, return_types=False, return_counts=False):
+        import cv2, scipy, numpy as np
+        
         # Look for vertical card edges
         if len(frame.shape) == 3: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         orig_h, orig_w = frame.shape
@@ -188,6 +190,7 @@ class Attacker:
         return output
     
     def deploy_troops(self, card_centers, available_slots, card_types=None, card_counts=None):
+        import time, numpy as np
         
         def card_gray(card_center):
             section = Frame_Handler.get_frame_section(card_center-0.01, 0.89, card_center+0.01, 0.91, grayscale=False)
@@ -226,6 +229,8 @@ class Attacker:
         Input_Handler.click(0.01, 0.9)
     
     def complete_attack(self, restart=True, exclude_clan_troops=False):
+        import time, numpy as np
+        
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_up()
         
@@ -278,6 +283,8 @@ class Attacker:
 
     @require_exit()
     def run_home_base(self, timeout=60, restart=True):
+        import time
+        
         try:
             # Make sure in home base
             start_time = time.time()
@@ -299,6 +306,8 @@ class Attacker:
 
     @require_exit()
     def run_builder_base(self, timeout=60, restart=True):
+        import time
+        
         try:
             # Make sure in builder base
             start_time = time.time()
