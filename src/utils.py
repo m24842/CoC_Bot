@@ -1,45 +1,17 @@
-import os
-import re
 import sys
-import cv2
-import json
-import time
-import signal
-import atexit
-import ctypes
-import base64
-import shutil
-import easyocr
-import adbutils
-import requests
-import argparse
-import subprocess
-import numpy as np
-import portalocker
-from groq import Groq
 from pathlib import Path
-import uiautomator2 as u2
-from datetime import datetime
-from bs4 import BeautifulSoup
 from functools import lru_cache
-import matplotlib.pyplot as plt
-from rapidfuzz import process, distance
-from PIL import Image, ImageDraw, ImageFont
-from curl_cffi import requests as curl_requests
-from concurrent.futures import ThreadPoolExecutor
-from pyminitouch import MNTDevice, CommandBuilder
-from apscheduler.schedulers.background import BackgroundScheduler
 import configs
 from configs import *
-from gui import get_gui
 
 if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
 
+APP_DATA_DIR = Path.home() / ".CoC_Bot"
+APP_DATA_DIR.mkdir(exist_ok=True)
+
 if getattr(sys, "frozen", False):
-    APP_DATA_DIR = Path.home() / ".CoC_Bot"
-    APP_DATA_DIR.mkdir(exist_ok=True)
     CACHE_PATH = APP_DATA_DIR / "cache.json"
 else:
     CACHE_PATH = Path(__file__).parent / "cache.json"
@@ -49,6 +21,8 @@ ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 ADB_WINDOW_DIMS = WINDOW_DIMS
 
 def parse_args(debug=None, id=None, gui=None):
+    import argparse
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", default=configs.DEBUG, help="Enable debug mode")
     parser.add_argument("--id", type=str, default=None, help="Instance ID")
@@ -65,6 +39,8 @@ def parse_args(debug=None, id=None, gui=None):
 
 def init_instance(id):
     global INSTANCE_ID, ADB_ADDRESS
+    import requests
+    
     assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
     INSTANCE_ID = id
     ADB_ADDRESS = configs.ADB_ADDRESSES[configs.INSTANCE_IDS.index(INSTANCE_ID)]
@@ -79,6 +55,8 @@ def init_instance(id):
         )
 
 def disable_sleep():
+    import sys, subprocess, ctypes, os, shutil
+    
     if sys.platform == "darwin":
         sleep_helper_temp = Path(__file__).parent / "sleep_helper.sh"
         sleep_helper_permanent = APP_DATA_DIR / "sleep_helper.sh"
@@ -89,6 +67,8 @@ def disable_sleep():
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 
 def enable_sleep():
+    import sys, ctypes
+    
     if sys.platform == "darwin":
         pass
     elif sys.platform == "win32":
@@ -99,6 +79,9 @@ def to_system_home():
 
 def connect_adb():
     global ADB_DEVICE, MINITOUCH_DEVICE, ADB_WINDOW_DIMS
+    import subprocess, adbutils, os
+    from pyminitouch import MNTDevice
+    
     if ADB_ABS_DIR != "": os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
     subprocess.run(["adb", "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     res = adbutils.adb.connect(ADB_ADDRESS)
@@ -119,6 +102,8 @@ def connect_adb():
     ADB_WINDOW_DIMS = ADB_DEVICE.window_size(landscape=False)
 
 def running():
+    import requests
+    
     if WEB_APP_URL == "": return True
     try:
         response = requests.get(
@@ -133,11 +118,16 @@ def running():
         return False
 
 def check_color(color, frame, tol=10):
+    import numpy as np
     assert len(frame.shape) == 3 and frame.shape[2] == 3, "Frame must be a color image"
     diff = np.abs(frame - np.array(color).reshape((1, 1, 3))).sum(2) <= tol
     return np.any(diff)
 
 def get_vocab():
+    import json, time, portalocker
+    from bs4 import BeautifulSoup
+    from curl_cffi import requests as curl_requests
+    
     other_words = [
         "prince",
         "copter",
@@ -191,6 +181,9 @@ def get_vocab():
     return list(vocab)
 
 def spell_check(text, cutoff=70):
+    import re
+    from rapidfuzz import process, distance
+    
     def spell_scorer(a, b, score_cutoff=0):
         lev = distance.Levenshtein.distance(a, b)
         length_penalty = abs(len(a) - len(b)) * 0.5
@@ -216,6 +209,7 @@ def fix_digits(text):
     return text.lower().replace('o', '0').replace('/', '1').replace('i', '1').replace('z', '2').replace('s', '5').replace('b', '6').replace('j', '7').replace('&', '8')
 
 def parse_time(text):
+    import re
     if type(text) is list:
         return [parse_time(t) for t in text]
     try:
@@ -230,13 +224,18 @@ def parse_time(text):
         return 0
 
 def to_int_array(*args):
+    import numpy as np
     return np.array(list(map(int, args)))
 
 def render_text(text, font, font_size, color=(255, 255, 255)):
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFont
+    
     @lru_cache(maxsize=32)
     def get_font(font, font_size):
         font_path = Asset_Manager.fonts.get(font)
         return ImageFont.truetype(font_path, font_size)
+    
     font = get_font(font, font_size)
     temp = Image.new("RGB", (1, 1))
     bbox = ImageDraw.Draw(temp).textbbox((0, 0), text, font=font)
@@ -248,6 +247,8 @@ def render_text(text, font, font_size, color=(255, 255, 255)):
     return render
 
 def get_telegram_chat_id():
+    import portalocker, requests, json
+    
     data = {}
     if CACHE_PATH.exists():
         with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
@@ -270,6 +271,8 @@ def get_telegram_chat_id():
     raise Exception("Failed to get Telegram chat ID")
 
 def send_notification(text):
+    import requests
+    
     if WEB_APP_URL != "":
         try:
             requests.post(
@@ -294,6 +297,8 @@ def send_notification(text):
         except: pass
 
 def extend_pythonanywhere_hosting(username, password):
+    import requests
+    
     assert "pythonanywhere.com" in WEB_APP_URL
     base_url = "https://www.pythonanywhere.com"
     login_url = f"{base_url}/login/"
@@ -328,6 +333,8 @@ def extend_pythonanywhere_hosting(username, password):
     assert res.url == webapps_url
 
 def to_home_base():
+    import cv2, time, numpy as np
+    
     try:
         get_home_builders(1)
         return
@@ -362,6 +369,8 @@ def to_home_base():
             return
 
 def get_home_builders(timeout=60, return_amount=True, raise_exception=True):
+    import time, cv2
+    
     start = time.time()
     while True:
         try:
@@ -387,6 +396,9 @@ def get_home_builders(timeout=60, return_amount=True, raise_exception=True):
     raise Exception("Failed to get home builders")
 
 def start_coc(timeout=60):
+    import time
+    from datetime import datetime
+    
     try:
         if not running(): return False
         to_system_home()
@@ -427,17 +439,21 @@ def start_coc(timeout=60):
         return False
 
 def stop_coc():
+    from datetime import datetime
     print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
     ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
     to_system_home()
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
 def update_coc(timeout=10):
+    import uiautomator2 as u2
     ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
     u2.connect(ADB_ADDRESS)(text="Update").click(timeout=timeout)
     to_system_home()
 
 def to_builder_base():
+    import cv2, time, numpy as np
+    
     try:
         get_builder_builders(1)
         return
@@ -469,6 +485,8 @@ def to_builder_base():
         Input_Handler.swipe(x1=0.5, y1=0.5, x2=0.25, y2=0.75, hold_end_time=100)
 
 def get_builder_builders(timeout=60, return_amount=True, raise_exception=True):
+    import time, cv2
+    
     start = time.time()
     while True:
         try:
@@ -508,12 +526,14 @@ class Exit_Handler:
     
     @classmethod
     def register(cls, func):
+        import atexit
         atexit.register(func)
         cls.RUN_AT_EXIT.append(func)
         return func
 
     @classmethod
     def handle_sig(cls, sig, frame):
+        import signal
         for func in cls.RUN_AT_EXIT:
             try: func()
             except: pass
@@ -523,6 +543,7 @@ class Exit_Handler:
 
     @classmethod
     def setup_signal_handlers(cls):
+        import signal
         signals = [signal.SIGINT, signal.SIGTERM]
         if sys.platform != "win32":
             signals.append(signal.SIGHUP)
@@ -537,6 +558,9 @@ class Task_Handler:
     
     @classmethod
     def get_exclusions(cls, use_cached=False):
+        import requests
+        from gui import get_gui
+        
         if use_cached:
             return cls.cached_exclusions
         if WEB_APP_URL != "":
@@ -678,6 +702,7 @@ class OCR_Handler:
     
     @classmethod
     def get_text(cls, frame):
+        import time
         if configs.GROQ_API_KEY != "":
             if time.time() > cls.backoff_time:
                 try: return cls.external_ocr(frame)
@@ -687,12 +712,16 @@ class OCR_Handler:
     @classmethod
     def local_ocr(cls, frame):
         if not hasattr(cls, 'reader'):
+            import easyocr
             cls.reader = easyocr.Reader(['en'], gpu=True)
         result = cls.reader.readtext(frame)
         return [text for _, text, _ in result if text.strip()]
 
     @classmethod
     def external_ocr(cls, frame):
+        import cv2, base64
+        from groq import Groq
+        
         base64_img = base64.b64encode(cv2.imencode(".jpg", frame)[1]).decode("utf-8")
         client = Groq(api_key=configs.GROQ_API_KEY, timeout=10, max_retries=0)
         chat_completion = client.chat.completions.create(
@@ -722,6 +751,8 @@ class Asset_Manager:
     
     @staticmethod
     def resource_path(rel_path):
+        import sys
+        from pathlib import Path
         if hasattr(sys, "_MEIPASS"):
             base_path = Path(sys._MEIPASS)
         else:
@@ -730,6 +761,7 @@ class Asset_Manager:
     
     @classmethod
     def load_fonts(cls):
+        import os
         cls.fonts = {}
         path = cls.resource_path("assets/fonts")
         for file in os.listdir(path):
@@ -737,6 +769,7 @@ class Asset_Manager:
 
     @classmethod
     def load_misc_assets(cls):
+        import os, cv2
         assets = {}
         path = cls.resource_path("assets/misc")
         for file in os.listdir(path):
@@ -745,6 +778,7 @@ class Asset_Manager:
     
     @classmethod
     def load_upgrader_assets(cls):
+        import os, cv2
         assets = {}
         path = cls.resource_path("assets/upgrader")
         for file in os.listdir(path):
@@ -753,6 +787,7 @@ class Asset_Manager:
 
     @classmethod
     def load_attacker_assets(cls):
+        import os, cv2
         assets = {}
         path = cls.resource_path("assets/attacker")
         for file in os.listdir(path):
@@ -767,6 +802,7 @@ Asset_Manager.load_fonts()
 class Input_Handler:
     @classmethod
     def down(cls, x, y, i=0):
+        from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
         MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
@@ -779,12 +815,15 @@ class Input_Handler:
 
     @classmethod
     def up(cls, i=0):
+        from pyminitouch import CommandBuilder
         builder = CommandBuilder()
         builder.up(i)
         builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
     def click(cls, x, y, n=1, delay=0, i=0):
+        import time
+        from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
         MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
@@ -811,6 +850,9 @@ class Input_Handler:
 
     @classmethod
     def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0):
+        import time, numpy as np
+        from pyminitouch import CommandBuilder
+        
         if x1 < 0: x1 = 1 + x1
         if y1 < 0: y1 = 1 + y1
         if x2 < 0: x2 = 1 + x2
@@ -859,6 +901,8 @@ class Input_Handler:
 
     @classmethod
     def zoom(cls, dir="out", percent=1.0):
+        from pyminitouch import CommandBuilder
+        
         builder = CommandBuilder()
         
         MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
@@ -884,11 +928,11 @@ class Input_Handler:
         builder.publish(MINITOUCH_DEVICE.connection)
 
 class Frame_Handler:
-    pool = ThreadPoolExecutor()
-    Exit_Handler.register(pool.shutdown)
+    pool = None
     
     @classmethod
     def get_frame(cls, grayscale=True):
+        import cv2, numpy as np
         frame = np.array(ADB_DEVICE.screenshot())
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
@@ -908,6 +952,7 @@ class Frame_Handler:
 
     @classmethod
     def save_frame(cls, frame, filename="frame.png"):
+        import cv2
         cv2.imwrite(filename, frame)
 
     @classmethod
@@ -917,6 +962,8 @@ class Frame_Handler:
     
     @classmethod
     def locate(cls, template, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
+        import cv2, numpy as np
+        
         if grayscale and len(template.shape) == 3:
             template = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
         h, w = template.shape[:2]
@@ -971,6 +1018,12 @@ class Frame_Handler:
 
     @classmethod
     def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
+        from concurrent.futures import ThreadPoolExecutor
+        
+        if cls.pool is None:
+            cls.pool = ThreadPoolExecutor()
+            Exit_Handler.register(cls.pool.shutdown)
+        
         frame = cls.get_frame(grayscale) if frame is None else frame
         
         threads = []
@@ -979,6 +1032,7 @@ class Frame_Handler:
         return [thread.result() for thread in threads]
 
 class Scheduler:
+    from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
     scheduler.start()
     Exit_Handler.register(scheduler.shutdown)
@@ -988,6 +1042,7 @@ class Scheduler:
 class Dev_Tools:
     @classmethod
     def optimal_template_font_size(cls, frame, text, font, font_size_range=(1, 100), color=(255, 255, 255), return_results=False, plot_results=False):
+        import matplotlib.pyplot as plt
         templates = [render_text(text, font, size, color) for size in range(font_size_range[0], font_size_range[1] + 1)]
         results = Frame_Handler.batch_locate(templates, frame=frame, grayscale=True, return_confidence=True)
         confidences = [res[2] for res in results]

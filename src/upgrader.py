@@ -1,8 +1,3 @@
-import re
-import cv2
-import time
-import numpy as np
-from scipy.ndimage import gaussian_filter1d
 from utils import *
 import configs
 from configs import *
@@ -32,6 +27,8 @@ class Upgrader:
     # ============================================================
 
     def get_resources(self, timeout=60):
+        import time
+        
         start = time.time()
         while time.time() < start + timeout:
             try:
@@ -47,6 +44,8 @@ class Upgrader:
         raise Exception("Failed to get resources")
 
     def home_lab_available(self, timeout=60):
+        import time, cv2
+        
         start = time.time()
         while time.time() < start + timeout:
             try:
@@ -69,6 +68,8 @@ class Upgrader:
         raise Exception("Failed to get home lab availability")
 
     def builder_lab_available(self, timeout=60):
+        import time, cv2
+        
         start = time.time()
         while time.time() < start + timeout:
             try:
@@ -91,6 +92,7 @@ class Upgrader:
         raise Exception("Failed to get builder lab availability")
 
     def collect_resources(self):
+        import numpy as np
         try:
             x_range = np.linspace(0.2, 0.8, 20)
             y_range = np.linspace(0.3, 0.8, 20)
@@ -101,6 +103,8 @@ class Upgrader:
             if configs.DEBUG: print("collect_resources", e)
 
     def collect_builder_attack_elixir(self):
+        import time
+        
         # Align view to top right corner
         Input_Handler.zoom(dir="out")
         for _ in range(3):
@@ -142,6 +146,8 @@ class Upgrader:
 
     @require_exit()
     def home_random_upgrade(self):
+        import time, re, numpy as np
+        
         try:
             # Open upgrade list menu
             self.click_home_builders()
@@ -302,6 +308,8 @@ class Upgrader:
     
     @require_exit()
     def home_specified_upgrade(self, upgrade_text):
+        import time, re, numpy as np
+        
         try:
             # Open upgrade list menu
             self.click_home_builders()
@@ -429,6 +437,8 @@ class Upgrader:
     
     @require_exit()
     def assign_builder_apprentice(self):
+        import time
+        
         try:
             # Open upgrade list menu
             self.click_home_builders()
@@ -463,6 +473,8 @@ class Upgrader:
     
     @require_exit()
     def home_lab_random_upgrade(self):
+        import time, re, numpy as np
+        
         try:
             # Open lab upgrade list menu
             self.click_home_lab()
@@ -522,6 +534,8 @@ class Upgrader:
     
     @require_exit()
     def home_lab_specified_upgrade(self, upgrade_text):
+        import time, re, numpy as np
+        
         try:
             # Open lab upgrade list menu
             self.click_home_lab()
@@ -614,6 +628,8 @@ class Upgrader:
 
     @require_exit()
     def assign_lab_assistant(self):
+        import time
+        
         try:
             # Open upgrade list menu
             self.click_home_lab()
@@ -648,6 +664,9 @@ class Upgrader:
 
     @require_exit()
     def builder_random_upgrade(self):
+        import time, re, cv2, numpy as np
+        from scipy.ndimage import gaussian_filter1d
+        
         try:
             # Open upgrade list menu
             self.click_builder_builders()
@@ -788,6 +807,9 @@ class Upgrader:
     
     @require_exit()
     def builder_specified_upgrade(self, upgrade_text):
+        import time, cv2, numpy as np
+        from scipy.ndimage import gaussian_filter1d
+        
         try:
             # Open upgrade list menu
             self.click_builder_builders()
@@ -912,6 +934,9 @@ class Upgrader:
     
     @require_exit()
     def builder_lab_random_upgrade(self):
+        import time, re, cv2, numpy as np
+        from scipy.ndimage import gaussian_filter1d
+        
         try:
             # Open lab upgrade list menu
             self.click_builder_lab()
@@ -989,6 +1014,9 @@ class Upgrader:
     
     @require_exit()
     def builder_lab_specified_upgrade(self, upgrade_text):
+        import time, cv2, numpy as np
+        from scipy.ndimage import gaussian_filter1d
+        
         try:
             # Open lab upgrade list menu
             self.click_builder_lab()
@@ -1100,6 +1128,8 @@ class Upgrader:
     # ============================================================
     
     def run_home_base(self, exclude_base=False, exclude_lab=False):
+        import time
+        
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_down()
         
@@ -1146,6 +1176,8 @@ class Upgrader:
             send_notification(f"Started upgrading {upgrade}")
     
     def run_builder_base(self, exclude_base=False, exclude_lab=False):
+        import time
+        
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_down()
         

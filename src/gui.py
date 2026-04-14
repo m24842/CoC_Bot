@@ -1,13 +1,10 @@
-import time
-import webview
-import requests
-from multiprocessing import Process, Pipe, Event
-from gui_server.gui_server import start_server
 import configs
 
 COC_BOT_GUI = None
 
 def run_gui(server_port, stop_event, debug=False):
+    import webview
+    
     url = f"http://localhost:{server_port}"
     window = webview.create_window(
         "CoC Bot",
@@ -25,6 +22,9 @@ def run_gui(server_port, stop_event, debug=False):
 
 class GUI:
     def __init__(self, id=None, stop_event=None, debug=False):
+        from multiprocessing import Process, Pipe, Event
+        from gui_server.gui_server import start_server
+        
         if id is not None: assert id in configs.INSTANCE_IDS, f"Invalid instance ID"
         self.debug = debug
         self.id = id
@@ -36,6 +36,8 @@ class GUI:
         self.window_proc = Process(target=run_gui, args=(self.server_port, self.stop_event, self.debug))
     
     def get_id(self):
+        import time, requests
+        
         while self.id in [None, ""]:
             response = requests.get(f"http://localhost:{self.server_port}/id")
             if response.ok:
