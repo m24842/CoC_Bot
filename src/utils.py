@@ -22,6 +22,7 @@ import uiautomator2 as u2
 from datetime import datetime
 from bs4 import BeautifulSoup
 from functools import lru_cache
+import matplotlib.pyplot as plt
 from rapidfuzz import process, distance
 from PIL import Image, ImageDraw, ImageFont
 from curl_cffi import requests as curl_requests
@@ -921,6 +922,14 @@ class Frame_Handler:
         h, w = template.shape[:2]
         frame = cls.get_frame(grayscale) if frame is None else frame
         fh, fw = frame.shape[:2]
+        
+        if h > fh or w > fw:
+            if return_all:
+                return []
+            if return_confidence:
+                return None, None, 0
+            return None, None
+
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
         if configs.DEBUG: print(max_val)
@@ -961,12 +970,12 @@ class Frame_Handler:
         return None, None
 
     @classmethod
-    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False):
+    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
         frame = cls.get_frame(grayscale) if frame is None else frame
         
         threads = []
         for template in templates:
-            threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, return_confidence))
+            threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, return_confidence, return_all))
         return [thread.result() for thread in threads]
 
 class Scheduler:
@@ -978,11 +987,19 @@ class Scheduler:
 
 class Dev_Tools:
     @classmethod
-    def optimal_template_font_size(cls, frame, text, font, font_size_range=(1, 100), color=(255, 255, 255), return_results=False):
+    def optimal_template_font_size(cls, frame, text, font, font_size_range=(1, 100), color=(255, 255, 255), return_results=False, plot_results=False):
         templates = [render_text(text, font, size, color) for size in range(font_size_range[0], font_size_range[1] + 1)]
         results = Frame_Handler.batch_locate(templates, frame=frame, grayscale=True, return_confidence=True)
         confidences = [res[2] for res in results]
         optimal_size = confidences.index(max(confidences)) + font_size_range[0]
+        
+        if plot_results:
+            plt.plot(confidences)
+            plt.xlabel("Font Size")
+            plt.ylabel("Confidence")
+            plt.title(f"Optimal Font Size: {optimal_size}")
+            plt.show()
+        
         if return_results:
             return optimal_size, results
         return optimal_size
