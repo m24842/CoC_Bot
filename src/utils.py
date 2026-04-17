@@ -773,7 +773,8 @@ class Asset_Manager:
         assets = {}
         path = cls.resource_path("assets/misc")
         for file in os.listdir(path):
-            assets[file.replace('.png', '')] = cv2.imread(path / file, cv2.IMREAD_COLOR)
+            if not file.endswith('.png'): continue
+            assets[file.replace('.png', '')] = cv2.cvtColor(cv2.imread(path / file, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
         cls.misc_assets = assets
     
     @classmethod
@@ -782,7 +783,8 @@ class Asset_Manager:
         assets = {}
         path = cls.resource_path("assets/upgrader")
         for file in os.listdir(path):
-            assets[file.replace('.png', '')] = cv2.imread(path / file, cv2.IMREAD_COLOR)
+            if not file.endswith('.png'): continue
+            assets[file.replace('.png', '')] = cv2.cvtColor(cv2.imread(path / file, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
         cls.upgrader_assets = assets
 
     @classmethod
@@ -791,7 +793,8 @@ class Asset_Manager:
         assets = {}
         path = cls.resource_path("assets/attacker")
         for file in os.listdir(path):
-            assets[file.replace('.png', '')] = cv2.imread(path / file, cv2.IMREAD_COLOR)
+            if not file.endswith('.png'): continue
+            assets[file.replace('.png', '')] = cv2.cvtColor(cv2.imread(path / file, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
         cls.attacker_assets = assets
 
 Asset_Manager.load_misc_assets()
@@ -931,51 +934,68 @@ class Frame_Handler:
     pool = None
     
     @classmethod
-    def get_frame(cls, grayscale=True):
-        import cv2, numpy as np
-        frame = np.array(ADB_DEVICE.screenshot())
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
-        if configs.DEBUG: cls.save_frame(frame, "debug/frame.png")
-        if grayscale: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    def grayscale(cls, frame):
+        import cv2
+        if len(frame.shape) == 3:
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         return frame
-
+    
     @classmethod
-    def get_frame_section(cls, x1, y1, x2, y2, high_contrast=False, thresh=200, grayscale=True):
+    def high_contrast(cls, frame, thresh=200):
+        frame = cls.grayscale(frame)
+        frame[frame < thresh] = 0
+        return frame
+    
+    @classmethod
+    def crop(cls, frame, x1, y1, x2, y2):
         if x1 < 0: x1 = 1 + x1
         if y1 < 0: y1 = 1 + y1
         if x2 < 0: x2 = 1 + x2
         if y2 < 0: y2 = 1 + y2
-        frame = cls.get_frame(grayscale)[int(WINDOW_DIMS[1]*y1):int(WINDOW_DIMS[1]*y2), int(WINDOW_DIMS[0]*x1):int(WINDOW_DIMS[0]*x2)]
-        if high_contrast and grayscale: frame[frame < thresh] = 0
+        h, w = frame.shape[:2]
+        return frame[int(h*y1):int(h*y2), int(w*x1):int(w*x2)]
+    
+    @classmethod
+    def get_frame(cls, grayscale=True, high_contrast=False, thresh=200):
+        import cv2, numpy as np
+        frame = np.array(ADB_DEVICE.screenshot())
+        frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
+        if configs.DEBUG: cls.save_frame(frame, "debug/frame.png")
+        if high_contrast: frame = cls.high_contrast(frame, thresh)
+        elif grayscale: frame = cls.grayscale(frame)
+        return frame
+
+    @classmethod
+    def get_frame_section(cls, x1, y1, x2, y2, high_contrast=False, thresh=200, grayscale=True):
+        frame = cls.get_frame(grayscale=grayscale, high_contrast=high_contrast, thresh=thresh)
+        frame = cls.crop(frame, x1, y1, x2, y2)
         return frame
 
     @classmethod
     def save_frame(cls, frame, filename="frame.png"):
         import cv2
-        cv2.imwrite(filename, frame)
+        cv2.imwrite(filename, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
 
     @classmethod
     def screenshot(cls, filename="debug/screenshot.png", grayscale=False):
-        frame = cls.get_frame(grayscale)
+        frame = cls.get_frame(grayscale=grayscale)
         cls.save_frame(frame, filename)
     
     @classmethod
-    def locate(cls, template, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
+    def locate(cls, template, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False):
         import cv2, numpy as np
         
-        if grayscale and len(template.shape) == 3:
-            template = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
+        if grayscale: template = cls.grayscale(template)
         h, w = template.shape[:2]
-        frame = cls.get_frame(grayscale) if frame is None else frame
+        frame = cls.get_frame(grayscale=grayscale) if frame is None else frame
         fh, fw = frame.shape[:2]
-        
+                
         if h > fh or w > fw:
             if return_all:
                 return []
             if return_confidence:
-                return None, None, 0
-            return None, None
+                return null_val, null_val, 0
+            return null_val, null_val
 
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
@@ -1013,22 +1033,22 @@ class Frame_Handler:
             else:
                 return x_loc / fw, y_loc / fh
         if return_confidence:
-            return None, None, max_val
-        return None, None
+            return null_val, null_val, max_val
+        return null_val, null_val
 
     @classmethod
-    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", return_confidence=False, return_all=False):
+    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False):
         from concurrent.futures import ThreadPoolExecutor
         
         if cls.pool is None:
             cls.pool = ThreadPoolExecutor()
             Exit_Handler.register(cls.pool.shutdown)
         
-        frame = cls.get_frame(grayscale) if frame is None else frame
+        frame = cls.get_frame(grayscale=grayscale) if frame is None else frame
         
         threads = []
         for template in templates:
-            threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, return_confidence, return_all))
+            threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, null_val, return_confidence, return_all))
         return [thread.result() for thread in threads]
 
 class Scheduler:
@@ -1042,14 +1062,14 @@ class Scheduler:
 class Dev_Tools:
     @classmethod
     def optimal_template_font_size(cls, frame, text, font, font_size_range=(1, 100), color=(255, 255, 255), return_results=False, plot_results=False):
-        import matplotlib.pyplot as plt
+        import numpy as np, matplotlib.pyplot as plt
         templates = [render_text(text, font, size, color) for size in range(font_size_range[0], font_size_range[1] + 1)]
         results = Frame_Handler.batch_locate(templates, frame=frame, grayscale=True, return_confidence=True)
         confidences = [res[2] for res in results]
         optimal_size = confidences.index(max(confidences)) + font_size_range[0]
         
         if plot_results:
-            plt.plot(confidences)
+            plt.plot(np.arange(font_size_range[0], font_size_range[1] + 1), confidences)
             plt.xlabel("Font Size")
             plt.ylabel("Confidence")
             plt.title(f"Optimal Font Size: {optimal_size}")
