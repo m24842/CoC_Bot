@@ -804,7 +804,7 @@ Asset_Manager.load_fonts()
 
 class Input_Handler:
     @classmethod
-    def down(cls, x, y, i=0):
+    def down(cls, x, y, pointer=0):
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
@@ -813,18 +813,18 @@ class Input_Handler:
         x = int(x * MAX_X)
         y = int(y * MAX_Y)
         builder = CommandBuilder()
-        builder.down(i, x, y, 100)
+        builder.down(pointer, x, y, 100)
         builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
-    def up(cls, i=0):
+    def up(cls, pointer=0):
         from pyminitouch import CommandBuilder
         builder = CommandBuilder()
-        builder.up(i)
+        builder.up(pointer)
         builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
-    def click(cls, x, y, n=1, delay=0, i=0):
+    def click(cls, x, y, n=1, delay=0, pointer=0):
         import time
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
@@ -835,9 +835,9 @@ class Input_Handler:
         y = int(y * MAX_Y)
         builder = CommandBuilder()
         for _ in range(n):
-            builder.down(i, x, y, 100)
+            builder.down(pointer, x, y, 100)
             builder.commit()
-            builder.up(i)
+            builder.up(pointer)
             builder.publish(MINITOUCH_DEVICE.connection)
             time.sleep(delay)
 
@@ -852,7 +852,7 @@ class Input_Handler:
         MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
 
     @classmethod
-    def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0):
+    def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0, pointer=0):
         import time, numpy as np
         from pyminitouch import CommandBuilder
         
@@ -875,15 +875,14 @@ class Input_Handler:
         y_points = np.linspace(y1, y2, inter_points + 2, dtype=int)
         dt = duration / (inter_points + 1)
         
-        builder.down(0, x1, y1, pressure=100)
+        builder.down(pointer, x1, y1, pressure=100)
         builder.publish(MINITOUCH_DEVICE.connection)
         for x, y in zip(x_points, y_points):
-            builder.move(0, x, y, pressure=100)
+            builder.move(pointer, x, y, pressure=100)
             builder.publish(MINITOUCH_DEVICE.connection)
             if dt > 0: time.sleep(dt / 1000)
-        builder.publish(MINITOUCH_DEVICE.connection)
         if hold_end_time > 0: time.sleep(hold_end_time / 1000)
-        builder.up(0)
+        builder.up(pointer)
         builder.publish(MINITOUCH_DEVICE.connection)
 
     @classmethod
