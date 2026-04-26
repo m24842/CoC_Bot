@@ -42,12 +42,40 @@ PRIORITY_HOME_LAB_UPGRADES = True # if false, will upgrade in random order regar
 #   IMPORTANT: Capitalization and spacing must match exactly with in-game text
 #   TIP: It is recommended to minimize the number of priority levels to keep check time reasonable (all upgrades in the same priority are checked in parallel)
 HOME_BASE_UPGRADE_PRIORITY = [
-    ["Laboratory", "Blacksmith", "Hero Hall", "Barbarian King", "Archer Queen", "Minion Prince", "Grand Warden", "Royal Champion", "Dragon Duke"],
-    ["Army Camp", "Barracks", "Dark Barracks", "Spell Factory", "Dark Spell Factory", "Workshop", "Clan Castle"],
-    ["Wall"],
+    [
+        "Laboratory",
+        "Blacksmith",
+        "Hero Hall",
+        "Barbarian King",
+        "Archer Queen",
+        "Minion Prince",
+        "Grand Warden",
+        "Royal Champion",
+        "Dragon Duke",
+    ],
+    [
+        "Army Camp",
+        "Barracks",
+        "Dark Barracks",
+        "Spell Factory",
+        "Dark Spell Factory",
+        "Workshop",
+        "Clan Castle",
+    ],
+    [
+        "Wall",
+    ],
 ]
 HOME_LAB_UPGRADE_PRIORITY = [
-    ["Balloon", "Dragon", "Lightning Spell", "Rage Spell", "Freeze Spell", "Poison Spell", "Earthquake Spell"],
+    [
+        "Balloon",
+        "Dragon",
+        "Lightning Spell",
+        "Rage Spell",
+        "Freeze Spell",
+        "Poison Spell",
+        "Earthquake Spell",
+    ],
 ]
 
 #   Builder base upgrade settings
@@ -65,12 +93,30 @@ PRIORITY_BUILDER_LAB_UPGRADES = True # if false, will upgrade in random order re
 #   IMPORTANT: Capitalization and spacing must match exactly with in-game text
 #   TIP: It is recommended to minimize the number of priority levels to keep check time reasonable (all upgrades in the same priority are checked in parallel)
 BUILDER_BASE_UPGRADE_PRIORITY = [
-    ["Builder Hall", "Multi Mortar", "Builder Barracks", "Battle Machine", "Battle Copter", "Star Laboratory"],
-    ["Gold Storage", "Elixir Storage", "Double Cannon", "Archer Tower"],
+    [
+        "Builder Hall",
+        "Multi Mortar",
+        "Builder Barracks",
+        "Battle Machine",
+        "Battle Copter",
+        "Star Laboratory",
+    ],
+    [
+        "Gold Storage",
+        "Elixir Storage",
+        "Double Cannon",
+        "Archer Tower",
+    ],
 ]
 BUILDER_LAB_UPGRADE_PRIORITY = [
-    ["Boxer Giant", "Night Witch"],
-    ["Baby Dragon", "Power P.E.K.K.A"],
+    [
+        "Boxer Giant",
+        "Night Witch",
+    ],
+    [
+        "Baby Dragon",
+        "Power P.E.K.K.A",
+    ],
 ]
 
 # REQUIRED: Attack Settings
