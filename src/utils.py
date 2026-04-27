@@ -409,6 +409,7 @@ def start_coc(timeout=60):
             if not running(): return False
             ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
             Input_Handler.click_exit(4, 0.1)
+            
             try:
                 get_home_builders(1, return_amount=False)
                 break
@@ -448,7 +449,11 @@ def stop_coc():
 def update_coc(timeout=10):
     import uiautomator2 as u2
     ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
-    u2.connect(ADB_ADDRESS)(text="Update").click(timeout=timeout)
+    try:
+        u2.connect(ADB_ADDRESS)(text="Play").click(timeout=timeout)
+        for _ in range(3): u2.connect(ADB_ADDRESS)(text="Play").click(timeout=0)
+    except:
+        pass
     to_system_home()
 
 def to_builder_base():
