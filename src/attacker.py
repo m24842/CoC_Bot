@@ -200,7 +200,7 @@ class Attacker:
         if card_counts is None: card_counts = [-1] * len(card_centers)
         
         # Start holding deploy position w/ secondary touch pointer
-        Input_Handler.down(0.5, 0.8, i=1)
+        Input_Handler.down(0.5, 0.8, pointer=1)
         
         for i in range(len(card_centers)):
             if available_slots[i]:
@@ -211,10 +211,10 @@ class Attacker:
                 if card_types[i] in ["hero", "clan"]:
                     Input_Handler.click(0.5, 0.8)
                 elif card_types[i] == "troop":
-                    Input_Handler.down(0.5, 0.8, i=0)
+                    Input_Handler.down(0.5, 0.8, pointer=0)
                     end_time = time.monotonic() + TROOP_DEPLOY_TIME
                     while time.monotonic() < end_time and not card_gray(card_centers[i]): time.sleep(0.01)
-                    Input_Handler.up(i=0)
+                    Input_Handler.up(pointer=0)
                 elif card_types[i] == "spell":
                     n = card_counts[i]
                     rxs = np.random.uniform(0.35, 0.65, n)
@@ -223,7 +223,7 @@ class Attacker:
                         Input_Handler.click(*coord)
         
         # Release secondary pointer
-        Input_Handler.up(i=1)
+        Input_Handler.up(pointer=1)
         
         # Unselect last card
         Input_Handler.click(0.01, 0.9)
