@@ -127,7 +127,7 @@ class Attacker:
             peaks_norm = peaks_norm[:-1]
         
         assert len(peaks) % 2 == 0, "Uneven number of troop slot edges detected"
-        
+                
         # Convert edge distances to card locations
         card_types = []
         card_centers = []
@@ -174,12 +174,17 @@ class Attacker:
                     card_type = "troop"
                     card_counts.append(-1)
             else:
-                card_type = "hero"
-                card_counts.append(1)
+                # Seige machine doesn't have multiplicity anymore
+                if prev_gap == dist_categories[1] and next_gap == dist_categories[1]:
+                    card_type = "clan"
+                    card_counts.append(1)
+                else:
+                    card_type = "hero"
+                    card_counts.append(1)
             card_types.append(card_type)
         
         card_centers = np.array(card_centers)
-        
+                
         if not return_boundaries and not return_types: return card_centers
         
         output = [card_centers]
