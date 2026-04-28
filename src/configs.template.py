@@ -23,6 +23,7 @@ CHECK_INTERVAL = 5 * 60 # seconds
 
 # REQUIRED: Upgrade settings
 MAX_UPGRADES_PER_CHECK = 10 # applies to both home and builder base
+START_FROM_MENU_TOP = True
 
 #   Home base upgrade settings
 OPEN_HOME_BUILDERS = 0 # number of home base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
