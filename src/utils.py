@@ -368,13 +368,13 @@ def to_home_base():
             time.sleep(2)
             return
 
-def get_home_builders(timeout=60, return_amount=True, raise_exception=True):
+def get_home_builders(timeout=60, return_amount=True, raise_exception=True, use_cached_frame=False):
     import time, cv2
     
     start = time.time()
     while True:
         try:
-            section = Frame_Handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True)
+            section = Frame_Handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True, use_cached=use_cached_frame)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/home_builders.png")
             
             slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
@@ -410,8 +410,10 @@ def start_coc(timeout=60):
             ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
             Input_Handler.click_exit(4, 0.1)
             
+            Frame_Handler.get_frame()
+            
             try:
-                get_home_builders(1, return_amount=False)
+                get_home_builders(1, return_amount=False, use_cached_frame=True)
                 break
             except KeyboardInterrupt: raise
             except SystemExit: raise
@@ -419,12 +421,16 @@ def start_coc(timeout=60):
                 pass
             
             try:
-                get_builder_builders(1, return_amount=False)
+                get_builder_builders(1, return_amount=False, use_cached_frame=True)
                 break
             except KeyboardInterrupt: raise
             except SystemExit: raise
             except:
                 pass
+            
+            cont_x, cont_y = Frame_Handler.locate(Asset_Manager.misc_assets["continue"], grayscale=False, thresh=0.8, ref="cc", use_cached=True)
+            if cont_x is not None and cont_y is not None:
+                Input_Handler.click(cont_x, cont_y)
             
             i += 1
             time.sleep(1)
@@ -489,13 +495,13 @@ def to_builder_base():
             return
         Input_Handler.swipe(x1=0.5, y1=0.5, x2=0.25, y2=0.75, hold_end_time=100)
 
-def get_builder_builders(timeout=60, return_amount=True, raise_exception=True):
+def get_builder_builders(timeout=60, return_amount=True, raise_exception=True, use_cached_frame=False):
     import time, cv2
     
     start = time.time()
     while True:
         try:
-            section = Frame_Handler.get_frame_section(0.565, 0.04, -0.38, 0.08, high_contrast=True)
+            section = Frame_Handler.get_frame_section(0.565, 0.04, -0.38, 0.08, high_contrast=True, use_cached=use_cached_frame)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/builder_builders.png")
             
             slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
@@ -936,6 +942,7 @@ class Input_Handler:
 
 class Frame_Handler:
     pool = None
+    cached_frame = None
     
     @classmethod
     def grayscale(cls, frame):
@@ -960,18 +967,22 @@ class Frame_Handler:
         return frame[int(h*y1):int(h*y2), int(w*x1):int(w*x2)]
     
     @classmethod
-    def get_frame(cls, grayscale=True, high_contrast=False, thresh=200):
+    def get_frame(cls, grayscale=True, high_contrast=False, thresh=200, use_cached=False):
         import cv2, numpy as np
-        frame = np.array(ADB_DEVICE.screenshot())
-        frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
+        if use_cached and cls.cached_frame is not None:
+            frame = cls.cached_frame.copy()
+        else:
+            frame = np.array(ADB_DEVICE.screenshot())
+            frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
+            cls.cached_frame = frame.copy()
         if configs.DEBUG: cls.save_frame(frame, "debug/frame.png")
         if high_contrast: frame = cls.high_contrast(frame, thresh)
         elif grayscale: frame = cls.grayscale(frame)
         return frame
 
     @classmethod
-    def get_frame_section(cls, x1, y1, x2, y2, high_contrast=False, thresh=200, grayscale=True):
-        frame = cls.get_frame(grayscale=grayscale, high_contrast=high_contrast, thresh=thresh)
+    def get_frame_section(cls, x1, y1, x2, y2, high_contrast=False, thresh=200, grayscale=True, use_cached=False):
+        frame = cls.get_frame(grayscale=grayscale, high_contrast=high_contrast, thresh=thresh, use_cached=use_cached)
         frame = cls.crop(frame, x1, y1, x2, y2)
         return frame
 
@@ -986,14 +997,14 @@ class Frame_Handler:
         cls.save_frame(frame, filename)
     
     @classmethod
-    def locate(cls, template, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False):
+    def locate(cls, template, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False, use_cached=False):
         import cv2, numpy as np
         
         if grayscale: template = cls.grayscale(template)
         h, w = template.shape[:2]
-        frame = cls.get_frame(grayscale=grayscale) if frame is None else frame
+        frame = cls.get_frame(grayscale=grayscale, use_cached=use_cached) if frame is None else frame
         fh, fw = frame.shape[:2]
-                
+        
         if h > fh or w > fw:
             if return_all:
                 return []
@@ -1041,14 +1052,14 @@ class Frame_Handler:
         return null_val, null_val
 
     @classmethod
-    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False):
+    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False, use_cached=False):
         from concurrent.futures import ThreadPoolExecutor
         
         if cls.pool is None:
             cls.pool = ThreadPoolExecutor()
             Exit_Handler.register(cls.pool.shutdown)
         
-        frame = cls.get_frame(grayscale=grayscale) if frame is None else frame
+        frame = cls.get_frame(grayscale=grayscale, use_cached=use_cached) if frame is None else frame
         
         threads = []
         for template in templates:
