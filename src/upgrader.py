@@ -285,13 +285,13 @@ class Upgrader:
             sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
-            frame = Frame_Handler.get_frame(grayscale=False)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
-            menu_center = (menu_left + menu_right) / 2
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -348,7 +348,7 @@ class Upgrader:
                 if xy_hero[0] is None or xy_hero[1] is None: return None
                 
                 hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
-                xy_hero_upgrade = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
+                xy_hero_upgrade = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True, use_cached=True)
                 xy_hero_upgrade = sorted(xy_hero_upgrade, key=lambda pair: abs(pair[0] - xy_hero[0]))
                 if len(xy_hero_upgrade) > 0: x, y = xy_hero_upgrade[0]
             if x is None or y is None: return None
@@ -359,12 +359,12 @@ class Upgrader:
             
             # Get upgrade name
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
-            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255)
+            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
             
             # Click confirm button
-            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
+            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True)
             if x is None or y is None: return None
             Input_Handler.click(x, y+0.05)
             time.sleep(0.5)
@@ -386,8 +386,8 @@ class Upgrader:
             sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
-            menu_left = x_sug - 0.5*sug_width
-            menu_right = x_sug + 0.5*sug_width + 0.11
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             
             # Find other upgrades label
             other_template = self._get_other_upgrade_template()[0]
@@ -399,7 +399,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -466,12 +466,12 @@ class Upgrader:
             
             # Get upgrade name
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
-            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255)
+            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
             
             # Click confirm button
-            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
+            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True)
             if x is None or y is None: return None
             Input_Handler.click(x, y+0.05)
             time.sleep(0.5)
@@ -537,13 +537,13 @@ class Upgrader:
             sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
-            frame = Frame_Handler.get_frame(grayscale=False)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
-            menu_center = (menu_left + menu_right) / 2
 
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -556,12 +556,12 @@ class Upgrader:
             
             # Get upgrade name
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
-            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255)
+            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_name.png")
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
             
             # Click confirm button
-            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
+            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True)
             if x is None or y is None: return None
             Input_Handler.click(x, y+0.05)
             time.sleep(0.5)
@@ -583,8 +583,8 @@ class Upgrader:
             sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
-            menu_left = x_sug - 0.5*sug_width
-            menu_right = x_sug + 0.5*sug_width + 0.11
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             
             # Find other upgrades label
             other_template = self._get_other_upgrade_template()[0]
@@ -596,7 +596,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -630,16 +630,16 @@ class Upgrader:
             
             # Get upgrade name
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
-            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255)
+            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_name.png")
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
             
             # Find confirm button
-            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85)
+            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True)
             if x is None or y is None: return None
             
             # Ensure sufficient resources for upgrade and confirm upgrade
-            section = Frame_Handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False, thresh=255)
+            section = Frame_Handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False, thresh=255, use_cached=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_cost.png")
             if not check_color([255, 136, 127], section, tol=10):
                 Input_Handler.click(x, y+0.05)
@@ -707,13 +707,13 @@ class Upgrader:
             sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
-            frame = Frame_Handler.get_frame(grayscale=False)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
-            menu_center = (menu_left + menu_right) / 2
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -760,8 +760,8 @@ class Upgrader:
             sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
-            menu_left = x_sug - 0.5*sug_width
-            menu_right = x_sug + 0.5*sug_width + 0.11
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             
             # Find other upgrades label
             other_template = self._get_other_upgrade_template()[0]
@@ -773,7 +773,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -810,8 +810,7 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find upgrade button
-            upgrade_template = self.assets["upgrade"]
-            x, y = Frame_Handler.locate(upgrade_template, thresh=0.90, grayscale=False)
+            x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.90, grayscale=False)
             if x is None or y is None: return None
             
             # Click upgrade
@@ -848,13 +847,13 @@ class Upgrader:
             sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
-            frame = Frame_Handler.get_frame(grayscale=False)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
-            menu_center = (menu_left + menu_right) / 2
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -889,8 +888,8 @@ class Upgrader:
             sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
-            menu_left = x_sug - 0.5*sug_width
-            menu_right = x_sug + 0.5*sug_width + 0.11
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             
             # Find other upgrades label
             other_template = self._get_other_upgrade_template()[0]
@@ -902,7 +901,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
