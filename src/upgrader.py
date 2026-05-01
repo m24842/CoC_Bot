@@ -154,7 +154,7 @@ class Upgrader:
     # 🧱 Upgrade Management
     # ============================================================
 
-    def _get_suggest_upgrade_template(self):
+    def _get_suggested_upgrade_template(self):
         template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
         h, w = template.shape[:2]
         return template, w / WINDOW_DIMS[0], h / WINDOW_DIMS[1]
@@ -201,7 +201,7 @@ class Upgrader:
             return bounds, centers
         
         menu_white = filter_color(menu, [255, 255, 255], tol=0) / 255
-        menu_red = filter_color(menu, [255, 136, 127], tol=10) / 255
+        menu_red = filter_color(menu, (255, 136, 127), tol=10) / 255
         white_profile = np.where(menu_white.mean(axis=1) > 0.01, 1, 0)
         red_profile = np.where(menu_red.mean(axis=1) > 0.01, 1, 0)
         white_bounds, white_centers = profile_bounds(white_profile)
@@ -252,14 +252,14 @@ class Upgrader:
                         y1, y2 = menu_ref_y, 0.2
                     elif dir == "up":
                         y1, y2 = 0.2, menu_ref_y
-                    Input_Handler.swipe(x1=menu_ref_x, y1=y1, x2=menu_ref_x, y2=y2, duration=0, hold_end_time=0, inter_points=10)
+                    Input_Handler.swipe(x1=menu_ref_x, y1=y1, x2=menu_ref_x, y2=y2, duration=0, hold_end_time=100, inter_points=10)
                 else:
                     # Slower but always works
                     if dir == "down":
                         y1, y2 = 0.2, 0.0
                     elif dir == "up":
                         y1, y2 = 0.0, 0.2
-                    Input_Handler.swipe(x1=menu_ref_x, y1=y1, x2=menu_ref_x, y2=y2, duration=0, hold_end_time=0, inter_points=10)
+                    Input_Handler.swipe(x1=menu_ref_x, y1=y1, x2=menu_ref_x, y2=y2, duration=0, hold_end_time=100, inter_points=10)
                 time.sleep(0.1)
                 
                 # Check if at end of upgrade menu
@@ -282,14 +282,14 @@ class Upgrader:
             time.sleep(0.5)
             
             # Locate menu boundaries
-            sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
+            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
@@ -383,7 +383,7 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
+            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
@@ -397,7 +397,7 @@ class Upgrader:
             
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
@@ -417,10 +417,17 @@ class Upgrader:
                 res = Frame_Handler.batch_locate(templates, frame_gray, thresh=0.80, ref="lc", return_all=True)
                 for items, name in zip(res, names):
                     for x, y in items:
-                        if x is not None and y is not None and abs(x - menu_left) < 0.01 and (y_sug is None or (y_sug is not None and y > y_sug)):
+                        if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
                             section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
-                            sufficient_resources = not check_color([255, 136, 127], section, tol=10)
-                            if sufficient_resources: return x, y, name
+                            sufficient_resources = not check_color((255, 136, 127), section, tol=10)
+                            if sufficient_resources:
+                                # Check that located upgrade name is left aligned
+                                if abs(x - menu_left) < 0.01:
+                                    return x, y, name
+                                # Or if it is left aligned to "New" label
+                                new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
+                                if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
+                                    return x, y, name
                 return None, None, None
             
             x, y, upgrade_name = self._scroll_locate_upgrade(
@@ -534,14 +541,14 @@ class Upgrader:
             time.sleep(0.5)
             
             # Locate menu boundaries
-            sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
+            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
 
@@ -580,7 +587,7 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
+            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
@@ -594,7 +601,7 @@ class Upgrader:
             
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
@@ -609,11 +616,18 @@ class Upgrader:
                 x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
                 xys = Frame_Handler.batch_locate(templates, frame_gray, thresh=0.80, ref="lc")
                 for x, y in xys:
-                    if x is not None and y is not None and abs(x - menu_left) < 0.01 and (y_sug is None or (y_sug is not None and y > y_sug)):
+                    if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
                         section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
-                        sufficient_resources = not check_color([255, 136, 127], section, tol=10)
+                        sufficient_resources = not check_color((255, 136, 127), section, tol=10)
                         if sufficient_resources:
-                            return x, y
+                            # Check that located upgrade name is left aligned
+                            if abs(x - menu_left) < 0.01:
+                                return x, y
+                            # Or if it is left aligned to "New" label
+                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
+                            print(menu_left, x, menu_right, y)
+                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
+                                return x, y
                 return None, None
             
             x, y = self._scroll_locate_upgrade(
@@ -641,7 +655,7 @@ class Upgrader:
             # Ensure sufficient resources for upgrade and confirm upgrade
             section = Frame_Handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False, thresh=255, use_cached=True)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_cost.png")
-            if not check_color([255, 136, 127], section, tol=10):
+            if not check_color((255, 136, 127), section, tol=10):
                 Input_Handler.click(x, y+0.05)
                 time.sleep(0.5)
                 return upgrade_name
@@ -704,14 +718,14 @@ class Upgrader:
             time.sleep(0.5)
             
             # Locate menu boundaries
-            sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
+            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
@@ -757,7 +771,7 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
+            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
@@ -771,7 +785,7 @@ class Upgrader:
             
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
@@ -788,11 +802,17 @@ class Upgrader:
                 x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
                 xys = Frame_Handler.batch_locate(templates, frame_gray, thresh=0.80, ref="lc")
                 for (x, y), name in zip(xys, names):
-                    if x is not None and y is not None and abs(x - menu_left) < 0.01 and (y_sug is None or (y_sug is not None and y > y_sug)):
+                    if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
                         section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
-                        sufficient_resources = not check_color([255, 136, 127], section, tol=10)
+                        sufficient_resources = not check_color((255, 136, 127), section, tol=10)
                         if sufficient_resources:
-                            return x, y, name
+                            # Check that located upgrade name is left aligned
+                            if abs(x - menu_left) < 0.01:
+                                return x, y, name
+                            # Or if it is left aligned to "New" label
+                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
+                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
+                                return x, y, name
                 return None, None, None
             
             x, y, upgrade_name = self._scroll_locate_upgrade(
@@ -844,14 +864,14 @@ class Upgrader:
             time.sleep(0.5)
             
             # Locate menu boundaries
-            sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
+            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
@@ -885,7 +905,7 @@ class Upgrader:
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            sug_template, sug_width, sug_height = self._get_suggest_upgrade_template()
+            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
             x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
@@ -899,7 +919,7 @@ class Upgrader:
             
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
@@ -916,11 +936,17 @@ class Upgrader:
                 x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
                 xys = Frame_Handler.batch_locate(templates, frame_gray, thresh=0.80, ref="lc")
                 for (x, y), name in zip(xys, names):
-                    if x is not None and y is not None and abs(x - menu_left) < 0.01 and (y_sug is None or (y_sug is not None and y > y_sug)):
+                    if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
                         section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
-                        sufficient_resources = not check_color([255, 136, 127], section, tol=10)
+                        sufficient_resources = not check_color((255, 136, 127), section, tol=10)
                         if sufficient_resources:
-                            return x, y, name
+                            # Check that located upgrade name is left aligned
+                            if abs(x - menu_left) < 0.01:
+                                return x, y, name
+                            # Or if it is left aligned to "New" label
+                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
+                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
+                                return x, y, name
                 return None, None, None
             
             x, y, upgrade_name = self._scroll_locate_upgrade(
