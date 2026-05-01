@@ -331,7 +331,7 @@
                     button.className = "exclusion";
                     button.name = "exclude";
                     button.type = "submit";
-                    let value = option_name.toLowerCase().replace(" ", "_");
+                    let value = option_name.toLowerCase().replaceAll(" ", "_");
                     button.value = value;
                     button.innerText = option_name;
                     if (exclusions.includes(value)) {
