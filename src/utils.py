@@ -123,6 +123,14 @@ def check_color(color, frame, tol=10):
     diff = np.abs(frame - np.array(color).reshape((1, 1, 3))).sum(2) <= tol
     return np.any(diff)
 
+def filter_color(color, frame, tol=10):
+    import numpy as np
+    assert len(frame.shape) == 3 and frame.shape[2] == 3
+    mask = np.abs(frame - np.array(color).reshape((1, 1, 3))).sum(2) <= tol
+    frame_filtered = frame.copy()
+    frame_filtered[~mask] = [0, 0, 0]
+    return frame_filtered
+
 def get_vocab():
     import json, time, portalocker
     from bs4 import BeautifulSoup
