@@ -32,8 +32,7 @@ class CoC_Bot:
                         timeout=(10, 20)
                     )
                     break
-                except KeyboardInterrupt: raise
-                except SystemExit: raise
+                except (KeyboardInterrupt, SystemExit): raise
                 except Exception as e:
                     if configs.DEBUG: print("update_status", e)
         if get_gui() is not None:
@@ -43,8 +42,7 @@ class CoC_Bot:
                     json={"status": status},
                     timeout=(10, 20)
                 )
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
+            except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
                 if configs.DEBUG: print("update_status", e)
     
@@ -85,8 +83,7 @@ class CoC_Bot:
                 connect_adb()
                 if configs.DEBUG: print("Connected to ADB.")
                 return
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
+            except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
                 if configs.DEBUG: print("connect_adb", e)
             time.sleep(0.5)
@@ -144,8 +141,7 @@ class CoC_Bot:
                 
                 time.sleep(CHECK_INTERVAL)
             
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
+            except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
                 print(e)
                 stop_coc()

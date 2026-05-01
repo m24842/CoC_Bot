@@ -15,19 +15,15 @@ class Tee:
             try:
                 s.write(data)
                 s.flush()
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
-            except:
-                pass
+            except (KeyboardInterrupt, SystemExit): raise
+            except: pass
 
     def flush(self):
         for s in self.streams:
             try:
                 s.flush()
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
-            except:
-                pass
+            except (KeyboardInterrupt, SystemExit): raise
+            except: pass
 
 def enable_logging(id):
     if getattr(sys, "frozen", False):
@@ -40,10 +36,8 @@ def enable_logging(id):
 
     LOG_PATH = LOG_DIR / f"{id}.log"
     log_file = open(LOG_PATH, "a", buffering=1)
-    try:
-        LOG_PATH.chmod(0o666)
-    except:
-        pass
+    try: LOG_PATH.chmod(0o666)
+    except: pass
 
     if getattr(sys, "frozen", False):
         sys.stdout = Tee(*[log_file])
