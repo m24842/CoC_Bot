@@ -48,8 +48,7 @@ class Upgrader:
                 if configs.DEBUG: print(text)
                 gold, elixir, dark_elixir = [int(fix_digits(s.replace(' ', ''))) for s in text]
                 return {"gold": gold, "elixir": elixir, "dark_elixir": dark_elixir}
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
+            except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
                 if configs.DEBUG: print("get_resources", e)
             time.sleep(0.5)
@@ -74,8 +73,7 @@ class Upgrader:
                 text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
                 available = int(text[0])
                 return available > 0
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
+            except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
                 if configs.DEBUG: print("home_lab_available", e)
             time.sleep(0.5)
@@ -100,8 +98,7 @@ class Upgrader:
                 text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
                 available = int(text[0])
                 return available > 0
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
+            except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
                 if configs.DEBUG: print("builder_lab_available", e)
             time.sleep(0.5)
@@ -115,8 +112,7 @@ class Upgrader:
             for x in x_range:
                 for y in y_range:
                     Input_Handler.click(x, y)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("collect_resources", e)
 
@@ -377,8 +373,7 @@ class Upgrader:
             Input_Handler.click(x, y+0.05)
             time.sleep(0.5)
             return upgrade_name
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("home_random_upgrade", e)
             return None
@@ -493,8 +488,7 @@ class Upgrader:
             Input_Handler.click(x, y+0.05)
             time.sleep(0.5)
             return upgrade_name
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("home_specified_upgrade", e)
             return None
@@ -540,8 +534,7 @@ class Upgrader:
             
             Input_Handler.click(x, y)
             time.sleep(0.5)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("assign_builder_apprentice", e)
     
@@ -587,8 +580,7 @@ class Upgrader:
             Input_Handler.click(x, y+0.05)
             time.sleep(0.5)
             return upgrade_name
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("home_lab_upgrade", e)
             return None
@@ -676,8 +668,7 @@ class Upgrader:
                 time.sleep(0.5)
                 return upgrade_name
             return None
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("home_lab_specified_upgrade", e)
             return None
@@ -723,8 +714,7 @@ class Upgrader:
             
             Input_Handler.click(x, y)
             time.sleep(0.5)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("assign_lab_assistant", e)
     
@@ -777,8 +767,7 @@ class Upgrader:
             Input_Handler.click(x, y)
             time.sleep(0.5)
             return upgrade_name
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("builder_random_upgrade", e)
             return None
@@ -864,8 +853,7 @@ class Upgrader:
             Input_Handler.click(x, y)
             time.sleep(0.5)
             return upgrade_name
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("builder_specified_upgrade", e)
             return None
@@ -915,8 +903,7 @@ class Upgrader:
             Input_Handler.click(x, y)
             time.sleep(0.5)
             return upgrade_name
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("builder_lab_random_upgrade", e)
             return None
@@ -992,8 +979,7 @@ class Upgrader:
             Input_Handler.click(x, y)
             time.sleep(0.5)
             return upgrade_name
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("builder_lab_specified_upgrade", e)
             return None
@@ -1033,10 +1019,8 @@ class Upgrader:
                         if final_builders < initial_builders: upgrades_started.append(upgraded)
                         elif final_builders == initial_builders and upgraded != "wall": break
                     else: break
-                except KeyboardInterrupt: raise
-                except SystemExit: raise
-                except:
-                    pass
+                except (KeyboardInterrupt, SystemExit): raise
+                except: pass
         if not Task_Handler.builder_apprentice_excluded():
             self.assign_builder_apprentice()
         
@@ -1048,10 +1032,8 @@ class Upgrader:
                 time.sleep(0.5)
                 final_lab_avail = self.home_lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded.lower())
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
-        except:
-            pass
+        except (KeyboardInterrupt, SystemExit): raise
+        except: pass
         if not Task_Handler.lab_assistant_excluded():
             self.assign_lab_assistant()
         
@@ -1081,10 +1063,8 @@ class Upgrader:
                         if final_builders < initial_builders: upgrades_started.append(upgraded)
                         elif final_builders == initial_builders and upgraded != "wall": break
                     else: break
-                except KeyboardInterrupt: raise
-                except SystemExit: raise
-                except:
-                    pass
+                except (KeyboardInterrupt, SystemExit): raise
+                except: pass
         
         # Lab upgrades
         lab_upgrades_started = []
@@ -1094,10 +1074,8 @@ class Upgrader:
                 time.sleep(0.5)
                 final_lab_avail = self.builder_lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded.lower())
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
-        except:
-            pass
+        except (KeyboardInterrupt, SystemExit): raise
+        except: pass
         
         for upgrade in upgrades_started + lab_upgrades_started:
             send_notification(f"Started upgrading {upgrade}")

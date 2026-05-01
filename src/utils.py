@@ -93,8 +93,7 @@ def connect_adb():
         device = adbutils.device(ADB_ADDRESS)
         mt_device = MNTDevice(ADB_ADDRESS)
         Exit_Handler.register(mt_device.stop)
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
+    except (KeyboardInterrupt, SystemExit): raise
     except:
         subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         raise Exception("Failed to get ADB device.")
@@ -226,10 +225,8 @@ def parse_time(text):
         pattern = re.compile(r"(\d+)([dhms])")
         seconds = sum(int(v) * units[u] for v, u in pattern.findall(text))
         return seconds
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        return 0
+    except (KeyboardInterrupt, SystemExit): raise
+    except: return 0
 
 def to_int_array(*args):
     import numpy as np
@@ -288,8 +285,7 @@ def send_notification(text):
                 json=text,
                 timeout=(10, 20)
             )
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except: pass
 
     if TELEGRAM_BOT_TOKEN != "":
@@ -300,8 +296,7 @@ def send_notification(text):
                 data={"chat_id": get_telegram_chat_id(),"text": telegram_text},
                 timeout=(10, 20)
             )
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except: pass
 
 def extend_pythonanywhere_hosting(username, password):
@@ -346,10 +341,8 @@ def to_home_base():
     try:
         get_home_builders(1)
         return
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        pass
+    except (KeyboardInterrupt, SystemExit): raise
+    except: pass
     
     Input_Handler.zoom(dir="out")
     for _ in range(3):
@@ -395,8 +388,7 @@ def get_home_builders(timeout=60, return_amount=True, raise_exception=True, use_
             text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
             available = int(text[0])
             return available
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("get_home_builders", e)
         time.sleep(0.5)
@@ -423,18 +415,14 @@ def start_coc(timeout=60):
             try:
                 get_home_builders(1, return_amount=False, use_cached_frame=True)
                 break
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
-            except:
-                pass
+            except (KeyboardInterrupt, SystemExit): raise
+            except: pass
             
             try:
                 get_builder_builders(1, return_amount=False, use_cached_frame=True)
                 break
-            except KeyboardInterrupt: raise
-            except SystemExit: raise
-            except:
-                pass
+            except (KeyboardInterrupt, SystemExit): raise
+            except: pass
             
             cont_x, cont_y = Frame_Handler.locate(Asset_Manager.misc_assets["continue"], grayscale=False, thresh=0.8, ref="cc", use_cached=True)
             if cont_x is not None and cont_y is not None:
@@ -448,8 +436,7 @@ def start_coc(timeout=60):
             raise Exception("Failed to start CoC")
         print("CoC started", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
         return True
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
+    except (KeyboardInterrupt, SystemExit): raise
     except:
         return False
 
@@ -466,8 +453,8 @@ def update_coc(timeout=10):
     try:
         u2.connect(ADB_ADDRESS)(text="Play").click(timeout=timeout)
         for _ in range(3): u2.connect(ADB_ADDRESS)(text="Play").click(timeout=0)
-    except:
-        pass
+    except (KeyboardInterrupt, SystemExit): raise
+    except: pass
     to_system_home()
 
 def to_builder_base():
@@ -476,10 +463,8 @@ def to_builder_base():
     try:
         get_builder_builders(1)
         return
-    except KeyboardInterrupt: raise
-    except SystemExit: raise
-    except:
-        pass
+    except (KeyboardInterrupt, SystemExit): raise
+    except: pass
     
     for _ in range(3):
         Input_Handler.zoom(dir="in")
@@ -522,8 +507,7 @@ def get_builder_builders(timeout=60, return_amount=True, raise_exception=True, u
             text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
             available = int(text[0])
             return available
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("get_builder_builders", e)
         time.sleep(0.5)
@@ -535,7 +519,8 @@ def require_exit(n=5, delay=0.1):
         def wrapper(*args, **kwargs):
             result = None
             try: result = func(*args, **kwargs)
-            finally: Input_Handler.click_exit(n, delay)
+            except (KeyboardInterrupt, SystemExit): raise
+            except: Input_Handler.click_exit(n, delay)
             return result
         return wrapper
     return decorator
@@ -602,8 +587,7 @@ class Task_Handler:
     def home_base_priority_excluded(cls, **kwargs):
         try:
             return "home_base_priority" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.PRIORITY_HOME_BASE_UPGRADES
 
@@ -611,8 +595,7 @@ class Task_Handler:
     def home_lab_priority_excluded(cls, **kwargs):
         try:
             return "home_lab_priority" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.PRIORITY_HOME_LAB_UPGRADES
     
@@ -620,8 +603,7 @@ class Task_Handler:
     def builder_base_priority_excluded(cls, **kwargs):
         try:
             return "builder_base_priority" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.PRIORITY_BUILDER_BASE_UPGRADES
     
@@ -629,8 +611,7 @@ class Task_Handler:
     def builder_lab_priority_excluded(cls, **kwargs):
         try:
             return "builder_lab_priority" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.PRIORITY_BUILDER_LAB_UPGRADES
 
@@ -638,8 +619,7 @@ class Task_Handler:
     def heroes_excluded(cls, **kwargs):
         try:
             return "heroes" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.UPGRADE_HEROES
 
@@ -647,8 +627,7 @@ class Task_Handler:
     def home_base_excluded(cls, **kwargs):
         try:
             return "home_base" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.UPGRADE_HOME_BASE
 
@@ -656,8 +635,7 @@ class Task_Handler:
     def builder_base_excluded(cls, **kwargs):
         try:
             return "builder_base" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.UPGRADE_BUILDER_BASE
 
@@ -665,8 +643,7 @@ class Task_Handler:
     def home_lab_excluded(cls, **kwargs):
         try:
             return "home_lab" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.UPGRADE_HOME_LAB
 
@@ -674,8 +651,7 @@ class Task_Handler:
     def builder_lab_excluded(cls, **kwargs):
         try:
             return "builder_lab" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.UPGRADE_BUILDER_LAB
 
@@ -683,8 +659,7 @@ class Task_Handler:
     def home_attacks_excluded(cls, **kwargs):
         try:
             return "home_attacks" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.ATTACK_HOME_BASE
 
@@ -692,8 +667,7 @@ class Task_Handler:
     def builder_attacks_excluded(cls, **kwargs):
         try:
             return "builder_attacks" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.ATTACK_BUILDER_BASE
 
@@ -701,8 +675,7 @@ class Task_Handler:
     def lab_assistant_excluded(cls, **kwargs):
         try:
             return "lab_assistant" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.ASSIGN_LAB_ASSISTANT
 
@@ -710,8 +683,7 @@ class Task_Handler:
     def builder_apprentice_excluded(cls, **kwargs):
         try:
             return "builder_apprentice" in cls.get_exclusions(**kwargs)
-        except KeyboardInterrupt: raise
-        except SystemExit: raise
+        except (KeyboardInterrupt, SystemExit): raise
         except:
             return not configs.ASSIGN_BUILDER_APPRENTICE
 
@@ -725,6 +697,7 @@ class OCR_Handler:
         if configs.GROQ_API_KEY != "":
             if time.time() > cls.backoff_time:
                 try: return cls.external_ocr(frame)
+                except (KeyboardInterrupt, SystemExit): raise
                 except: cls.backoff_time = time.time() + 600
         return cls.local_ocr(frame)
 
