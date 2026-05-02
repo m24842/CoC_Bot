@@ -98,11 +98,12 @@ class Attacker:
         import cv2, scipy, numpy as np
         
         # Look for vertical card edges
-        if len(frame.shape) == 3: frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        orig_h, orig_w = frame.shape
-        frame = frame[:, max(0, int(orig_w*clip_left)-10):min(orig_w, int(orig_w*clip_right)+10)]
-        frame = cv2.equalizeHist(frame)
-        edges = cv2.convertScaleAbs(np.abs(cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=3)))
+        assert len(frame.shape) == 3 and frame.shape[2] == 3
+        if len(frame.shape) == 3: frame_gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        orig_h, orig_w = frame_gray.shape
+        frame_gray = frame_gray[:, max(0, int(orig_w*clip_left)-10):min(orig_w, int(orig_w*clip_right)+10)]
+        frame_gray = cv2.equalizeHist(frame_gray)
+        edges = cv2.convertScaleAbs(np.abs(cv2.Sobel(frame_gray, cv2.CV_64F, 1, 0, ksize=3)))
         profile = np.sum(edges, axis=0)
         profile = (profile - profile.min()) / (profile.max() - profile.min())
         peaks = scipy.signal.find_peaks(profile, height=0.8, distance=10)[0]
@@ -127,7 +128,7 @@ class Attacker:
             peaks_norm = peaks_norm[:-1]
         
         assert len(peaks) % 2 == 0, "Uneven number of troop slot edges detected"
-                
+        
         # Convert edge distances to card locations
         card_types = []
         card_centers = []
@@ -143,13 +144,14 @@ class Attacker:
             
             # Figure out whether card is a normal troop, clan troop, or hero
             card_section = frame[:, peaks[i]:peaks[i+1]]
-            h, w = card_section.shape[:2]
-            card_texture = cv2.Canny(card_section, 50, 150) / 255
+            card_section_gray = frame_gray[:, peaks[i]:peaks[i+1]]
+            h, w = card_section_gray.shape[:2]
+            card_texture = cv2.Canny(card_section_gray, 50, 150) / 255
             x_asset = render_text("x", "SupercellMagic", 25)
             x_h, x_w = x_asset.shape[:2]
-            x_sign_loc = Frame_Handler.locate(x_asset, card_section, grayscale=True, thresh=0.8, ref="lc")
+            x_sign_loc = Frame_Handler.locate(x_asset, card_section_gray, grayscale=True, thresh=0.8, ref="lc")
             if x_sign_loc[0] is not None and x_sign_loc[1] is not None: # Only troops, clan troops, or spells have multiplicity
-                count_section = card_section[:int(h*x_sign_loc[1]+0.5*x_h)+1, int(w*x_sign_loc[0]+x_w)-1:]
+                count_section = card_section_gray[:int(h*x_sign_loc[1]+0.5*x_h)+1, int(w*x_sign_loc[0]+x_w)-1:]
                 number_locs = Frame_Handler.batch_locate([render_text(str(n), "SupercellMagic", 25) for n in range(0, 12)], frame=count_section, grayscale=True, thresh=0.8, ref="cc")
                 
                 count = 1
@@ -174,8 +176,12 @@ class Attacker:
                     card_type = "troop"
                     card_counts.append(-1)
             else:
+                card_section_border = card_section.copy()
+                card_section_border[int(h*0.1):int(h*0.9), int(w*0.1):int(w*0.9)] = 0
+                mask = filter_color((68, 202, 222), card_section_border, tol=100, return_mask=True)[1]
+                blue_pct = mask.mean()
                 # Seige machine doesn't have multiplicity anymore
-                if prev_gap == dist_categories[1] and next_gap == dist_categories[1]:
+                if blue_pct > 0.1:
                     card_type = "clan"
                     card_counts.append(1)
                 else:
