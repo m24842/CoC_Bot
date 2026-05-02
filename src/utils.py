@@ -520,7 +520,8 @@ def require_exit(n=5, delay=0.1):
             result = None
             try: result = func(*args, **kwargs)
             except (KeyboardInterrupt, SystemExit): raise
-            except: Input_Handler.click_exit(n, delay)
+            except: pass
+            Input_Handler.click_exit(n, delay)
             return result
         return wrapper
     return decorator
