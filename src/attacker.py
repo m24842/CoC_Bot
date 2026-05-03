@@ -99,8 +99,10 @@ class Attacker:
         
         # Look for vertical card edges
         assert len(frame.shape) == 3 and frame.shape[2] == 3
-        if len(frame.shape) == 3: frame_gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        frame_color = frame.copy()
+        frame_gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         orig_h, orig_w = frame_gray.shape
+        frame_color = frame_color[:, max(0, int(orig_w*clip_left)-10):min(orig_w, int(orig_w*clip_right)+10)]
         frame_gray = frame_gray[:, max(0, int(orig_w*clip_left)-10):min(orig_w, int(orig_w*clip_right)+10)]
         frame_gray = cv2.equalizeHist(frame_gray)
         edges = cv2.convertScaleAbs(np.abs(cv2.Sobel(frame_gray, cv2.CV_64F, 1, 0, ksize=3)))
@@ -112,7 +114,7 @@ class Attacker:
         # Compute distances between edges and discretize
         dists = np.diff(peaks_norm)
         dist_categories = np.array([0.007, 0.015, 0.068]) # normal gap, type change gap, card width
-        tol = 0.005
+        tol = 0.01
         diffs = np.abs(dists[:, None] - dist_categories)
         closest_idx = np.argmin(diffs, axis=1)
         closest_dist = diffs[np.arange(len(dists)), closest_idx]
@@ -120,12 +122,13 @@ class Attacker:
         dists_discrete[closest_dist > tol] = np.nan
         
         # Remove partially visible card edges
-        if dists_discrete[0] != dist_categories[2]: # First should be a card
-            peaks = peaks[1:]
-            peaks_norm = peaks_norm[1:]
-        if dists_discrete[-1] != dist_categories[2]: # Last should be a card
-            peaks = peaks[:-1]
-            peaks_norm = peaks_norm[:-1]
+        remove_left = 0
+        remove_right = len(dists_discrete) - 1
+        while dists_discrete[remove_left] != dist_categories[2]: remove_left += 1
+        while dists_discrete[remove_right] != dist_categories[2]: remove_right -= 1
+        peaks = peaks[remove_left:remove_right+2]
+        peaks_norm = peaks_norm[remove_left:remove_right+2]
+        dists_discrete = dists_discrete[remove_left:remove_right+1]
         
         assert len(peaks) % 2 == 0, "Uneven number of troop slot edges detected"
         
@@ -143,7 +146,7 @@ class Attacker:
             if prev_gap == dist_categories[1]: type_gaps_seen += 1
             
             # Figure out whether card is a normal troop, clan troop, or hero
-            card_section = frame[:, peaks[i]:peaks[i+1]]
+            card_section = frame_color[:, peaks[i]:peaks[i+1]]
             card_section_gray = frame_gray[:, peaks[i]:peaks[i+1]]
             h, w = card_section_gray.shape[:2]
             card_texture = cv2.Canny(card_section_gray, 50, 150) / 255
@@ -253,7 +256,7 @@ class Attacker:
             frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
             # Find troops to deploy
             card_centers, card_boundaries, card_types, card_counts, type_gaps_seen = self.detect_troop_positions(frame, clip_left=last_card_left, type_gaps_seen=type_gaps_seen, return_boundaries=True, return_types=True, return_counts=True)
-
+            
             if len(card_centers) == 0: break
 
             # Exclude clan troops if specified
