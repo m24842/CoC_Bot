@@ -388,9 +388,11 @@
                 if (exclusions.includes(name)) {
                     button.classList.remove("inactive");
                     button.classList.add("active");
+                    button.title = exclusion_options.get(button.innerText)[1];
                 } else {
                     button.classList.remove("active");
                     button.classList.add("inactive");
+                    button.title = exclusion_options.get(button.innerText)[0];
                 }
             });
         }
