@@ -295,7 +295,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -404,7 +404,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -557,7 +557,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
 
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -611,7 +611,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -737,7 +737,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -798,7 +798,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -885,7 +885,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -934,7 +934,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.02, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
