@@ -203,15 +203,16 @@ class Attacker:
         output.append(type_gaps_seen)
         return output
     
-    def deploy_troops(self, card_centers, available_slots, card_types=None, card_counts=None):
+    def deploy_troops(self, card_centers, available_slots=None, card_types=None, card_counts=None):
         import time, numpy as np
         
         def card_gray(card_center):
             section = Frame_Handler.get_frame_section(card_center-0.01, 0.89, card_center+0.01, 0.91, grayscale=False)
             return np.all(section[:, :, 0] == section[:, :, 1]) and np.all(section[:, :, 1] == section[:, :, 2])
         
-        if card_types is None: card_types = ["troop"] * len(card_centers)
-        if card_counts is None: card_counts = [-1] * len(card_centers)
+        if available_slots is None: available_slots = [1] * len(card_centers)
+        if card_types is None: card_types = [None] * len(card_centers)
+        if card_counts is None: card_counts = [0] * len(card_centers)
         
         # Start holding deploy position w/ secondary touch pointer
         Input_Handler.down(0.5, 0.8, pointer=1)
@@ -235,6 +236,8 @@ class Attacker:
                     rys = np.random.uniform(0.45, 0.55, n)
                     for coord in zip(rxs, rys):
                         Input_Handler.click(*coord)
+                else:
+                    Input_Handler.click(0.5, 0.8, n=card_counts[i])
         
         # Release secondary pointer
         Input_Handler.up(pointer=1)
@@ -242,7 +245,7 @@ class Attacker:
         # Unselect last card
         Input_Handler.click(0.01, 0.9)
     
-    def complete_attack(self, restart=True, exclude_clan_troops=False):
+    def complete_normal_attack(self, restart=True, exclude_clan_troops=False):
         import time, numpy as np
         
         Input_Handler.zoom(dir="out")
@@ -291,6 +294,21 @@ class Attacker:
         else:
             stop_coc()
     
+    def complete_builder_attack(self, restart=True):
+        import numpy as np
+        
+        Input_Handler.zoom(dir="out")
+        Input_Handler.swipe_up()
+        
+        card_centers = np.linspace(0.1, 0.9, 11)
+        self.deploy_troops(card_centers, card_counts=[4]*len(card_centers))
+        
+        # Close and reopen CoC to auto complete battle
+        if restart:
+            start_coc()
+        else:
+            stop_coc()
+    
     # ============================================================
     # ⚔️ Attack Management
     # ============================================================
@@ -312,7 +330,7 @@ class Attacker:
             
             # Complete an attack
             if self.start_normal_attack(timeout):
-                self.complete_attack(restart=restart, exclude_clan_troops=EXCLUDE_CLAN_TROOPS)
+                self.complete_normal_attack(restart=restart, exclude_clan_troops=EXCLUDE_CLAN_TROOPS)
         
         except Exception as e:
             if configs.DEBUG: print("attack_home_base", e)
@@ -334,7 +352,7 @@ class Attacker:
             
             # Complete an attack
             if self.start_builder_attack(timeout):
-                self.complete_attack(restart=restart, exclude_clan_troops=False)
+                self.complete_builder_attack(restart=restart)
         
         except Exception as e:
             if configs.DEBUG: print("attack_builder_base", e)

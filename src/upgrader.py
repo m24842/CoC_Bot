@@ -242,32 +242,23 @@ class Upgrader:
         y = 0.85
         return x, y
     
-    def _scroll_locate_upgrade(self, locate_template_func, menu_left, menu_right, menu_ref_loc, dir="down"):
+    def _scroll_locate_upgrade(self, locate_template_func, menu_left, menu_right, menu_top, menu_bottom, dir="down"):
         # First two return values of locate_template_func should be x and y of located template
         import time, numpy as np
-        menu_ref_x, menu_ref_y = menu_ref_loc
+        menu_center = (menu_left + menu_right) / 2
         res = locate_template_func()
         if res[0] is None or res[1] is None:
-            prev_section = Frame_Handler.get_frame_section(menu_left, 0.2, menu_right, menu_ref_y, high_contrast=True, thresh=255)
+            prev_section = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, high_contrast=True, thresh=255)
             for _ in range(20):
-                if menu_ref_y > 0.2:
-                    # Faster scrolling if upgrade menu is known to be larger
-                    if dir == "down":
-                        y1, y2 = menu_ref_y, 0.2
-                    elif dir == "up":
-                        y1, y2 = 0.2, menu_ref_y
-                    Input_Handler.swipe(x1=menu_ref_x, y1=y1, x2=menu_ref_x, y2=y2, duration=0, hold_end_time=100, inter_points=10)
-                else:
-                    # Slower but always works
-                    if dir == "down":
-                        y1, y2 = 0.2, 0.0
-                    elif dir == "up":
-                        y1, y2 = 0.0, 0.2
-                    Input_Handler.swipe(x1=menu_ref_x, y1=y1, x2=menu_ref_x, y2=y2, duration=0, hold_end_time=100, inter_points=10)
+                if dir == "down":
+                    y1, y2 = menu_bottom-0.05, menu_top+0.05
+                elif dir == "up":
+                    y1, y2 = menu_top+0.05, menu_bottom-0.05
+                Input_Handler.swipe(x1=menu_center, y1=y1, x2=menu_center, y2=y2, duration=0, hold_end_time=100, inter_points=10)
                 time.sleep(0.1)
                 
                 # Check if at end of upgrade menu
-                section = Frame_Handler.get_frame_section(menu_left, 0.2, menu_right, menu_ref_y, high_contrast=True, thresh=255)
+                section = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, high_contrast=True, thresh=255)
                 diff = np.abs(section - prev_section).mean() / 255
                 if diff < 0.01: break
                 prev_section = section
@@ -399,8 +390,6 @@ class Upgrader:
             # Find other upgrades label
             other_template = self._get_other_upgrade_template()[0]
             x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70, grayscale=False)
-            if y_other is not None: menu_ref_pos = y_other
-            else: menu_ref_pos = y_sug
             
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
@@ -441,7 +430,8 @@ class Upgrader:
                 lambda: locate_template(templates, upgrade_text),
                 menu_left,
                 menu_right,
-                (x_sug, menu_ref_pos),
+                menu_top,
+                menu_bottom,
                 dir="down" if configs.START_FROM_MENU_TOP else "up",
             )
             
@@ -646,7 +636,8 @@ class Upgrader:
                 lambda: locate_template(templates),
                 menu_left,
                 menu_right,
-                (x_sug, menu_ref_pos),
+                menu_top,
+                menu_bottom,
                 dir="down" if configs.START_FROM_MENU_TOP else "up",
             )
             
@@ -836,7 +827,8 @@ class Upgrader:
                 lambda: locate_template(templates, upgrade_text),
                 menu_left,
                 menu_right,
-                (x_sug, menu_ref_pos),
+                menu_top,
+                menu_bottom,
                 dir="down" if configs.START_FROM_MENU_TOP else "up"
             )
             
@@ -974,7 +966,8 @@ class Upgrader:
                 lambda: locate_template(templates, upgrade_text),
                 menu_left,
                 menu_right,
-                (x_sug, menu_ref_pos),
+                menu_top,
+                menu_bottom,
                 dir="down" if configs.START_FROM_MENU_TOP else "up",
             )
             
