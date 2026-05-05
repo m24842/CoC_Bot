@@ -296,6 +296,8 @@ class Upgrader:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -558,7 +560,9 @@ class Upgrader:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
-
+            menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
+            
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
 
@@ -738,6 +742,8 @@ class Upgrader:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -886,6 +892,8 @@ class Upgrader:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
                 for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
+            frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             
             # Find a valid upgrade
             potential_y_locs = self._get_potential_upgrade_locs(menu)
