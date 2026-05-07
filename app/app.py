@@ -1,23 +1,32 @@
 import os
 import time
 import json
-import sqlite3
+from pathlib import Path
+from collections import deque
 from flask import Flask, render_template, jsonify, abort, request
 from flask_cors import CORS
 
-PATH = os.path.dirname(os.path.abspath(__file__))
+PATH = Path(__file__).parent
+CACHE_PATH = PATH / "data" / "cache.json"
+NOTIFICATION_CACHE_SIZE = 3
 
 app = Flask(__name__)
 CORS(app)
 
 class Instance:
-    def __init__(self, id, run_status="", end_time=0, exclusions=set()):
+    def __init__(
+        self,
+        id,
+        run_status="",
+        end_time=0,
+        exclusions=set(),
+        notifications=deque(maxlen=NOTIFICATION_CACHE_SIZE)
+    ):
         self.id = id
         self.run_status = run_status
         self.end_time = end_time
         self.exclusions = exclusions
-        self.data_path = os.path.join(PATH, "data")
-        self.init_db(id)
+        self.notifications = notifications
     
     def __eq__(self, other):
         return self.id == other.id
@@ -31,44 +40,36 @@ class Instance:
             "run_status": self.run_status,
             "end_time": self.end_time,
             "exclusions": sorted(list(self.exclusions)),
+            "notifications": list(self.notifications)
         }
     
-    def init_db(self, id):
-        os.makedirs(self.data_path, exist_ok=True)
-        notifications_path = os.path.join(self.data_path, f"{id}_notifications.db")
-        if not os.path.exists(notifications_path):
-            with sqlite3.connect(notifications_path) as conn:
-                conn.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {id}_notifications (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        time_stamp REAL,
-                        data TEXT
-                    )
-                """)
-                conn.commit()
+    def get_notifications(self, limit=NOTIFICATION_CACHE_SIZE):
+        return list(self.notifications)[-limit:]
     
-    def get_notifications(self, limit=3):
-        notifications_path = os.path.join(self.data_path, f"{self.id}_notifications.db")
-        with sqlite3.connect(notifications_path) as conn:
-            cursor = conn.execute(f"SELECT time_stamp, data FROM {self.id}_notifications ORDER BY time_stamp DESC LIMIT ?", (limit,))
-            return [{"time_stamp": row[0], "data": row[1]} for row in cursor.fetchall()]
-
     def add_notification(self, data):
-        notifications_path = os.path.join(self.data_path, f"{self.id}_notifications.db")
-        with sqlite3.connect(notifications_path) as conn:
-            conn.execute(f"INSERT INTO {self.id}_notifications (time_stamp, data) VALUES (?, ?)",
-                            (time.time(), str(data)))
-            conn.commit()
+        self.notifications.append({"time_stamp": time.time(), "data": str(data)})
+        data = get_cache()
+        data["known_instances"][self.id] = self.to_dict()
+        with open(CACHE_PATH, "w") as f:
+            json.dump(data, f, indent=4)
 
 instances = {}
 
+def get_cache():
+    if os.path.exists(CACHE_PATH):
+        try:
+            with open(CACHE_PATH, "r") as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
 def get_known_instances():
     global instances
-    data = {}
-    cache_path = os.path.join(PATH, "data/cache.json")
-    if os.path.exists(cache_path):
+    data = get_cache()
+    if os.path.exists(CACHE_PATH):
         try:
-            with open(cache_path, "r") as f:
+            with open(CACHE_PATH, "r") as f:
                 data = json.load(f)
         except:
             data = {}
@@ -76,13 +77,18 @@ def get_known_instances():
     for id in known_instances:
         id = str(id)
         info = known_instances[id]
-        instances[id] = Instance(id, run_status=info.get("run_status", ""), end_time=info.get("end_time", 0), exclusions=set(info.get("exclusions", [])))
+        instances[id] = Instance(
+            id,
+            run_status=info.get("run_status", ""),
+            end_time=info.get("end_time", 0),
+            exclusions=set(info.get("exclusions", [])),
+            notifications=deque(info.get("notifications", []), maxlen=NOTIFICATION_CACHE_SIZE)
+        )
 
 def update_known_instances():
     global instances
     data = {id: instances[id].to_dict() for id in instances}
-    cache_path = os.path.join(PATH, "data/cache.json")
-    with open(cache_path, "w") as f:
+    with open(CACHE_PATH, "w") as f:
         json.dump({"known_instances": data}, f, indent=4)
 
 @app.route("/", methods=["GET"])
