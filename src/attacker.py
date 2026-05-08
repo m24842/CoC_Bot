@@ -193,7 +193,7 @@ class Attacker:
             card_types.append(card_type)
         
         card_centers = np.array(card_centers)
-                
+        
         if not return_boundaries and not return_types: return card_centers
         
         output = [card_centers]
