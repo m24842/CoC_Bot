@@ -70,6 +70,7 @@
     > ❗️ __Important__: If hosting from a personal device, configure port forwarding as necessary
     
     * Each bot instance can be accessed at `WEB_APP_ADDRESS/<instance_name>` (the default instance name is `main`)
+    * View a demo of the web app [here](https://youtu.be/_R6PbJ4_SzQ)
 
 4. Setup iPhone shortcut:
     > __Note__: An [older version](<shortcut/CoC Bot Auto Pause Old.shortcut>) of the shortcut is provided that does not require Scriptable, but is incapable of handling request errors
@@ -87,6 +88,6 @@
 
     > 💡 __Tip__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
 
-    > 💡 __Tip__: If not using the bot for development purposes, it can be built into an executable or desktop app for convenience using [build.sh](scripts/build.sh). The desktop app GUI or command-line arguments can be used to specify the instance to run if using multiple bot instances. It is recommended to create a desktop shortcut to launch multiple desktop app instances. On MacOS, create an Automator Application that runs `open -n <app_path>`. On Windows, create a desktop shortcut that runs `Start-Process <exe_path>`.
+    > 💡 __Tip__: If not using the bot for development purposes, it can be built into an executable or desktop app for convenience using [build.sh](scripts/build.sh). The desktop app GUI or command-line arguments can be used to specify the instance to run if using multiple bot instances. View a demo of the desktop app [here](https://youtube.com/shorts/zVZwBW8QIeY?feature=share).
 
     * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager, set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to `INSTANCE_IDS` and `ADB_ADDRESSES` in `configs.py`. Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).
