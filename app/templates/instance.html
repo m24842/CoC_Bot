@@ -373,6 +373,10 @@
             initExclusions();
             updateAll();
 
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") window.location.href = "/";
+            });
+
             document.querySelectorAll("form").forEach(form => {
                 form.addEventListener("submit", async (e) => {
                     e.preventDefault();
