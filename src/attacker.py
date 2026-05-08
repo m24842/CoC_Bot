@@ -237,7 +237,7 @@ class Attacker:
                     for coord in zip(rxs, rys):
                         Input_Handler.click(*coord)
                 else:
-                    Input_Handler.click(0.5, 0.8, n=card_counts[i])
+                    Input_Handler.click(0.5, 0.8, n=max(0, card_counts[i]))
         
         # Release secondary pointer
         Input_Handler.up(pointer=1)

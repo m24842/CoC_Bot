@@ -407,9 +407,17 @@
         initExclusions();
         updateAll();
 
-        document.addEventListener("keyup", (event) => {
-            if (event.key === "Escape") window.location.href = "/";
-        });
+        window.addEventListener(
+            "keydown",
+            (event) => {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    window.location.href = "/";
+                }
+            },
+            true
+        );
 
         document.getElementsByName("custom_time").forEach(input => {
             input.addEventListener('input', () => {
@@ -454,7 +462,7 @@
                     }
                     setExclusion(submitter.value, action);
                 } else if (submitter.name === "shutdown") {
-                    shutdown();
+                    await shutdown();
                     window.location.href = "/";
                 }
 
