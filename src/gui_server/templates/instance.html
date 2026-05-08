@@ -24,7 +24,9 @@
     <div id="control" style="display: none;">
         <header>
             <div class="instance_tag">
-                <strong class="instance_id" id="instance_id"></strong>
+                <a href="/" style="text-decoration:none; color:inherit;">
+                    <strong class="instance_id" id="instance_id">{{ id }}</strong>
+                </a>
             </div>
             
             <img src="{{ url_for('static', filename='coc_bot_logo.png') }}" alt="CoC Bot">
@@ -66,6 +68,10 @@
                 <h1 class="exclusions_title">Task Settings</h1>
                 <form method="POST" class="exclusions-form"></form>
             </div>
+
+            <form method="POST" class="cancel-button" style="margin-top:30px;">
+                <button type="submit" name="shutdown">Shutdown</button>
+            </form>
         </div>
     </div>
 
@@ -98,7 +104,7 @@
 
         async function fetchExclusions() {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/exclude` : `/exclude`;
+                const url = web_app_url ? `${web_app_url}/${id}/exclude` : `/${id}/exclude`;
                 const response = await fetch(url);
                 const data = await response.json();
                 exclusions = data.exclusions;
@@ -109,7 +115,7 @@
 
         async function fetchNotifications() {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/notifications` : `/notifications`;
+                const url = web_app_url ? `${web_app_url}/${id}/notifications` : `/${id}/notifications`;
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {
@@ -139,7 +145,7 @@
 
         async function fetchEndTime() {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/end_time` : `/end_time`;
+                const url = web_app_url ? `${web_app_url}/${id}/end_time` : `/${id}/end_time`;
                 const response = await fetch(url);
                 const data = await response.json();
                 end_time = data.end_time;
@@ -150,7 +156,7 @@
 
         async function fetchStatus() {
             try {
-                url = web_app_url ? `${web_app_url}/${id}/status` : `/status`;
+                url = web_app_url ? `${web_app_url}/${id}/status` : `/${id}/status`;
                 const response = await fetch(url);
                 const data = await response.json();
                 run_status = data.status;
@@ -159,34 +165,9 @@
             }
         }
 
-        async function setID(new_id) {
-            try {
-                const url = `/id`;
-                const response = await fetch(url, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        id: new_id
-                    })
-                });
-                const res = await response.json();
-                if (res === 0) {
-                    alert("Invalid ID");
-                    return false;
-                } else {
-                    id = new_id;
-                    return true;
-                }
-            } catch (error) {
-                console.error('Error setting ID:', error);
-            }
-        }
-
         async function setEndTime(minutes) {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/end_time` : `/end_time`;
+                const url = web_app_url ? `${web_app_url}/${id}/end_time` : `/${id}/end_time`;
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {
@@ -207,7 +188,7 @@
 
         async function setExclusion(item, action) {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/exclude` : `/exclude`;
+                const url = web_app_url ? `${web_app_url}/${id}/exclude` : `/${id}/exclude`;
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {
@@ -224,6 +205,24 @@
                 }
             } catch (error) {
                 console.error('Error updating exclusion:', error);
+            }
+        }
+
+        async function shutdown() {
+            try {
+                const url = `/instance`;
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        action: "stop",
+                        id: id
+                    })
+                });
+            } catch (error) {
+                console.error('Error shutting down instance:', error);
             }
         }
 
@@ -408,6 +407,10 @@
         initExclusions();
         updateAll();
 
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") window.location.href = "/";
+        });
+
         document.getElementsByName("custom_time").forEach(input => {
             input.addEventListener('input', () => {
                 input.value = input.value.replace(/\D/g, '');
@@ -450,6 +453,9 @@
                         action = "add";
                     }
                     setExclusion(submitter.value, action);
+                } else if (submitter.name === "shutdown") {
+                    shutdown();
+                    window.location.href = "/";
                 }
 
                 form.reset();

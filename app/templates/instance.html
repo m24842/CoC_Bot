@@ -11,7 +11,9 @@
 <body>
     <header>
         <div class="instance_tag">
-            <strong class="instance_id" id="instance_id">{{ id }}</strong>
+            <a href="/" style="text-decoration:none; color:inherit;">
+                <strong class="instance_id" id="instance_id">{{ id }}</strong>
+            </a>
         </div>
 
         <img src="{{ url_for('static', filename='coc_bot_logo.png') }}" alt="CoC Bot">
@@ -127,7 +129,7 @@
 
             async function fetchCurrentTime() {
                 try {
-                    const response = await fetch(`/${id}/current_time`);
+                    const response = await fetch(`/current_time`);
                     const data = await response.json();
                     current_time = data.current_time;
                     start = Date.now();

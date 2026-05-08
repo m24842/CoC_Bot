@@ -5,11 +5,7 @@ from upgrader import Upgrader
 from attacker import Attacker
 
 class CoC_Bot:
-    def __init__(self, prevent_sleep=DISABLE_DEVICE_SLEEP):
-        if prevent_sleep:
-            disable_sleep()
-            Exit_Handler.register(enable_sleep)
-        
+    def __init__(self):
         self.start_bluestacks()
         self.connect_adb()
         self.upgrader = Upgrader()

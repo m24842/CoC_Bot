@@ -12,10 +12,11 @@ sys.path.append(str(path))
 import os
 import time
 import socket
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, abort, request
 from configs import *
 
 app = Flask(__name__)
+bot_pipe = None
 
 class Instance:
     def __init__(self, id=None):
@@ -35,56 +36,80 @@ class Instance:
         }
         self.exclusions = set(k for k, v in task_settings.items() if v)
 
-instance = Instance("")
+instances = {}
 
 @app.route("/", methods=["GET"])
 def home():
     return render_template(
-        "gui.html",
-        id=instance.id,
-        web_app_url=WEB_APP_URL,
-        current_time=time.time(),
-        end_time=instance.end_time,
-        run_status=instance.run_status,
-        exclusions=list(instance.exclusions)
+        "home.html",
+        ids=sorted(list(instances.keys())),
     )
 
-@app.route("/id", methods=["GET", "POST"])
-def handle_id():
-    global instance
-    if request.method == "GET":
-        return jsonify({"id": instance.id})
-    elif request.method == "POST":
-        id = request.json.get("id", "").strip()
+@app.route("/<id>", methods=["GET"])
+def handle_instance(id):
+    instance = instances.get(id)
+    if not instance: abort(404)
+    return render_template(
+        "instance.html",
+        id=id,
+        web_app_url=WEB_APP_URL,
+        end_time=instance.end_time,
+        current_time=time.time(),
+        run_status=instance.run_status,
+        exclusions=list(instance.exclusions),
+    )
+
+@app.route("/instance", methods=["POST"])
+def handle_instance_start_stop():
+    data = request.json
+    action = data.get("action", "")
+    id = data.get("id", "")
+    if action == "start":
         if id not in INSTANCE_IDS:
             return jsonify(0)
-        instance.id = id
+        if id not in instances:
+            instances[id] = Instance(id)
+            bot_pipe.send({"action": "start", "id": id})
         return jsonify(1)
+    elif action == "stop":
+        instance = instances.pop(id, None)
+        if instance:
+            bot_pipe.send({"action": "stop", "id": id})
+        return jsonify(1)
+    return jsonify(0)
 
 @app.route("/current_time", methods=["GET"])
 def handle_current_time():
     return {"current_time": time.time()}
 
-@app.route("/end_time", methods=["GET", "POST"])
-def handle_end_time():
+@app.route("/<id>/end_time", methods=["GET", "POST"])
+def handle_end_time(id):
+    instance = instances.get(id)
+    if not instance: abort(404)
     if request.method == "POST":
         data = request.json.get("time", 0)
         instance.end_time = int(data) * 60 + time.time()
     return {"end_time": instance.end_time}
 
-@app.route("/running", methods=["GET"])
-def handle_running():
+@app.route("/<id>/running", methods=["GET"])
+def handle_running(id):
+    instance = instances.get(id)
+    if not instance: abort(404)
     return {"running": instance.end_time == 0 or instance.end_time < time.time()}
 
-@app.route("/status", methods=["GET", "POST"])
-def handle_status():
+@app.route("/<id>/status", methods=["GET", "POST"])
+def handle_status(id):
+    instance = instances.get(id)
+    if not instance: abort(404)
     if request.method == "POST":
         data = request.json
         instance.run_status = data.get("status", "")
     return {"status": instance.run_status}
 
-@app.route("/exclude", methods=["GET", "POST"])
-def handle_exclude():
+@app.route("/<id>/exclude", methods=["GET", "POST"])
+def handle_exclude(id):
+    instance = instances.get(id)
+    if not instance: abort(404)
     if request.method == "POST":
         data = request.json
         action = data.get("action", "")
@@ -100,14 +125,19 @@ def find_open_port():
         s.bind(('', 0))
         return s.getsockname()[1]
 
-def start_server(port_pipe, id=None):
-    global instance
-    sys.stdout = open(os.devnull, 'w')
-    sys.stderr = open(os.devnull, 'w')
-    instance = Instance(id)
+def start_server(pipe, id=None, debug=False):
+    global bot_pipe
+    bot_pipe = pipe
+    
+    if not debug:
+        sys.stdout = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, 'w')
+
+    if id is not None:
+        instances[id] = Instance(id)
+    
     port = find_open_port()
-    port_pipe.send(port)
-    port_pipe.close()
+    bot_pipe.send(port)
     app.run(port=port, debug=DEBUG)
 
 if __name__ == "__main__":

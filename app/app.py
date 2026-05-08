@@ -109,8 +109,8 @@ def handle_instance(id):
         run_status=instance.run_status
     )
 
-@app.route("/<id>/current_time", methods=["GET"])
-def handle_current_time(id):
+@app.route("/current_time", methods=["GET"])
+def handle_current_time():
     return {"current_time": time.time()}
 
 @app.route("/<id>/end_time", methods=["GET", "POST"])

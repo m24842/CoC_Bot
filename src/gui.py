@@ -2,7 +2,7 @@ import configs
 
 COC_BOT_GUI = None
 
-def run_gui(server_port, stop_event, debug=False):
+def run_gui(server_port, pipe, debug=False):
     import webview
     
     url = f"http://localhost:{server_port}"
@@ -15,25 +15,25 @@ def run_gui(server_port, stop_event, debug=False):
     )
     
     def on_closed():
-        stop_event.set()
+        pipe.send(-1)
 
     window.events.closed += on_closed
     webview.start(debug=debug)
 
 class GUI:
-    def __init__(self, id=None, stop_event=None, debug=False):
-        from multiprocessing import Process, Pipe, Event
+    def __init__(self, id=None, debug=False):
+        from multiprocessing import Process, Pipe
         from gui_server.gui_server import start_server
         
         if id is not None: assert id in configs.INSTANCE_IDS, f"Invalid instance ID"
         self.debug = debug
         self.id = id
-        self.stop_event = stop_event if stop_event is not None else Event()
         parent_conn, child_conn = Pipe()
-        self.server_proc = Process(target=start_server, args=(child_conn, id))
+        self.pipe = parent_conn
+        self.server_proc = Process(target=start_server, args=(child_conn, id, debug,))
         self.server_proc.start()
-        self.server_port = parent_conn.recv()
-        self.window_proc = Process(target=run_gui, args=(self.server_port, self.stop_event, self.debug))
+        self.server_port = self.pipe.recv()
+        self.window_proc = Process(target=run_gui, args=(self.server_port, child_conn, self.debug))
     
     def get_id(self):
         import time, requests
@@ -56,15 +56,18 @@ class GUI:
             self.window_proc.terminate()
             self.window_proc.join()
 
-def init_gui(id=None, stop_event=None, debug=False):
+def init_gui(id=None, debug=False):
     global COC_BOT_GUI
-    COC_BOT_GUI = GUI(id, stop_event=stop_event, debug=debug)
+    COC_BOT_GUI = GUI(id, debug=debug)
     COC_BOT_GUI.start()
+    return COC_BOT_GUI.pipe
 
 def get_gui():
     return COC_BOT_GUI
 
 if __name__ == "__main__":
-    init_gui(None, debug=True)
-    get_gui().stop_event.wait()
+    pipe = init_gui(None, debug=True)
+    while True:
+        try: print("GUI Received:", pipe.recv())
+        except EOFError: break
     get_gui().stop()
