@@ -323,36 +323,22 @@ class Upgrader:
             Input_Handler.click(x_upgrade, y_upgrade)
             time.sleep(0.5)
             
-            in_hero_hall = Frame_Handler.locate(render_text("Hero Hall", "SupercellMagic", 28), thresh=0.80)[0] is not None
+            # Hero upgrades go directly to confirm screen now
+            in_hero_hall = not get_home_builders(0, return_amount=False, raise_exception=False)
             if in_hero_hall:
                 if Task_Handler.heroes_excluded(): return None
             else:
                 self._click_home_builders()
-            time.sleep(0.5)
-            
-            # Find upgrade button
-            upgrade_template = self.assets["upgrade"]
-            x, y = Frame_Handler.locate(upgrade_template, thresh=0.90, grayscale=False)
-            if in_hero_hall:
-                # chosen_upgrade should be a hero
-                if chosen_upgrade is None: return None
-                hero_name_template = render_text(chosen_upgrade, "SupercellMagic", 19)
-                xy_hero = Frame_Handler.locate(hero_name_template, thresh=0.60)
-                if xy_hero[0] is None or xy_hero[1] is None:
-                    Input_Handler.swipe_left(y=0.5)
-                    time.sleep(0.5)
-                    xy_hero = Frame_Handler.locate(hero_name_template, thresh=0.60)
-                if xy_hero[0] is None or xy_hero[1] is None: return None
+                time.sleep(0.5)
                 
-                hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
-                xy_hero_upgrade = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True, use_cached=True)
-                xy_hero_upgrade = sorted(xy_hero_upgrade, key=lambda pair: abs(pair[0] - xy_hero[0]))
-                if len(xy_hero_upgrade) > 0: x, y = xy_hero_upgrade[0]
-            if x is None or y is None: return None
-            
-            # Click upgrade
-            Input_Handler.click(x, y)
-            time.sleep(0.5)
+                # Find upgrade button
+                upgrade_template = self.assets["upgrade"]
+                x, y = Frame_Handler.locate(upgrade_template, thresh=0.90, grayscale=False)
+                if x is None or y is None: return None
+                
+                # Click upgrade
+                Input_Handler.click(x, y)
+                time.sleep(0.5)
             
             # Get upgrade name
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
@@ -439,34 +425,22 @@ class Upgrader:
             Input_Handler.click(x_sug, y)
             time.sleep(0.5)
             
-            in_hero_hall = Frame_Handler.locate(render_text("Hero Hall", "SupercellMagic", 28), thresh=0.80)[0] is not None
+            # Hero upgrades go directly to confirm screen now
+            in_hero_hall = not get_home_builders(0, return_amount=False, raise_exception=False)
             if in_hero_hall:
                 if Task_Handler.heroes_excluded(): return None
             else:
                 self._click_home_builders()
-            time.sleep(0.5)
-            
-            # Find upgrade button
-            upgrade_template = self.assets["upgrade"]
-            x, y = Frame_Handler.locate(upgrade_template, thresh=0.90, grayscale=False)
-            if in_hero_hall:
-                hero_name_template = render_text(upgrade_name, "SupercellMagic", 19)
-                xy_hero = Frame_Handler.locate(hero_name_template, thresh=0.60)
-                if xy_hero[0] is None or xy_hero[1] is None:
-                    Input_Handler.swipe_left(y=0.5)
-                    time.sleep(0.5)
-                    xy_hero = Frame_Handler.locate(hero_name_template, thresh=0.60)
-                if xy_hero[0] is None or xy_hero[1] is None: return None
+                time.sleep(0.5)
                 
-                hero_upgrade_template = render_text("Upgrade", "SupercellMagic", 17)
-                xy_hero_upgrade = Frame_Handler.locate(hero_upgrade_template, thresh=0.70, return_all=True)
-                xy_hero_upgrade = sorted(xy_hero_upgrade, key=lambda pair: abs(pair[0] - xy_hero[0]))
-                if len(xy_hero_upgrade) > 0: x, y = xy_hero_upgrade[0]
-            if x is None or y is None: return None
-            
-            # Click upgrade
-            Input_Handler.click(x, y)
-            time.sleep(0.5)
+                # Find upgrade button
+                upgrade_template = self.assets["upgrade"]
+                x, y = Frame_Handler.locate(upgrade_template, thresh=0.90, grayscale=False)
+                if x is None or y is None: return None
+
+                # Click upgrade
+                Input_Handler.click(x, y)
+                time.sleep(0.5)
             
             # Get upgrade name
             x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
