@@ -295,30 +295,25 @@ class Upgrader:
             town_hall_template = [render_text("Town Hall", "CCBackBeat", 27)]
             hero_templates = [render_text(hero, "SupercellMagic", 19) for hero in self.hero_names]
             locs = Frame_Handler.batch_locate(town_hall_template + hero_templates, thresh=0.80, ref="lc", null_val=-1)
-            town_hall_loc = locs[0:1]
+            town_hall_loc = locs[0]
             hero_locs = locs[1:]
-            invalid_locs = town_hall_loc
+            invalid_locs = [town_hall_loc]
             if Task_Handler.heroes_excluded():
                 invalid_locs += hero_locs
             invalid_y_locs = np.array(invalid_locs)[:, 1]
-            hero_y_locs = np.array(hero_locs)[:, 1]
             
             # Choose an upgrade
-            chosen_upgrade = None
             x_upgrade, y_upgrade = None, None
             for y_loc in np.random.permutation(potential_y_locs):
                 y = menu_top + y_loc / WINDOW_DIMS[1]
                 if min(abs(invalid_y_locs - y)) > 0.02:
                     x_upgrade = menu_center
                     y_upgrade = y
-                    hero_dists = abs(hero_y_locs - y)
-                    if min(hero_dists) < 0.02:
-                        chosen_upgrade = self.hero_names[hero_dists.argmin()]
                     break
             if x_upgrade is None or y_upgrade is None:
                 # If no valid upgrades found but town hall is found, then upgrade it
-                if invalid_y_locs[0] != -1:
-                    x_upgrade, y_upgrade = menu_center, invalid_y_locs[0]
+                if invalid_y_locs[0] != -1 and min(abs(town_hall_loc[1] - potential_y_locs)) < 0.02:
+                    x_upgrade, y_upgrade = menu_center, town_hall_loc[1]
                 else: return None
             Input_Handler.click(x_upgrade, y_upgrade)
             time.sleep(0.5)

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CoC Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='coc_bot_logo.png') }}" alt="CoC Bot">
+        <h1 class="themed_text">CoC Bot</h1>
+    </header>
+
+    <div class="container">
+        <form method="POST" class="custom-input-form">
+            <input type="text" name="id" placeholder="ID" required title="Instance ID" autofocus>
+            <button type="submit" name="id"><i class="fas fa-arrow-right"></i></button>
+        </form>
+        <form class="stacked-buttons"></form>
+    </div>
+
+    <script>
+        const ids = new Set({{ ids|default([])|tojson }});
+
+        async function registerID(new_id) {
+            try {
+                const url = `/instance`;
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        action: "start",
+                        id: new_id
+                    })
+                });
+                const res = await response.json();
+                if (res === 0) {
+                    alert("Invalid ID");
+                    return false;
+                } else {
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error setting ID:', error);
+            }
+        }
+
+        function updateInstances() {
+            let i = 0;
+            const ids_list = Array.from(ids);
+            while (i < ids_list.length) {
+                const id = ids_list[i];
+                if (!document.getElementById(`id_${id}`)) {
+                    const idButton = document.createElement("button");
+                    idButton.type = "submit";
+                    idButton.id = `id_${id}`;
+                    idButton.value = id;
+                    idButton.innerHTML = `${id}`;
+                    idButton.onclick = () => {
+                        window.location.href = `/${id}`;
+                    };
+                    document.querySelector(".stacked-buttons").appendChild(idButton);
+                }
+
+                i++;
+            }
+        }
+
+        updateInstances();
+
+        document.querySelectorAll("form").forEach(form => {
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                
+                const submitter = e.submitter;
+                const formData = new FormData(form);
+
+                if (submitter.name === "id") {
+                    const newID = formData.get("id").trim();
+                    const valid = await registerID(newID);
+                    if (!valid) return;
+                    // ids.add(newID);
+                    // updateInstances();
+                    window.location.href = `/${newID}`;
+                }
+                
+                form.reset();
+            });
+        });
+    </script>
+</body>
+</html>

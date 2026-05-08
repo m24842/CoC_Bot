@@ -62,9 +62,16 @@ def disable_sleep():
         sleep_helper_permanent = APP_DATA_DIR / "sleep_helper.sh"
         shutil.copyfile(sleep_helper_temp, sleep_helper_permanent)
         os.chmod(sleep_helper_permanent, 0o755)
-        subprocess.Popen(["osascript", "-e", f'do shell script "{sleep_helper_permanent} {os.getpid()}" with administrator privileges'])
+        cmd = f'do shell script "{sleep_helper_permanent} {os.getpid()}" with administrator privileges'
+        subprocess.Popen(
+            ["osascript", "-e", cmd],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
+    Exit_Handler.register(enable_sleep)
 
 def enable_sleep():
     import sys, ctypes
@@ -1054,7 +1061,7 @@ class Scheduler:
     from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
     scheduler.start()
-    Exit_Handler.register(scheduler.shutdown)
+    # Exit_Handler.register(scheduler.shutdown)
     
     add_job = scheduler.add_job
 
