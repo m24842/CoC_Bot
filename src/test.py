@@ -6,7 +6,7 @@ from coc_bot import CoC_Bot
 if __name__ == "__main__":
     args = parse_args(debug=True, id="main")
     init_instance(args.id)
-    bot = CoC_Bot(prevent_sleep=False)
+    bot = CoC_Bot()
     # Frame_Handler.screenshot()
     # start_coc()
     # bot.run()
