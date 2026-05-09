@@ -70,7 +70,7 @@
     > ❗️ __Important__: If hosting from a personal device, configure port forwarding as necessary
     
     * Each bot instance can be accessed at `WEB_APP_ADDRESS/<instance_name>` (the default instance name is `main`)
-    * View a demo of the web app [here](https://youtu.be/_R6PbJ4_SzQ)
+    * View a demo of the web app [here](https://youtu.be/6w2SRJFtSnM)
 
 4. Setup iPhone shortcut:
     > __Note__: An [older version](<shortcut/CoC Bot Auto Pause Old.shortcut>) of the shortcut is provided that does not require Scriptable, but is incapable of handling request errors
