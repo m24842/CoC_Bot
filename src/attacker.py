@@ -152,7 +152,7 @@ class Attacker:
             card_texture = cv2.Canny(card_section_gray, 50, 150) / 255
             x_asset = render_text("x", "SupercellMagic", 25)
             x_h, x_w = x_asset.shape[:2]
-            x_sign_loc = Frame_Handler.locate(x_asset, card_section_gray, grayscale=True, thresh=0.8, ref="lc")
+            x_sign_loc = Frame_Handler.locate(x_asset, card_section_gray, grayscale=True, thresh=0.75, ref="lc")
             if x_sign_loc[0] is not None and x_sign_loc[1] is not None: # Only troops, clan troops, or spells have multiplicity
                 count_section = card_section_gray[:int(h*x_sign_loc[1]+0.5*x_h)+1, int(w*x_sign_loc[0]+x_w)-1:]
                 number_locs = Frame_Handler.batch_locate([render_text(str(n), "SupercellMagic", 25) for n in range(0, 12)], frame=count_section, grayscale=True, thresh=0.8, ref="cc")
@@ -191,7 +191,7 @@ class Attacker:
                     card_type = "hero"
                     card_counts.append(1)
             card_types.append(card_type)
-        
+
         card_centers = np.array(card_centers)
         
         if not return_boundaries and not return_types: return card_centers
