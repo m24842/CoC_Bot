@@ -20,23 +20,21 @@ class CoC_Bot:
         from gui import get_gui
         
         if WEB_APP_URL != "":
-            for _ in range(5):
-                try:
-                    requests.post(
-                        f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status",
-                        json={"status": status},
-                        timeout=(10, 20)
-                    )
-                    break
-                except (KeyboardInterrupt, SystemExit): raise
-                except Exception as e:
-                    if configs.DEBUG: print("update_status", e)
+            try:
+                requests.post(
+                    f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status",
+                    json={"status": status},
+                    timeout=(1, 2)
+                )
+            except (KeyboardInterrupt, SystemExit): raise
+            except Exception as e:
+                if configs.DEBUG: print("update_status", e)
         if get_gui() is not None:
             try:
                 requests.post(
                     f"http://localhost:{get_gui().server_port}/status",
                     json={"status": status},
-                    timeout=(10, 20)
+                    timeout=(1, 2)
                 )
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:

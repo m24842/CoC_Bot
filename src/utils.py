@@ -48,11 +48,15 @@ def init_instance(id):
         if "pythonanywhere.com" in WEB_APP_URL:
             Scheduler.add_job(extend_pythonanywhere_hosting, args=(configs.PA_USERNAME, configs.PA_PASSWORD), trigger="interval", hours=24)
         
-        requests.post(
-            f"{WEB_APP_URL}/instances",
-            json={"id": INSTANCE_ID},
-            timeout=(10, 20)
-        )
+        try:
+            requests.post(
+                f"{WEB_APP_URL}/instances",
+                json={"id": INSTANCE_ID},
+                timeout=(10, 20)
+            )
+        except (KeyboardInterrupt, SystemExit): raise
+        except Exception as e:
+            if configs.DEBUG: print("init_instance", e)
 
 def disable_sleep():
     import sys, subprocess, ctypes, os, shutil
@@ -114,7 +118,7 @@ def running():
     try:
         response = requests.get(
             f"{WEB_APP_URL}/{INSTANCE_ID}/running",
-            timeout=(10, 20)
+            timeout=(1, 2)
         )
         if response.status_code == 200:
             return response.json().get("running", False)
@@ -292,7 +296,7 @@ def send_notification(text):
             requests.post(
                 f"{WEB_APP_URL}/{INSTANCE_ID}/notify",
                 json=text,
-                timeout=(10, 20)
+                timeout=(1, 2)
             )
         except (KeyboardInterrupt, SystemExit): raise
         except: pass
@@ -303,7 +307,7 @@ def send_notification(text):
             requests.post(
                 f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
                 data={"chat_id": get_telegram_chat_id(),"text": telegram_text},
-                timeout=(10, 20)
+                timeout=(1, 2)
             )
         except (KeyboardInterrupt, SystemExit): raise
         except: pass
