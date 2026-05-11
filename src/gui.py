@@ -5,7 +5,7 @@ COC_BOT_GUI = None
 def run_gui(server_port, pipe, debug=False):
     import webview
     
-    url = f"http://localhost:{server_port}"
+    url = f"http://127.0.0.1:{server_port}"
     window = webview.create_window(
         "CoC Bot",
         url=url,
@@ -34,16 +34,6 @@ class GUI:
         self.server_proc.start()
         self.server_port = self.pipe.recv()
         self.window_proc = Process(target=run_gui, args=(self.server_port, child_conn, self.debug))
-    
-    def get_id(self):
-        import time, requests
-        
-        while self.id in [None, ""]:
-            response = requests.get(f"http://localhost:{self.server_port}/id")
-            if response.ok:
-                self.id = response.json().get("id")
-            time.sleep(0.1)
-        return self.id
     
     def start(self):
         self.window_proc.start()
