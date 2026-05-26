@@ -444,7 +444,6 @@ def start_coc(timeout=60):
             update_coc(timeout=5, from_in_game=True)
             
             i += 1
-            time.sleep(1)
         if time.time() - start > timeout:
             stop_coc()
             raise Exception("Failed to start CoC")
@@ -463,20 +462,26 @@ def stop_coc():
 
 def update_coc(timeout=10, from_in_game=False):
     import uiautomator2 as u2
-    conn = u2.connect(ADB_ADDRESS)
+    conn = u2.connect(ADB_DEVICE)
     if not from_in_game:
         ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
     else:
-        try:
-            conn(text="UPDATE").click(timeout=0)
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
+        if conn.exists(text="UPDATE"):
+            try:
+                conn(text="UPDATE").click(timeout=0)
+            except (KeyboardInterrupt, SystemExit): raise
+            except:
+                if not from_in_game: to_system_home()
+                return
+        else:
             if not from_in_game: to_system_home()
             return
-    try:
-        conn(text="Update").click(timeout=timeout)
-    except (KeyboardInterrupt, SystemExit): raise
-    except: pass
+    
+    if conn.exists(text="Update"):
+        try:
+            conn(text="Update").click(timeout=timeout)
+        except (KeyboardInterrupt, SystemExit): raise
+        except: pass
     if not from_in_game: to_system_home()
 
 def to_builder_base():

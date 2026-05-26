@@ -8,7 +8,7 @@ if __name__ == "__main__":
     init_instance(args.id)
     bot = CoC_Bot()
     # Frame_Handler.screenshot()
-    # start_coc()
+    start_coc()
     # bot.run()
     # to_home_base()
     # bot.upgrader.run_home_base()

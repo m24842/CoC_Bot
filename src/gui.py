@@ -2,6 +2,12 @@ import configs
 
 COC_BOT_GUI = None
 
+def find_open_port():
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
+
 def run_gui(server_port, pipe, debug=False):
     import webview
     
@@ -30,9 +36,9 @@ class GUI:
         self.id = id
         parent_conn, child_conn = Pipe()
         self.pipe = parent_conn
-        self.server_proc = Process(target=start_server, args=(child_conn, id, debug,))
+        self.server_port = find_open_port()
+        self.server_proc = Process(target=start_server, args=(child_conn, self.server_port, id, self.debug,))
         self.server_proc.start()
-        self.server_port = self.pipe.recv()
         self.window_proc = Process(target=run_gui, args=(self.server_port, child_conn, self.debug))
     
     def start(self):
