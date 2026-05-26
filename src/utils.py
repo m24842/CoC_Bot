@@ -468,16 +468,16 @@ def update_coc(timeout=10, from_in_game=False):
         ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
     else:
         try:
-            conn(text="UPDATE").click()
+            conn(text="UPDATE").click(timeout=0)
         except (KeyboardInterrupt, SystemExit): raise
         except:
-            to_system_home()
+            if not from_in_game: to_system_home()
             return
     try:
         conn(text="Update").click(timeout=timeout)
     except (KeyboardInterrupt, SystemExit): raise
     except: pass
-    to_system_home()
+    if not from_in_game: to_system_home()
 
 def to_builder_base():
     import cv2, time, numpy as np
