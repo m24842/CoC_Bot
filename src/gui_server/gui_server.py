@@ -120,12 +120,7 @@ def handle_exclude(id):
             instance.exclusions.discard(item)
     return {"exclusions": sorted(list(instance.exclusions))}
 
-def find_open_port():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
-
-def start_server(pipe, id=None, debug=False):
+def start_server(pipe, port, id=None, debug=False):
     global bot_pipe
     bot_pipe = pipe
     
@@ -136,11 +131,9 @@ def start_server(pipe, id=None, debug=False):
     if id is not None:
         instances[id] = Instance(id)
     
-    port = find_open_port()
-    bot_pipe.send(port)
-    app.run(port=port, debug=DEBUG)
+    app.run(port=port, debug=debug)
 
 if __name__ == "__main__":
     from multiprocessing import Pipe
     parent_conn, child_conn = Pipe()
-    start_server(child_conn)
+    start_server(child_conn, port=1234)

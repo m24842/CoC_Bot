@@ -12,4 +12,5 @@ pyinstaller \
   --add-data "assets:assets" \
   --add-data "src/gui_server:gui_server" \
   --add-data "src/sleep_helper.sh:." \
+   --add-data="src/uiautomator2:uiautomator2" \
   "src/main.py"
