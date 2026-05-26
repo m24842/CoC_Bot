@@ -441,11 +441,12 @@ def start_coc(timeout=60):
             if cont_x is not None and cont_y is not None:
                 Input_Handler.click(cont_x, cont_y)
             
+            update_coc(timeout=5, from_in_game=True)
+            
             i += 1
             time.sleep(1)
         if time.time() - start > timeout:
             stop_coc()
-            update_coc()
             raise Exception("Failed to start CoC")
         print("CoC started", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
         return True
@@ -460,12 +461,18 @@ def stop_coc():
     to_system_home()
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
-def update_coc(timeout=10):
+def update_coc(timeout=10, from_in_game=False):
     import uiautomator2 as u2
-    ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
+    conn = u2.connect(ADB_ADDRESS)
+    if not from_in_game:
+        ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
+    else:
+        try:
+            conn(text="UPDATE").click()
+        except (KeyboardInterrupt, SystemExit): raise
+        except: pass
     try:
-        u2.connect(ADB_ADDRESS)(text="Update").click(timeout=timeout)
-        for _ in range(3): u2.connect(ADB_ADDRESS)(text="Update").click(timeout=0)
+        conn(text="Update").click(timeout=timeout)
     except (KeyboardInterrupt, SystemExit): raise
     except: pass
     to_system_home()
