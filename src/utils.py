@@ -464,8 +464,8 @@ def update_coc(timeout=10):
     import uiautomator2 as u2
     ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
     try:
-        u2.connect(ADB_ADDRESS)(text="Play").click(timeout=timeout)
-        for _ in range(3): u2.connect(ADB_ADDRESS)(text="Play").click(timeout=0)
+        u2.connect(ADB_ADDRESS)(text="Update").click(timeout=timeout)
+        for _ in range(3): u2.connect(ADB_ADDRESS)(text="Update").click(timeout=0)
     except (KeyboardInterrupt, SystemExit): raise
     except: pass
     to_system_home()
