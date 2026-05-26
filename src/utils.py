@@ -470,7 +470,9 @@ def update_coc(timeout=10, from_in_game=False):
         try:
             conn(text="UPDATE").click()
         except (KeyboardInterrupt, SystemExit): raise
-        except: pass
+        except:
+            to_system_home()
+            return
     try:
         conn(text="Update").click(timeout=timeout)
     except (KeyboardInterrupt, SystemExit): raise
