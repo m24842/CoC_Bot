@@ -5,11 +5,9 @@ build
 dist
 debug
 *.pyc
-*.log
-*.ctl
 *.spec
 src/cache.json
 src/configs.py
 scripts/start.sh
+scripts/stop.sh
 app/data
-app/coc_bot_web_app.service
