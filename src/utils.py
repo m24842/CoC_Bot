@@ -613,7 +613,7 @@ class Task_Handler:
                 cls.cached_exclusions = res.json().get("exclusions", [])
         elif configs.LOCAL_GUI:
             res = requests.get(
-                f"http://localhost:{get_gui().server_port}/exclude",
+                f"http://localhost:{get_gui().server_port}/{INSTANCE_ID}/exclude",
                 timeout=(10, 20)
             )
             if res.status_code == 200:
