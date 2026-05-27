@@ -267,6 +267,16 @@ class Upgrader:
                 if res[0] is not None and res[1] is not None: break
         return res
     
+    def _scroll_to_menu_bottom(self, menu_left, menu_right, menu_top, menu_bottom, max_scrolls=10):
+        import numpy as np
+        menu_center = (menu_left + menu_right) / 2
+        for _ in range(max_scrolls):
+            menu_prev = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, high_contrast=True)
+            Input_Handler.swipe_up(x=menu_center, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            menu_curr = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, high_contrast=True)
+            diff = np.abs(menu_curr - menu_prev).mean() / 255
+            if diff < 0.01: break
+    
     @require_exit()
     def home_random_upgrade(self):
         import time, re, numpy as np
@@ -284,9 +294,9 @@ class Upgrader:
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=menu_center, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             
@@ -376,7 +386,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -518,7 +528,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             
@@ -574,7 +584,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -701,7 +711,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             
@@ -764,7 +774,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
@@ -852,7 +862,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             
@@ -903,7 +913,7 @@ class Upgrader:
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
             else:
-                for _ in range(5): Input_Handler.swipe_up(x=x_sug, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+                self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]

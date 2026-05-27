@@ -18,7 +18,7 @@ else:
 
 INSTANCE_ID = None
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
-ADB_WINDOW_DIMS = WINDOW_DIMS
+CACHE = {}
 
 def parse_args(debug=None, id=None, gui=None):
     import argparse
@@ -89,7 +89,7 @@ def to_system_home():
     ADB_DEVICE.shell("input keyevent KEYCODE_HOME")
 
 def connect_adb():
-    global ADB_DEVICE, MINITOUCH_DEVICE, ADB_WINDOW_DIMS
+    global ADB_DEVICE, MINITOUCH_DEVICE
     import subprocess, adbutils, os
     from pyminitouch import MNTDevice
     
@@ -109,7 +109,6 @@ def connect_adb():
         subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         raise Exception("Failed to get ADB device.")
     ADB_DEVICE, MINITOUCH_DEVICE = device, mt_device
-    ADB_WINDOW_DIMS = ADB_DEVICE.window_size(landscape=False)
 
 def running():
     import requests
@@ -348,8 +347,12 @@ def extend_pythonanywhere_hosting(username, password):
     )
     assert res.url == webapps_url
 
-def to_home_base():
+def to_home_base(ref_cache=False):
     import cv2, time, numpy as np
+    
+    if ref_cache and CACHE.get("location") == "home_base": return
+    
+    CACHE["location"] = "home_base"
     
     try:
         get_home_builders(1)
@@ -427,12 +430,14 @@ def start_coc(timeout=60):
             
             try:
                 get_home_builders(1, return_amount=False, use_cached_frame=True)
+                CACHE["location"] = "home_base"
                 break
             except (KeyboardInterrupt, SystemExit): raise
             except: pass
             
             try:
                 get_builder_builders(1, return_amount=False, use_cached_frame=True)
+                CACHE["location"] = "builder_base"
                 break
             except (KeyboardInterrupt, SystemExit): raise
             except: pass
@@ -484,8 +489,12 @@ def update_coc(timeout=10, from_in_game=False):
         except: pass
     if not from_in_game: to_system_home()
 
-def to_builder_base():
+def to_builder_base(ref_cache=False):
     import cv2, time, numpy as np
+    
+    if ref_cache and CACHE.get("location") == "builder_base": return
+    
+    CACHE["location"] = "builder_base"
     
     try:
         get_builder_builders(1)
@@ -981,7 +990,9 @@ class Frame_Handler:
         if use_cached and cls.cached_frame is not None:
             frame = cls.cached_frame.copy()
         else:
-            frame = np.array(ADB_DEVICE.screenshot())
+            try: frame = ADB_DEVICE.framebuffer() # faster than screenshot but potentially unstable
+            except: frame = ADB_DEVICE.screenshot()
+            frame = np.array(frame)[..., :3]
             frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
             cls.cached_frame = frame.copy()
         if configs.DEBUG: cls.save_frame(frame, "debug/frame.png")
