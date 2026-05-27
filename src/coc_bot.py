@@ -137,6 +137,7 @@ class CoC_Bot:
             
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
-                print(e)
+                import traceback
+                traceback.print_exc()
                 stop_coc()
                 self.update_status("error")
