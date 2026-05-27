@@ -618,7 +618,7 @@ class Task_Handler:
             )
             if res.status_code == 200:
                 cls.cached_exclusions = res.json().get("exclusions", [])
-        return cls.cached_exclusions
+        raise Exception("No external exclusion sources available")
 
     @classmethod
     def home_base_priority_excluded(cls, **kwargs):
