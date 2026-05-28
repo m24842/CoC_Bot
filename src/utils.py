@@ -1034,6 +1034,7 @@ class Frame_Handler:
             frame = cls.cached_frame.copy()
         else:
             try: frame = ADB_DEVICE.framebuffer() # faster than screenshot but potentially unstable
+            except (KeyboardInterrupt, SystemExit): raise
             except: frame = ADB_DEVICE.screenshot()
             frame = np.array(frame)[..., :3]
             frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
