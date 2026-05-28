@@ -20,16 +20,18 @@ INSTANCE_ID = None
 ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
 CACHE = {}
 
-def parse_args(debug=None, id=None, gui=None):
+def parse_args(debug=None, id=None, gui=None, gui_port=None):
     import argparse
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", default=configs.DEBUG, help="Enable debug mode")
     parser.add_argument("--id", type=str, default=None, help="Instance ID")
     parser.add_argument("--gui", action="store_true", default=configs.LOCAL_GUI, help="Run with GUI")
+    parser.add_argument("--gui-port", type=int, default=None, help="GUI port")
     args = parser.parse_args()
     configs.DEBUG = args.debug if debug is None else debug
     configs.LOCAL_GUI = args.gui if gui is None else gui
+    CACHE["gui_port"] = args.gui_port if gui_port is None else gui_port
     if id is not None:
         assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
         args.id = id
@@ -601,7 +603,6 @@ class Task_Handler:
     @classmethod
     def get_exclusions(cls, use_cached=False):
         import requests
-        from gui import get_gui
         
         if use_cached and cls.cache_valid:
             return cls.cached_exclusions
@@ -613,14 +614,16 @@ class Task_Handler:
             if res.status_code == 200:
                 cls.cache_valid = True
                 cls.cached_exclusions = res.json().get("exclusions", [])
-        elif configs.LOCAL_GUI and get_gui() is not None:
+                return cls.cached_exclusions
+        elif configs.LOCAL_GUI and CACHE.get("gui_port") is not None:
             res = requests.get(
-                f"http://localhost:{get_gui().server_port}/{INSTANCE_ID}/exclude",
+                f"http://localhost:{CACHE['gui_port']}/{INSTANCE_ID}/exclude",
                 timeout=(10, 20)
             )
             if res.status_code == 200:
                 cls.cache_valid = True
                 cls.cached_exclusions = res.json().get("exclusions", [])
+                return cls.cached_exclusions
         return None
 
     @classmethod
