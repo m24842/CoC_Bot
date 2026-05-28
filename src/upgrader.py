@@ -378,10 +378,6 @@ class Upgrader:
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             
-            # Find other upgrades label
-            other_template = self._get_other_upgrade_template()[0]
-            x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70, grayscale=False)
-            
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
@@ -574,12 +570,6 @@ class Upgrader:
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
             
-            # Find other upgrades label
-            other_template = self._get_other_upgrade_template()[0]
-            x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70, grayscale=False)
-            if y_other is not None: menu_ref_pos = y_other
-            else: menu_ref_pos = y_sug
-            
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
@@ -763,13 +753,7 @@ class Upgrader:
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
-            
-            # Find other upgrades label
-            other_template = self._get_other_upgrade_template()[0]
-            x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70, grayscale=False)
-            if y_other is not None: menu_ref_pos = y_other
-            else: menu_ref_pos = y_sug
-            
+
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
@@ -902,13 +886,7 @@ class Upgrader:
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
-            
-            # Find other upgrades label
-            other_template = self._get_other_upgrade_template()[0]
-            x_other, y_other = Frame_Handler.locate(other_template, thresh=0.70, grayscale=False)
-            if y_other is not None: menu_ref_pos = y_other
-            else: menu_ref_pos = y_sug
-            
+
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
                 Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)

@@ -17,7 +17,6 @@ class CoC_Bot:
     
     def update_status(self, status):
         import requests
-        from gui import get_gui
         
         if WEB_APP_URL != "":
             try:
@@ -29,10 +28,10 @@ class CoC_Bot:
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
                 if configs.DEBUG: print("update_status", e)
-        if get_gui() is not None:
+        if utils.CACHE.get("gui_port") is not None:
             try:
                 requests.post(
-                    f"http://localhost:{get_gui().server_port}/status",
+                    f"http://localhost:{utils.CACHE['gui_port']}/status",
                     json={"status": status},
                     timeout=(1, 2)
                 )
