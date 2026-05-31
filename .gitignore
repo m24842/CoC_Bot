@@ -9,5 +9,4 @@ debug
 src/cache.json
 src/configs.py
 scripts/start.sh
-scripts/stop.sh
 app/data
