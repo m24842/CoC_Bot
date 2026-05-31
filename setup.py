@@ -1,6 +1,6 @@
-import os
 import sys
 import shutil
+import subprocess
 from pathlib import Path
 
 py311 = shutil.which("python3.11")
@@ -17,12 +17,12 @@ web_app_packages = dir_path / "app" / "requirements.txt"
 bot_setup = input("Install bot dependencies? (y/n): ").lower() == 'y'
 web_app_setup = input("Install web app dependencies? (y/n): ").lower() == 'y'
 
-if not Path.exists(dir_path / ".venv"): os.system(f"{py311} -m venv {venv_path}")
+if not Path.exists(dir_path / ".venv"): subprocess.run([py311, "-m", "venv", venv_path])
 
 if bot_setup:
-    os.system(f"{venv_python} -m pip install -r {bot_packages}")
+    subprocess.run([venv_python, "-m", "pip", "install", "-r", bot_packages])
 if web_app_setup:
-    os.system(f"{venv_python} -m pip install -r {web_app_packages}")
+    subprocess.run([venv_python, "-m", "pip", "install", "-r", web_app_packages])
 
 if not Path.exists(dir_path / "src" / "configs.py"):
     shutil.copy(dir_path / "src" / "configs.template.py", dir_path / "src" / "configs.py")
