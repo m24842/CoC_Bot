@@ -5,39 +5,36 @@ from configs import *
 class Attacker:
     def __init__(self):
         self.assets = Asset_Manager.attacker_assets
+        self.misc_assets = Asset_Manager.misc_assets
     
     # ============================================================
     # 📱 Screen Interaction
     # ============================================================
     
-    def click_okay(self):
-        x, y = Frame_Handler.locate(self.assets["okay"], thresh=0.9)
-        if x is not None and y is not None:
-            Input_Handler.click(x, y)
-            return True
-        return False
+    def _click_okay(self, timeout=5):
+        return click_with_timeout(
+            lambda: Frame_Handler.locate(self.assets["okay"], thresh=0.9),
+            timeout=timeout,
+        )
     
-    def click_surrender(self):
-        x, y = Frame_Handler.locate(self.assets["surrender"], thresh=0.9)
-        if x is not None and y is not None:
-            Input_Handler.click(x, y)
-            return True
-        return False
+    def _click_surrender(self, timeout=5):
+        return click_with_timeout(
+            lambda: Frame_Handler.locate(self.assets["surrender"], thresh=0.9),
+            timeout=timeout
+        )
     
-    def click_end_battle(self):
-        x, y = Frame_Handler.locate(self.assets["end_battle"], thresh=0.9)
-        if x is not None and y is not None:
-            Input_Handler.click(x, y)
-            return True
-        return False
+    def _click_end_battle(self, timeout=5):
+        return click_with_timeout(
+            lambda: Frame_Handler.locate(self.assets["end_battle"], thresh=0.9),
+            timeout=timeout
+        )
     
-    def click_return_home(self):
-        x, y = Frame_Handler.locate(self.assets["return_home"], thresh=0.9)
-        if x is not None and y is not None:
-            Input_Handler.click(x, y)
-            return True
-        return False
-    
+    def _click_return_home(self, timeout=5):
+        return click_with_timeout(
+            lambda: Frame_Handler.locate(self.assets["return_home"], thresh=0.9),
+            timeout=timeout
+        )
+
     def start_normal_attack(self, timeout=60):
         import time
         
@@ -45,30 +42,30 @@ class Attacker:
         Input_Handler.click(0.07, 0.9)
         
         # Find a match
-        for _ in range(20):
-            time.sleep(0.5)
+        def locate_find_a_match():
             xys = Frame_Handler.locate(self.assets["find_a_match"], thresh=0.9, return_all=True)
-            if len(xys) > 0: break
-        if len(xys) == 0: return False
-        xys = sorted(xys, key=lambda xy: xy[0])
-        x, y = xys[0]
-        if x > 0.2: return False
-        Input_Handler.click(x, y)
+            if len(xys) == 0: return None, None
+            xys = sorted(xys, key=lambda xy: xy[0])
+            x, y = xys[0]
+            if x > 0.2: return None, None
+            return x, y
+        if not click_with_timeout(
+            locate_find_a_match,
+            timeout=5
+        ): return False
         
         # Confirm attack
-        for _ in range(20):
-            time.sleep(0.5)
-            x, y = Frame_Handler.locate(self.assets["confirm_attack"], thresh=0.9)
-            if x is not None and y is not None: break
-        if x is None or y is None: return False
-        Input_Handler.click(x, y)
+        if not click_with_timeout(
+            lambda: Frame_Handler.locate(self.assets["confirm_attack"], thresh=0.9),
+            timeout=5
+        ): return False
         
         # Wait until "end battle" button is found
         start_time = time.time()
         while time.time() - start_time < timeout:
-            time.sleep(0.5)
             x, y = Frame_Handler.locate(self.assets["end_battle"], thresh=0.9)
             if x is not None and y is not None: return True
+            time.sleep(0.1)
         return False
     
     def start_builder_attack(self, timeout=60):
@@ -78,20 +75,18 @@ class Attacker:
         Input_Handler.click(0.07, 0.9)
         
         # Find a match
-        for _ in range(20):
-            time.sleep(0.5)
-            x, y = Frame_Handler.locate(self.assets["find_now"], thresh=0.9)
-            if x is not None and y is not None: break
-        if x is None or y is None: return False
-        Input_Handler.click(x, y)
+        if not click_with_timeout(
+            lambda: Frame_Handler.locate(self.assets["find_now"], thresh=0.9),
+            timeout=5
+        ): return False
         
-        # Wait until "battle starts in" test is found
+        # Wait until "battle starts in" text is found
         start_time = time.time()
         while time.time() - start_time < timeout:
-            time.sleep(0.5)
             section = Frame_Handler.get_frame_section(0, 0, 1, 0.1, grayscale=True, high_contrast=True, thresh=150)
             x, y = Frame_Handler.locate(self.assets["battle_starts_in"], section, thresh=0.9)
             if x is not None and y is not None: return True
+            time.sleep(0.1)
         return False
     
     def detect_troop_positions(self, frame, clip_left=0.0, clip_right=1.0, type_gaps_seen=0, return_boundaries=False, return_types=False, return_counts=False):

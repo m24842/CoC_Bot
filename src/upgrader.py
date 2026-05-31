@@ -15,6 +15,7 @@ class Upgrader:
     
     def __init__(self):
         self.assets = Asset_Manager.upgrader_assets
+        self.misc_assets = Asset_Manager.misc_assets
 
     # ============================================================
     # 📱 Screen Interaction
@@ -31,6 +32,24 @@ class Upgrader:
     
     def _click_builder_lab(self):
         Input_Handler.click(0.45, 0.05)
+
+    def _click_upgrade(self, timeout=5):
+        return click_with_timeout(
+            lambda: Frame_Handler.locate(self.assets["upgrade"], thresh=0.90, grayscale=False),
+            timeout=timeout
+        )
+
+    def _click_home_confirm(self, timeout=5):
+        return click_with_timeout(
+            lambda: Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True),
+            timeout=timeout
+        )
+
+    def _click_builder_confirm(self, timeout=5):
+        return click_with_timeout(
+            lambda: self._find_builder_confirm(),
+            timeout=timeout
+        )
 
     # ============================================================
     # 💰 Resource & Builder Tracking
@@ -64,7 +83,7 @@ class Upgrader:
                 if configs.DEBUG: Frame_Handler.save_frame(section, "debug/home_lab.png")
                 
                 # Find the backslash
-                slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
+                slash = cv2.cvtColor(self.misc_assets["slash"], cv2.COLOR_RGB2GRAY)
                 res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
                 _, max_val, _, _ = cv2.minMaxLoc(res)
                 if max_val < 0.9: continue
@@ -89,7 +108,7 @@ class Upgrader:
                 if configs.DEBUG: Frame_Handler.save_frame(section, "debug/builder_lab.png")
                 
                 # Find the backslash
-                slash = cv2.cvtColor(self.assets["slash"], cv2.COLOR_RGB2GRAY)
+                slash = cv2.cvtColor(self.misc_assets["slash"], cv2.COLOR_RGB2GRAY)
                 res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
                 _, max_val, _, _ = cv2.minMaxLoc(res)
                 if max_val < 0.9: continue
@@ -168,6 +187,14 @@ class Upgrader:
         h, w = template.shape[:2]
         return template, w / WINDOW_DIMS[0], h / WINDOW_DIMS[1]
 
+    def _get_upgrade_name(self):
+        import re
+        x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
+        section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
+        if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
+        upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
+        return upgrade_name
+
     def _get_upgrade_menu(self, frame, sug_loc, sug_width, return_bounds=False):
         x_sug, y_sug = sug_loc
         menu_top = 0.15
@@ -227,7 +254,7 @@ class Upgrader:
         diff = gaussian_filter1d(diff, sigma=10)
         min_loc = np.argmin(diff)
         x = min_loc / section.shape[1]
-        if diff[min_loc] > thresh: return None
+        if diff[min_loc] > thresh: return None, None
         x1 = x
         i = min_loc
         while i > 0 and diff[i] < thresh:
@@ -279,7 +306,7 @@ class Upgrader:
     
     @require_exit()
     def home_random_upgrade(self):
-        import time, re, numpy as np
+        import time, numpy as np
 
         try:
             # Open upgrade list menu
@@ -334,27 +361,15 @@ class Upgrader:
                 if Task_Handler.heroes_excluded(): return None
             else:
                 self._click_home_builders()
-                time.sleep(0.5)
                 
-                # Find upgrade button
-                upgrade_template = self.assets["upgrade"]
-                x, y = Frame_Handler.locate(upgrade_template, thresh=0.90, grayscale=False)
-                if x is None or y is None: return None
-                
-                # Click upgrade
-                Input_Handler.click(x, y)
+                if not self._click_upgrade(): return None
                 time.sleep(0.5)
             
             # Get upgrade name
-            x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
-            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
+            upgrade_name = self._get_upgrade_name()
             
             # Click confirm button
-            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True)
-            if x is None or y is None: return None
-            Input_Handler.click(x, y+0.05)
+            if not self._click_home_confirm(): return None
             time.sleep(0.5)
             return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
@@ -364,7 +379,7 @@ class Upgrader:
 
     @require_exit()
     def home_specified_upgrade(self, upgrade_text):
-        import time, re, numpy as np
+        import time, numpy as np
         
         try:
             # Open upgrade list menu
@@ -432,27 +447,15 @@ class Upgrader:
                 if Task_Handler.heroes_excluded(): return None
             else:
                 self._click_home_builders()
-                time.sleep(0.5)
                 
-                # Find upgrade button
-                upgrade_template = self.assets["upgrade"]
-                x, y = Frame_Handler.locate(upgrade_template, thresh=0.90, grayscale=False)
-                if x is None or y is None: return None
-
-                # Click upgrade
-                Input_Handler.click(x, y)
+                if not self._click_upgrade(): return None
                 time.sleep(0.5)
             
             # Get upgrade name
-            x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
-            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
-            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
+            upgrade_name = self._get_upgrade_name()
             
             # Click confirm button
-            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True)
-            if x is None or y is None: return None
-            Input_Handler.click(x, y+0.05)
+            if not self._click_home_confirm(): return None
             time.sleep(0.5)
             return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
@@ -488,7 +491,7 @@ class Upgrader:
             
             # Find assign assistant label
             xys = Frame_Handler.locate(self.assets["assign_assistant"], thresh=0.9, grayscale=False, return_all=True)
-            if xys is None: return
+            if len(xys) == 0: return
             
             x, y = sorted(xys, key=lambda pair: pair[1])[0]
             
@@ -507,7 +510,7 @@ class Upgrader:
     
     @require_exit()
     def home_lab_random_upgrade(self):
-        import time, re, numpy as np
+        import time, numpy as np
         
         try:
             # Open lab upgrade list menu
@@ -538,15 +541,10 @@ class Upgrader:
             time.sleep(0.5)
             
             # Get upgrade name
-            x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
-            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_name.png")
-            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
-            
+            upgrade_name = self._get_upgrade_name()
+
             # Click confirm button
-            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True)
-            if x is None or y is None: return None
-            Input_Handler.click(x, y+0.05)
+            if not self._click_home_confirm(): return None
             time.sleep(0.5)
             return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
@@ -556,7 +554,7 @@ class Upgrader:
     
     @require_exit()
     def home_lab_specified_upgrade(self, upgrade_text):
-        import time, re, numpy as np
+        import time, numpy as np
         
         try:
             # Open lab upgrade list menu
@@ -596,7 +594,6 @@ class Upgrader:
                                 return x, y
                             # Or if it is left aligned to "New" label
                             new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
-                            print(menu_left, x, menu_right, y)
                             if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
                                 return x, y
                 return None, None
@@ -615,23 +612,12 @@ class Upgrader:
             time.sleep(0.5)
             
             # Get upgrade name
-            x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
-            section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_name.png")
-            upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]))
+            upgrade_name = self._get_upgrade_name()
             
-            # Find confirm button
-            x, y = Frame_Handler.locate(self.assets["confirm"], grayscale=False, thresh=0.85, use_cached=True)
-            if x is None or y is None: return None
-            
-            # Ensure sufficient resources for upgrade and confirm upgrade
-            section = Frame_Handler.get_frame_section(x-0.08, y+0.02, x+0.08, y+0.1, grayscale=False, thresh=255, use_cached=True)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "debug/lab_upgrade_cost.png")
-            if not check_color((255, 136, 127), section, tol=10):
-                Input_Handler.click(x, y+0.05)
-                time.sleep(0.5)
-                return upgrade_name
-            return None
+            # Click confirm button
+            if not self._click_home_confirm(): return None
+            time.sleep(0.5)
+            return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("home_lab_specified_upgrade", e)
@@ -665,7 +651,7 @@ class Upgrader:
             
             # Find assign assistant label
             xys = Frame_Handler.locate(self.assets["assign_assistant"], thresh=0.9, grayscale=False, return_all=True)
-            if xys is None: return
+            if len(xys) == 0: return
             
             x, y = sorted(xys, key=lambda pair: pair[1])[0]
             
@@ -715,22 +701,17 @@ class Upgrader:
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()))
             Input_Handler.click(x_upgrade, y_upgrade)
             self._click_builder_builders()
-            time.sleep(0.5)
             
             # Click upgrade button
-            x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.9)
-            if x is None or y is None: return None
-            Input_Handler.click(x, y)
-            time.sleep(0.5)
+            if not self._click_upgrade(): return None
             
             # # Get upgrade name
             # section = Frame_Handler.get_frame_section(0.15, 0.1, 0.43, 0.35, high_contrast=True, thresh=240)
             # if configs.DEBUG: Frame_Handler.save_frame(section, "debug/upgrade_name.png")
             # upgrade_name = spell_check("".join(OCR_Handler.get_text(section)).lower())
             
-            # Find confirm button
-            x, y = self._find_builder_confirm()
-            Input_Handler.click(x, y)
+            # Click confirm button
+            if not self._click_builder_confirm(): return None
             time.sleep(0.5)
             return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
@@ -798,20 +779,14 @@ class Upgrader:
             if x is None or y is None: return None
             Input_Handler.click(x, y)
             time.sleep(0.5)
-            self._click_builder_builders()
-            time.sleep(0.5)
             
-            # Find upgrade button
-            x, y = Frame_Handler.locate(self.assets["upgrade"], thresh=0.90, grayscale=False)
-            if x is None or y is None: return None
+            self._click_builder_builders()
             
             # Click upgrade
-            Input_Handler.click(x, y)
-            time.sleep(0.5)
+            if not self._click_upgrade(): return None
             
-            # Find confirm button
-            x, y = self._find_builder_confirm()
-            Input_Handler.click(x, y)
+            # Click confirm button
+            if not self._click_builder_confirm(): return None
             time.sleep(0.5)
             return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
@@ -859,11 +834,9 @@ class Upgrader:
             section = Frame_Handler.high_contrast(Frame_Handler.crop(frame, menu_left, y_upgrade - 0.035, menu_center, y_upgrade + 0.025))
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()))
             Input_Handler.click(x_upgrade, y_upgrade)
-            time.sleep(0.5)
             
-            # Find confirm button
-            x, y = self._find_builder_confirm()
-            Input_Handler.click(x, y)
+            # Click confirm button
+            if not self._click_builder_confirm(): return None
             time.sleep(0.5)
             return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
@@ -930,11 +903,9 @@ class Upgrader:
             
             if x is None or y is None: return None
             Input_Handler.click(x, y)
-            time.sleep(0.5)
             
             # Find confirm button
-            x, y = self._find_builder_confirm()
-            Input_Handler.click(x, y)
+            if not self._click_builder_confirm(): return None
             time.sleep(0.5)
             return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
