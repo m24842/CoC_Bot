@@ -128,6 +128,18 @@ def running():
         if configs.DEBUG: print("running", e)
         return False
 
+def click_with_timeout(locator_func, timeout=1, interval=0.1):
+    import time
+    x, y = locator_func()
+    start = time.time()
+    while (x is None or y is None) and time.time() - start < timeout:
+        time.sleep(interval)
+        x, y = locator_func()
+    if x is not None and y is not None:
+        Input_Handler.click(x, y)
+        return True
+    return False
+
 def check_color(color, frame, tol=10):
     import numpy as np
     assert len(frame.shape) == 3 and frame.shape[2] == 3, "Frame must be a color image"
@@ -357,7 +369,7 @@ def to_home_base(ref_cache=False):
     CACHE["location"] = "home_base"
     
     try:
-        get_home_builders(1)
+        get_home_builders(0, return_amount=False)
         return
     except (KeyboardInterrupt, SystemExit): raise
     except: pass
@@ -396,7 +408,7 @@ def get_home_builders(timeout=60, return_amount=True, raise_exception=True, use_
             section = Frame_Handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True, use_cached=use_cached_frame)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/home_builders.png")
             
-            slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
+            slash = cv2.cvtColor(Asset_Manager.misc_assets["slash"], cv2.COLOR_RGB2GRAY)
             res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             if raise_exception and max_val < 0.9: raise Exception("Slash not found")
@@ -409,7 +421,7 @@ def get_home_builders(timeout=60, return_amount=True, raise_exception=True, use_
         except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("get_home_builders", e)
-        time.sleep(0.5)
+        time.sleep(0.1)
         if time.time() > start + timeout: break
     raise Exception("Failed to get home builders")
 
@@ -431,14 +443,14 @@ def start_coc(timeout=60):
             Frame_Handler.get_frame()
             
             try:
-                get_home_builders(1, return_amount=False, use_cached_frame=True)
+                get_home_builders(0, return_amount=False, use_cached_frame=True)
                 CACHE["location"] = "home_base"
                 break
             except (KeyboardInterrupt, SystemExit): raise
             except: pass
             
             try:
-                get_builder_builders(1, return_amount=False, use_cached_frame=True)
+                get_builder_builders(0, return_amount=False, use_cached_frame=True)
                 CACHE["location"] = "builder_base"
                 break
             except (KeyboardInterrupt, SystemExit): raise
@@ -499,7 +511,7 @@ def to_builder_base(ref_cache=False):
     CACHE["location"] = "builder_base"
     
     try:
-        get_builder_builders(1)
+        get_builder_builders(0, return_amount=False)
         return
     except (KeyboardInterrupt, SystemExit): raise
     except: pass
@@ -535,7 +547,7 @@ def get_builder_builders(timeout=60, return_amount=True, raise_exception=True, u
             section = Frame_Handler.get_frame_section(0.565, 0.04, -0.38, 0.08, high_contrast=True, use_cached=use_cached_frame)
             if configs.DEBUG: Frame_Handler.save_frame(section, "debug/builder_builders.png")
             
-            slash = cv2.cvtColor(Asset_Manager.upgrader_assets["slash"], cv2.COLOR_RGB2GRAY)
+            slash = cv2.cvtColor(Asset_Manager.misc_assets["slash"], cv2.COLOR_RGB2GRAY)
             res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             if raise_exception and max_val < 0.9: raise Exception("Slash not found")
@@ -548,7 +560,7 @@ def get_builder_builders(timeout=60, return_amount=True, raise_exception=True, u
         except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("get_builder_builders", e)
-        time.sleep(0.5)
+        time.sleep(0.1)
         if time.time() > start + timeout: break
     raise Exception("Failed to get builder builders")
 
@@ -1081,7 +1093,7 @@ class Frame_Handler:
 
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
-        if configs.DEBUG: print(max_val)
+        if configs.DEBUG: print("locate confidence:", max_val)
         
         if return_all:
             ys, xs = np.where(res >= thresh)
