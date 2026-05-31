@@ -82,8 +82,6 @@
     * Create an Automation task that runs when CoC opens and is set to run immediately
 
 5. Start the bot: `python src/main.py`
-    > __Note__: [start.sh](scripts/start.sh) uses tmux to start the bot in the background.
-
     > __Note__: On MacOS, if `DISABLE_DEVICE_SLEEP = True` in `configs.py`, the user password is required to toggle the `disablesleep` flag in power management settings
 
     > 💡 __Tip__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
