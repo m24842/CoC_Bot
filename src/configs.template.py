@@ -2,12 +2,12 @@
 # == User Configs == #
 ######################
 
-# OPTIONAL: Telegram notifications (enter empty string to disable)
-TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
-
 # OPTIONAL: Web app (enter empty string to disable)
 WEB_APP_URL = "" # (e.g. 12.34.567.890:1234)
 PA_USERNAME, PA_PASSWORD = "", "" # only if using pythonanywhere to auto extend hosting
+
+# OPTIONAL: Telegram notifications (enter empty string to disable)
+TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 
 # OPTIONAL: Groq API key for faster/more accurate OCR (enter empty string to disable)
 GROQ_API_KEY = ""
@@ -19,7 +19,7 @@ DEFAULT_INSTANCE_ID = INSTANCE_IDS[0]
 
 # REQUIRED: General Settings
 LOCAL_GUI = True # web app not required
-CHECK_INTERVAL = 5 * 60 # seconds
+CHECK_INTERVAL = 5 # minutes
 
 # REQUIRED: Upgrade settings
 MAX_UPGRADES_PER_CHECK = 10 # applies to both home and builder base

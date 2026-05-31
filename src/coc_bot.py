@@ -132,7 +132,7 @@ class CoC_Bot:
                     stop_coc()
                     self.update_status(time.time())
                 
-                time.sleep(CHECK_INTERVAL)
+                time.sleep(60 * CHECK_INTERVAL)
             
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
