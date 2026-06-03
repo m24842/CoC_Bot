@@ -9,7 +9,7 @@ def find_open_port():
         return s.getsockname()[1]
 
 def run_gui(server_port, pipe, debug=False):
-    import webview
+    import sys, webview
     
     url = f"http://127.0.0.1:{server_port}"
     window = webview.create_window(
@@ -17,13 +17,20 @@ def run_gui(server_port, pipe, debug=False):
         url=url,
         width=400,
         height=600,
-        resizable=False,
+        min_size=(400, 600),
+        resizable=(sys.platform == "darwin"),
     )
     
     def on_closed():
         pipe.send(-1)
+    
+    def set_aspect_ratio():
+        if sys.platform != "darwin": return
+        nswindow = window.native
+        nswindow.setAspectRatio_((2, 3))
 
     window.events.closed += on_closed
+    window.events.loaded += set_aspect_ratio
     webview.start(debug=debug)
 
 class GUI:
@@ -37,7 +44,7 @@ class GUI:
         parent_conn, child_conn = Pipe()
         self.pipe = parent_conn
         self.server_port = find_open_port()
-        self.server_proc = Process(target=start_server, args=(child_conn, self.server_port, id, self.debug,))
+        self.server_proc = Process(target=start_server, args=(child_conn, self.server_port, id, False,))
         self.server_proc.start()
         self.window_proc = Process(target=run_gui, args=(self.server_port, child_conn, self.debug))
     
