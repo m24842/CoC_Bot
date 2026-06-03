@@ -397,6 +397,14 @@ class Upgrader:
         import time, numpy as np
         
         try:
+            # Render templates
+            if type(upgrade_text) == str: upgrade_text = [upgrade_text]
+            if Task_Handler.heroes_excluded():
+                upgrade_text = list(set(upgrade_text) - set(self.hero_names))
+            if len(upgrade_text) == 0: return None
+            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+            np.random.shuffle(templates)
+            
             # Open upgrade list menu
             self._click_home_builders()
             time.sleep(0.5)
@@ -415,12 +423,6 @@ class Upgrader:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
-            if type(upgrade_text) == str: upgrade_text = [upgrade_text]
-            if Task_Handler.heroes_excluded():
-                upgrade_text = list(set(upgrade_text) - set(self.hero_names))
-            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
-            np.random.shuffle(templates)
-            
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
                 frame_gray = Frame_Handler.grayscale(frame)
@@ -582,6 +584,12 @@ class Upgrader:
         import time, numpy as np
         
         try:
+            # Render templates
+            if type(upgrade_text) == str: upgrade_text = [upgrade_text]
+            if len(upgrade_text) == 0: return None
+            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+            np.random.shuffle(templates)
+            
             # Open lab upgrade list menu
             self._click_home_lab()
             time.sleep(0.5)
@@ -600,10 +608,6 @@ class Upgrader:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
-            if type(upgrade_text) == str: upgrade_text = [upgrade_text]
-            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
-            np.random.shuffle(templates)
-            
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
                 frame_gray = Frame_Handler.grayscale(frame)
@@ -762,6 +766,14 @@ class Upgrader:
         import time, numpy as np
         
         try:
+            # Render templates
+            if type(upgrade_text) == str: upgrade_text = [upgrade_text]
+            if len(upgrade_text) == 0: return None
+            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+            combined = list(zip(templates, upgrade_text))
+            np.random.shuffle(combined)
+            templates, upgrade_text = zip(*combined)
+            
             # Open upgrade list menu
             self._click_builder_builders()
             time.sleep(0.5)
@@ -780,12 +792,6 @@ class Upgrader:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
-            if type(upgrade_text) == str: upgrade_text = [upgrade_text]
-            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
-            combined = list(zip(templates, upgrade_text))
-            np.random.shuffle(combined)
-            templates, upgrade_text = zip(*combined)
-            
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
                 frame_gray = Frame_Handler.grayscale(frame)
@@ -902,6 +908,14 @@ class Upgrader:
         import time, numpy as np
         
         try:
+            # Render templates
+            if type(upgrade_text) == str: upgrade_text = [upgrade_text]
+            if len(upgrade_text) == 0: return None
+            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+            combined = list(zip(templates, upgrade_text))
+            np.random.shuffle(combined)
+            templates, upgrade_text = zip(*combined)
+            
             # Open lab upgrade list menu
             self._click_builder_lab()
             time.sleep(0.5)
@@ -920,12 +934,6 @@ class Upgrader:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
-            if type(upgrade_text) == str: upgrade_text = [upgrade_text]
-            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
-            combined = list(zip(templates, upgrade_text))
-            np.random.shuffle(combined)
-            templates, upgrade_text = zip(*combined)
-            
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
                 frame_gray = Frame_Handler.grayscale(frame)
