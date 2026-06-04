@@ -801,8 +801,8 @@ class OCR_Handler:
         if not hasattr(cls, 'reader'):
             import easyocr
             cls.reader = easyocr.Reader(['en'], gpu=True)
-        result = cls.reader.readtext(frame)
-        return [text for _, text, _ in result if text.strip()]
+        result = cls.reader.readtext(frame, detail=0)
+        return [text for text in result if text.strip()]
 
     @classmethod
     def external_ocr(cls, frame):
