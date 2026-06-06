@@ -740,7 +740,7 @@ class Upgrader:
             if x_upgrade is None or y_upgrade is None: return None
             
             # Get upgrade name
-            section = Frame_Handler.high_contrast(Frame_Handler.crop(frame, menu_left, y_upgrade - 0.035, menu_center, y_upgrade + 0.025))
+            section = Frame_Handler.high_contrast(Frame_Handler.get_frame_section(menu_left, y_upgrade - 0.035, menu_center, y_upgrade + 0.025))
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()))
             
             # Select upgrade
@@ -876,6 +876,7 @@ class Upgrader:
                 # Choose an upgrade
                 if len(potential_y_locs) == 0: return None
                 x_upgrade, y_upgrade = menu_center, menu_top + np.random.choice(potential_y_locs) / WINDOW_DIMS[1]
+                return x_upgrade, y_upgrade
             
             x_upgrade, y_upgrade = self._scroll_locate_upgrade(
                 locate_upgrade,
@@ -888,7 +889,7 @@ class Upgrader:
             if x_upgrade is None or y_upgrade is None: return None
             
             # Get upgrade name
-            section = Frame_Handler.high_contrast(Frame_Handler.crop(frame, menu_left, y_upgrade - 0.035, menu_center, y_upgrade + 0.025))
+            section = Frame_Handler.high_contrast(Frame_Handler.get_frame_section(menu_left, y_upgrade - 0.035, menu_center, y_upgrade + 0.025))
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()))
             
             # Select upgrade
