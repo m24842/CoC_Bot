@@ -73,6 +73,8 @@
     * View a demo of the web app [here](https://youtu.be/6w2SRJFtSnM)
 
 4. Setup iPhone shortcut:
+    > ❗️ __Important__: iOS will terminate long running shortcuts after about 30-60 mins (there's no reported limit so times may vary). To ensure the bot is paused for longer, it is suggested to set the shortcut to "run after confirmation" so that the pause duration can be set arbitrarily high through the web app when desired.
+
     > __Note__: An [older version](<shortcut/CoC Bot Auto Pause Old.shortcut>) of the shortcut is provided that does not require Scriptable, but is incapable of handling request errors
     
     * Download [Scriptable](https://apps.apple.com/us/app/scriptable/id1405459188) and create a new script named "CoC Bot Script" with the contents of [CoC_Bot_Script.js](<shortcut/Scriptable.js>)
