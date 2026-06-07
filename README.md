@@ -80,7 +80,7 @@
     * Download [Scriptable](https://apps.apple.com/us/app/scriptable/id1405459188) and create a new script named "CoC Bot Script" with the contents of [CoC_Bot_Script.js](<shortcut/Scriptable.js>)
     * Open the [provided shortcut](<shortcut/CoC Bot Auto Pause.shortcut>)
     * Enter your `WEB_APP_URL` into the `url` item of the Dictionary
-    * Adjust the `id` item containing an array of instance names as necessary
+    * Add your instance ids to the `ids` array in the Dictionary (main is added by default)
     * Create an Automation task that runs when CoC opens and is set to run immediately
 
 5. Start the bot: `python src/main.py`
