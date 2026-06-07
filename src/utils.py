@@ -148,7 +148,7 @@ def check_color(color, frame, tol=10):
 
 def filter_color(color, frame, tol=10, return_mask=False):
     import numpy as np
-    assert len(frame.shape) == 3 and frame.shape[2] == 3
+    assert len(frame.shape) == 3 and frame.shape[2] == 3, "Frame must be a color image"
     mask = np.abs(frame - np.array(color).reshape((1, 1, 3))).sum(2) <= tol
     frame_filtered = frame.copy()
     frame_filtered[~mask] = [0, 0, 0]

@@ -220,12 +220,6 @@ class Upgrader:
     def _get_potential_upgrade_locs(self, menu):
         import numpy as np
         
-        def filter_color(frame, color, tol=10):
-            color = np.array(color).reshape((1, 1, 3))
-            mask = (np.abs(frame - color).sum(axis=2) <= tol)
-            frame = np.where(mask, 255, 0)
-            return frame
-        
         def profile_bounds(profile):
             bounds = []
             prev_val = 0
@@ -241,8 +235,8 @@ class Upgrader:
             centers = (bounds[:, 0] + bounds[:, 1]) / 2
             return bounds, centers
         
-        menu_white = filter_color(menu, [255, 255, 255], tol=0) / 255
-        menu_red = filter_color(menu, (255, 136, 127), tol=10) / 255
+        menu_white = (filter_color([255, 255, 255], menu, tol=0, return_mask=True)[1])
+        menu_red = filter_color((255, 136, 127), menu, tol=10, return_mask=True)[1]
         white_profile = np.where(menu_white.mean(axis=1) > 0.01, 1, 0)
         red_profile = np.where(menu_red.mean(axis=1) > 0.01, 1, 0)
         white_bounds, white_centers = profile_bounds(white_profile)
@@ -251,7 +245,7 @@ class Upgrader:
         for wc in white_centers:
             if len(red_centers) == 0 or abs(red_centers - wc).min() > 12.5:
                 potential_y_locs.append(wc)
-        return potential_y_locs
+        return np.array(potential_y_locs)
 
     def _find_builder_confirm(self):
         import cv2, numpy as np
@@ -330,11 +324,19 @@ class Upgrader:
             heros_excluded = Task_Handler.heroes_excluded()
             
             def locate_upgrade():
-                menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
-                
+                frame = Frame_Handler.get_frame(grayscale=False)
+                frame_gray = Frame_Handler.grayscale(frame)
+                menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+
                 # Find a valid upgrade
                 potential_y_locs = self._get_potential_upgrade_locs(menu)
-                locs = Frame_Handler.batch_locate(town_hall_template + hero_templates, thresh=0.80, ref="lc", null_val=-1)
+                if len(potential_y_locs) == 0: return None, None
+                potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
+                if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
+                
+                # Locate invalid upgrades
+                locs = Frame_Handler.batch_locate(town_hall_template + hero_templates, frame_gray, thresh=0.80, ref="lc", null_val=-1)
                 town_hall_loc = locs[0]
                 hero_locs = locs[1:]
                 invalid_locs = [town_hall_loc]
@@ -345,10 +347,9 @@ class Upgrader:
                 # Choose an upgrade
                 x_upgrade, y_upgrade = None, None
                 for y_loc in np.random.permutation(potential_y_locs):
-                    y = menu_top + y_loc / WINDOW_DIMS[1]
-                    if min(abs(invalid_y_locs - y)) > 0.02:
+                    if min(abs(invalid_y_locs - y_loc)) > 0.02:
                         x_upgrade = menu_center
-                        y_upgrade = y
+                        y_upgrade = y_loc
                         break
                 if x_upgrade is None or y_upgrade is None:
                     # If no valid upgrades found but town hall is found, then upgrade it
@@ -545,13 +546,17 @@ class Upgrader:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             def locate_upgrade():
-                menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
-                
+                frame = Frame_Handler.get_frame(grayscale=False)
+                menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+
                 # Find a valid upgrade
                 potential_y_locs = self._get_potential_upgrade_locs(menu)
+                if len(potential_y_locs) == 0: return None, None
+                potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
+                if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
 
                 # Choose an upgrade
-                if len(potential_y_locs) == 0: return None, None
                 x_upgrade, y_upgrade = menu_center, menu_top + np.random.choice(potential_y_locs) / WINDOW_DIMS[1]
                 return x_upgrade, y_upgrade
             
@@ -719,14 +724,18 @@ class Upgrader:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             def locate_upgrade():
-                menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
-                
+                frame = Frame_Handler.get_frame(grayscale=False)
+                menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+
                 # Find a valid upgrade
                 potential_y_locs = self._get_potential_upgrade_locs(menu)
+                if len(potential_y_locs) == 0: return None, None
+                potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
+                if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
                 
                 # Choose an upgrade
-                if len(potential_y_locs) == 0: return None, None
-                x_upgrade, y_upgrade = menu_center, menu_top + np.random.choice(potential_y_locs) / WINDOW_DIMS[1]
+                x_upgrade, y_upgrade = menu_center, np.random.choice(potential_y_locs)
                 return x_upgrade, y_upgrade
             
             x_upgrade, y_upgrade = self._scroll_locate_upgrade(
@@ -758,6 +767,8 @@ class Upgrader:
             return upgrade_name
         except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             if configs.DEBUG: print("builder_random_upgrade", e)
             return None
     
@@ -868,14 +879,18 @@ class Upgrader:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             def locate_upgrade():
-                menu = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, grayscale=False)
+                frame = Frame_Handler.get_frame(grayscale=False)
+                menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
                 
                 # Find a valid upgrade
                 potential_y_locs = self._get_potential_upgrade_locs(menu)
+                if len(potential_y_locs) == 0: return None, None
+                potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
+                if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
                 
                 # Choose an upgrade
-                if len(potential_y_locs) == 0: return None
-                x_upgrade, y_upgrade = menu_center, menu_top + np.random.choice(potential_y_locs) / WINDOW_DIMS[1]
+                x_upgrade, y_upgrade = menu_center, np.random.choice(potential_y_locs)
                 return x_upgrade, y_upgrade
             
             x_upgrade, y_upgrade = self._scroll_locate_upgrade(
