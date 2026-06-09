@@ -19,3 +19,4 @@ psutil
 rapidfuzz
 requests
 scipy
+uiautomator2
