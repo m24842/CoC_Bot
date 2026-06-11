@@ -13,15 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Git pull PythonAnywhere
-        run: |
-          curl -X POST \
-            -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
-            -d $'input=git pull\n' \
-            "${{ vars.PA_HOST }}/api/v0/user/${{ vars.PA_USERNAME }}/consoles/${{ vars.PA_CONSOLE_ID }}/send_input/"
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       
-      - name: Reload webapp
-        run: |
-          curl -X POST \
-            -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
-            "${{ vars.PA_HOST }}/api/v0/user/${{ vars.PA_USERNAME }}/webapps/${{ vars.PA_USERNAME }}.pythonanywhere.com/reload/"
+      - name: Deploy Webapp
+        run: python .github/workflows/deploy_webapp.py --username ${{ secrets.PA_USERNAME }} --password ${{ secrets.PA_PASSWORD }} --token ${{ secrets.PA_TOKEN }} --console-id ${{ secrets.PA_CONSOLE_ID }}
