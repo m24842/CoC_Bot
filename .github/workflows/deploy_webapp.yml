@@ -22,4 +22,10 @@ jobs:
           python-version: "3.11"
       
       - name: Deploy Webapp
-        run: python .github/workflows/deploy_webapp.py --host ${{ vars.PA_HOST }} --username ${{ secrets.PA_USERNAME }} --password ${{ secrets.PA_PASSWORD }} --token ${{ secrets.PA_TOKEN }} --console-id ${{ vars.PA_CONSOLE_ID }}
+        run: |
+          python .github/workflows/deploy_webapp.py \
+            --host "${{ vars.PA_HOST }}" \
+            --username "${{ secrets.PA_USERNAME }}" \
+            --password "${{ secrets.PA_PASSWORD }}" \
+            --token "${{ secrets.PA_TOKEN }}" \
+            --console-id "${{ vars.PA_CONSOLE_ID }}"
