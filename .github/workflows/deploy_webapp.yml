@@ -17,7 +17,7 @@ jobs:
         run: |
           curl -X POST \
             -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
-            -d "input=git pull\n" \
+            -d $'input=git pull\n' \
             "${{ vars.PA_HOST }}/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/${{ vars.PA_CONSOLE_ID }}/send_input/"
       
       - name: Reload webapp
