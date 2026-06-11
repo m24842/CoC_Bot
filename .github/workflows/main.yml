@@ -1,0 +1,12 @@
+- name: Git pull PythonAnywhere
+  run: |
+    curl -X POST \
+      -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
+      -d "input=git pull" \
+      "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/47113587/send_input/"
+
+- name: Reload webapp
+  run: |
+    curl -X POST \
+      -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
+      "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_USERNAME }}.pythonanywhere.com/reload/"
