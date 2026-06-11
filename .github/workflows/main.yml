@@ -1,12 +1,24 @@
-- name: Git pull PythonAnywhere
-  run: |
-    curl -X POST \
-      -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
-      -d "input=git pull" \
-      "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/47113587/send_input/"
+name: Deploy Webapp
 
-- name: Reload webapp
-  run: |
-    curl -X POST \
-      -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
-      "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_USERNAME }}.pythonanywhere.com/reload/"
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Git pull PythonAnywhere
+        run: |
+          curl -X POST \
+            -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
+            -d "input=git pull" \
+            "${{ vars.PA_HOST }}/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/${{ vars.PA_CONSOLE_ID }}/send_input/"
+      
+      - name: Reload webapp
+        run: |
+          curl -X POST \
+            -H "Authorization: Token ${{ secrets.PA_TOKEN }}" \
+            "${{ vars.PA_HOST }}/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ vars.PA_DOMAIN_NAME }}/reload/"
