@@ -557,7 +557,7 @@ class Upgrader:
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
 
                 # Choose an upgrade
-                x_upgrade, y_upgrade = menu_center, menu_top + np.random.choice(potential_y_locs) / WINDOW_DIMS[1]
+                x_upgrade, y_upgrade = menu_center, np.random.choice(potential_y_locs)
                 return x_upgrade, y_upgrade
             
             x_upgrade, y_upgrade = self._scroll_locate_upgrade(
