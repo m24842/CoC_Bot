@@ -582,6 +582,7 @@ class Exit_Handler:
     @classmethod
     def register(cls, func):
         import atexit
+        if func in cls.RUN_AT_EXIT: return
         atexit.register(func)
         cls.RUN_AT_EXIT.append(func)
         return func
