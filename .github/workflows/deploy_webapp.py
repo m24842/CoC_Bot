@@ -1,3 +1,4 @@
+import time
 import argparse
 import requests
 from selenium import webdriver
@@ -42,15 +43,19 @@ def deploy(host, username, password, token, console_id):
         })
     driver.refresh()
     driver.get(console_url)
+    time.sleep(3) # wait for console to startup
     assert driver.current_url == console_url, "Failed to startup console."
     print("Console started successfully.")
 
     # Send console input
-    res = requests.post(
-        console_input_url,
-        headers={'Authorization': 'Token {token}'.format(token=token)},
-        data={'input': 'git pull\n'}
-    )
+    for _ in range(3):
+        res = requests.post(
+            console_input_url,
+            headers={'Authorization': 'Token {token}'.format(token=token)},
+            data={'input': 'git pull\n'}
+        )
+        if res.status_code == 200: break
+        time.sleep(2)
     assert res.status_code == 200, "Failed to send git pull command to console."
     print("Git pull command sent successfully.")
 
