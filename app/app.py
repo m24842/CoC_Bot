@@ -8,6 +8,7 @@ from flask_cors import CORS
 
 PATH = Path(__file__).parent
 CACHE_PATH = PATH / "data" / "cache.json"
+CACHE_PATH.parent.mkdir(exist_ok=True)
 NOTIFICATION_CACHE_SIZE = 3
 
 app = Flask(__name__)
