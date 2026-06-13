@@ -1,5 +1,7 @@
 import argparse
 import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 def deploy(host, username, password, token, console_id):
     login_url = f"{host}/login/"
@@ -24,10 +26,24 @@ def deploy(host, username, password, token, console_id):
         headers=headers,
     )
     assert "Log out" in session.get(host).text, "Login failed."
+    print("Login successful.")
 
     # Startup console process
-    res = session.get(console_url)
-    assert res.url == console_url, "Failed to startup console."
+    options = Options()
+    options.add_argument("--headless=new")
+    driver = webdriver.Chrome(options=options)
+    driver.get(host)
+    for cookie in session.cookies:
+        driver.add_cookie({
+            "name": cookie.name,
+            "value": cookie.value,
+            "domain": cookie.domain,
+            "path": cookie.path,
+        })
+    driver.refresh()
+    driver.get(console_url)
+    assert driver.current_url == console_url, "Failed to startup console."
+    print("Console started successfully.")
 
     # Send console input
     res = requests.post(
@@ -36,6 +52,7 @@ def deploy(host, username, password, token, console_id):
         data={'input': 'git pull\n'}
     )
     assert res.status_code == 200, "Failed to send git pull command to console."
+    print("Git pull command sent successfully.")
 
     # Reload webapp
     res = requests.post(
@@ -43,6 +60,7 @@ def deploy(host, username, password, token, console_id):
         headers={'Authorization': 'Token {token}'.format(token=token)}
     )
     assert res.status_code == 200, "Failed to reload webapp."
+    print("Webapp reloaded successfully.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
