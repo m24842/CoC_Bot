@@ -485,22 +485,20 @@ def update_coc(timeout=10, from_in_game=False):
     if not from_in_game:
         ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
     else:
-        if conn.exists(text="UPDATE"):
-            try:
-                conn(text="UPDATE").click(timeout=0)
-            except (KeyboardInterrupt, SystemExit): raise
-            except:
-                if not from_in_game: to_system_home()
-                return
-        else:
+        try:
+            conn(text="UPDATE").click(timeout=0)
+        except (KeyboardInterrupt, SystemExit): raise
+        except:
+            print("Failed to click update button")
             if not from_in_game: to_system_home()
             return
     
-    if conn.exists(text="Update"):
-        try:
-            conn(text="Update").click(timeout=timeout)
-        except (KeyboardInterrupt, SystemExit): raise
-        except: pass
+    try:
+        conn(text="Update").click(timeout=timeout)
+    except (KeyboardInterrupt, SystemExit): raise
+    except:
+        print("Failed to click update button")
+        pass
     if not from_in_game: to_system_home()
 
 def to_builder_base(ref_cache=False):
