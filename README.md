@@ -69,7 +69,7 @@
     
     > ❗️ __Important__: If hosting from a personal device, configure port forwarding as necessary
     
-    * Each bot instance can be accessed at `WEB_APP_ADDRESS/<instance_name>` (the default instance name is `main`)
+    * Each bot instance can be accessed at `WEB_APP_URL/<instance_name>` (the default instance name is `main`)
     * View a demo of the web app [here](https://youtu.be/6w2SRJFtSnM)
 
 4. Setup iPhone shortcut:
