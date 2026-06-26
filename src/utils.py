@@ -111,7 +111,7 @@ def start_bluestacks():
     if sys.platform == "darwin":
         for instance in instances:
             subprocess.Popen(
-                ["open", "-g", "-a", "BlueStacks", "--args", "--instance", instance],
+                ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", instance],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,
@@ -174,6 +174,7 @@ def file_search(root, target_name, keywords=[]):
         try:
             for entries in current_dir.iterdir():
                 if entries.is_file() and entries.name == target_name:
+                    Cache_Manager.setdefault("file_search", {})[target_name] = str(entries.resolve())
                     return entries.resolve()
                 
                 if entries.is_dir():
@@ -235,7 +236,6 @@ def filter_color(color, frame, tol=10, return_mask=False):
     return frame_filtered
 
 def get_vocab():
-    import time
     from bs4 import BeautifulSoup
     from curl_cffi import requests as curl_requests
     
@@ -272,8 +272,6 @@ def get_vocab():
     text = sorted(list(vocab))
     Cache_Manager["vocab"] = text
     
-    save_cache()
-
     return list(vocab)
 
 def spell_check(text, cutoff=70):
@@ -714,7 +712,7 @@ class Cache_Instance(collections.UserDict):
 
     def __getitem__(self, key):
         return super().__getitem__(key)
-    
+
     def load_cache(self):
         import json, portalocker
         if CACHE_PATH.exists():

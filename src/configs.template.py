@@ -135,4 +135,3 @@ DISABLE_DEVICE_SLEEP = True
 WINDOW_DIMS = (1920, 1080) # width, height
 ADB_ABS_DIR = "" # absolute path to dir with adb executable, leave empty to use system PATH
 BLUESTACKS_BIN_PATH = "" # absolute path to Bluestacks executable, leave empty to use system defaults
-BLUESTACKS_RESTART_INTERVAL = 1 # days, set to -1 to disable

@@ -16,20 +16,9 @@ class CoC_Bot:
     
     def run(self):
         import time
-        from datetime import datetime, timedelta
-        
-        last_restarted = datetime.now()
-        
+                
         while True:
             try:
-                if all([
-                    BLUESTACKS_RESTART_INTERVAL > 0,
-                    datetime.now() - last_restarted > timedelta(days=BLUESTACKS_RESTART_INTERVAL)
-                ]):
-                    restart_bluestacks()
-                    if not ADB_Manager.connect(60): continue
-                    last_restarted = datetime.now()
-
                 if not running():
                     time.sleep(1)
                     continue
