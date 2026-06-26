@@ -288,7 +288,7 @@ def spell_check(text, cutoff=70):
         score = 100 - 10 * (lev + length_penalty)
         return score if score >= score_cutoff else 0
     
-    vocab = Cache_Manager.get("vocab", [])
+    vocab = Cache_Manager.get("vocab", get_vocab())
     words = re.split(r"[ _]+", text)
     results = []
 
