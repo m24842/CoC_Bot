@@ -1,8 +1,9 @@
 def launch_proc(args):
     from log import enable_logging
-    from utils import init_instance
+    from utils import parse_args, init_instance
     from coc_bot import CoC_Bot
     
+    parse_args(args.debug, args.id, args.gui, args.gui_port)
     init_instance(args.id)
     enable_logging(args.id)
     bot = CoC_Bot()
