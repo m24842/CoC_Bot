@@ -99,6 +99,10 @@ def check_bluestacks():
 def start_bluestacks():
     import sys, subprocess, time
     
+    if check_bluestacks():
+        if configs.DEBUG: print("BlueStacks already running.")
+        return
+    
     conf_path = file_search("/", "bluestacks.conf", ["bluestacks"])
 
     instances = set()
