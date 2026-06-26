@@ -399,14 +399,12 @@ def render_text(text, font, font_size, color=(255, 255, 255)):
     return render
 
 def get_telegram_chat_id():
-    import portalocker, requests, json
+    import requests
     
-    data = {}
-    if CACHE_PATH.exists():
-        with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
-            data = json.load(f)
-            if "telegram_chat_id" in data: return data["telegram_chat_id"]
-    
+    telegram_chat_id = Cache_Manager.get("telegram_chat_id", None)
+    if telegram_chat_id is not None:
+        return telegram_chat_id
+
     res = requests.get(
         f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates",
         timeout=(10, 20)
@@ -415,12 +413,10 @@ def get_telegram_chat_id():
         res = res.json()
         if res["ok"] and len(res["result"]) > 0:
             chat_id = res["result"][-1]["message"]["chat"]["id"]
-            data["telegram_chat_id"] = chat_id
-            with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
-                json.dump(data, f, indent=4)
+            Cache_Manager["telegram_chat_id"] = chat_id
             return chat_id
 
-    raise Exception("Failed to get Telegram chat ID")
+    raise Exception("Failed to get Telegram chat ID. Please send a message to your bot first.")
 
 def send_notification(text):
     import requests
