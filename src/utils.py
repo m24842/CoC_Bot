@@ -109,11 +109,9 @@ def start_bluestacks():
     instances = sorted(instances)
     
     if sys.platform == "darwin":
-        bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else "/Applications/BlueStacks.app/Contents/MacOS/BlueStacks"
-        assert Path(bin_path).exists(), f"BlueStacks executable not found at {bin_path}"
         for instance in instances:
             subprocess.Popen(
-                [bin_path, "--instance", instance],
+                ["open", "-g", "-a", "BlueStacks", "--args", "--instance", instance],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,
@@ -124,7 +122,7 @@ def start_bluestacks():
         assert Path(bin_path).exists(), f"BlueStacks executable not found at {bin_path}"
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        startupinfo.wShowWindow = 6
+        startupinfo.wShowWindow = 7
         for instance in instances:
             subprocess.Popen(
                 [bin_path, "--instance", instance],
