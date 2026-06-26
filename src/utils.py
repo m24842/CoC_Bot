@@ -1,4 +1,4 @@
-import sys
+import sys, collections
 from pathlib import Path
 from functools import lru_cache
 import configs
@@ -16,9 +16,7 @@ if getattr(sys, "frozen", False):
 else:
     CACHE_PATH = Path(__file__).parent / "cache.json"
 
-INSTANCE_ID = None
-ADB_ADDRESS, ADB_DEVICE, MINITOUCH_DEVICE = None, None, None
-CACHE = {}
+INSTANCE_ID, ADB_ADDRESS = None, None
 
 def parse_args(debug=None, id=None, gui=None, gui_port=None):
     import argparse
@@ -31,7 +29,7 @@ def parse_args(debug=None, id=None, gui=None, gui_port=None):
     args = parser.parse_args()
     configs.DEBUG = args.debug if debug is None else debug
     configs.LOCAL_GUI = args.gui if gui is None else gui
-    CACHE["gui_port"] = args.gui_port if gui_port is None else gui_port
+    Cache_Manager["gui_port"] = args.gui_port if gui_port is None else gui_port
     if id is not None:
         assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
         args.id = id
@@ -45,15 +43,16 @@ def init_instance(id):
     
     assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
     INSTANCE_ID = id
-    ADB_ADDRESS = configs.ADB_ADDRESSES[configs.INSTANCE_IDS.index(INSTANCE_ID)]
+    ADB_ADDRESS = configs.ADB_ADDRESSES[configs.INSTANCE_IDS.index(id)]
     if WEB_APP_URL != "":
         if "pythonanywhere.com" in WEB_APP_URL:
             Scheduler.add_job(extend_pythonanywhere_hosting, args=(configs.PA_USERNAME, configs.PA_PASSWORD), trigger="interval", hours=24)
+            Scheduler.add_job(get_vocab, trigger="interval", hours=24)
         
         try:
             requests.post(
                 f"{WEB_APP_URL}/instances",
-                json={"id": INSTANCE_ID},
+                json={"id": id},
                 timeout=(10, 20)
             )
         except (KeyboardInterrupt, SystemExit): raise
@@ -88,29 +87,110 @@ def enable_sleep():
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
 
 def to_system_home():
-    ADB_DEVICE.shell("input keyevent KEYCODE_HOME")
+    ADB_Manager.adbutils_device.shell("input keyevent KEYCODE_HOME")
 
-def connect_adb():
-    global ADB_DEVICE, MINITOUCH_DEVICE
-    import subprocess, adbutils, os
-    from pyminitouch import MNTDevice
+def check_bluestacks():
+    import psutil
+    for proc in psutil.process_iter(['name']):
+        if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
+            return True
+    return False
+
+def start_bluestacks():
+    import sys, subprocess, time
     
-    if ADB_ABS_DIR != "": os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
-    subprocess.run(["adb", "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    res = adbutils.adb.connect(ADB_ADDRESS)
-    if "connected" not in res:
-        subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        raise Exception("Failed to connect to ADB.")
-    device, mt_device = None, None
-    try:
-        device = adbutils.device(ADB_ADDRESS)
-        mt_device = MNTDevice(ADB_ADDRESS)
-        Exit_Handler.register(mt_device.stop)
-    except (KeyboardInterrupt, SystemExit): raise
-    except:
-        subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        raise Exception("Failed to get ADB device.")
-    ADB_DEVICE, MINITOUCH_DEVICE = device, mt_device
+    conf_path = file_search("/", "bluestacks.conf", ["bluestacks"])
+
+    instances = set()
+    for line in open(conf_path).read().splitlines():
+        if line.startswith("bst.instance"):
+            instance_name = line.split(".")[2].strip()
+            instances.add(instance_name)
+    instances = sorted(instances)
+    
+    if sys.platform == "darwin":
+        bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else "/Applications/BlueStacks.app/Contents/MacOS/BlueStacks"
+        assert Path(bin_path).exists(), f"BlueStacks executable not found at {bin_path}"
+        for instance in instances:
+            subprocess.Popen(
+                [bin_path, "--instance", instance],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+    elif sys.platform == "win32":
+        bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"
+        assert Path(bin_path).exists(), f"BlueStacks executable not found at {bin_path}"
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = 6
+        for instance in instances:
+            subprocess.Popen(
+                [bin_path, "--instance", instance],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                startupinfo=startupinfo,
+                creationflags=subprocess.DETACHED_PROCESS,
+            )
+    
+    for _ in range(120):
+        if check_bluestacks():
+            if configs.DEBUG: print("BlueStacks started.")
+            return
+        time.sleep(0.5)
+    
+    raise Exception("BlueStacks failed to start.")
+
+def stop_bluestacks():
+    import psutil, time
+    
+    for proc in psutil.process_iter(['name']):
+        if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
+            proc.terminate()
+    
+    for _ in range(120):
+        if not check_bluestacks():
+            if configs.DEBUG: print("BlueStacks stopped.")
+            return
+        time.sleep(0.5)
+    
+    raise Exception("BlueStacks failed to stop.")
+
+def restart_bluestacks():
+    stop_bluestacks()
+    start_bluestacks()
+
+def file_search(root, target_name, keywords=[]):
+    if cached_path := Cache_Manager.get("file_search", {}).get(target_name, None) is not None:
+        return cached_path
+    
+    keywords = [kw.lower() for kw in keywords]
+    root = Path(root)
+    queue = collections.deque([root])
+    visited = set([root.resolve()])
+    while queue:
+        current_dir = queue.popleft()
+        
+        try:
+            for entries in current_dir.iterdir():
+                if entries.is_file() and entries.name == target_name:
+                    return entries.resolve()
+                
+                if entries.is_dir():
+                    real_path = entries.resolve()
+                    if real_path not in visited:
+                        visited.add(real_path)
+                        if any(kw in entries.name.lower() for kw in keywords):
+                            queue.appendleft(entries)
+                        else:
+                            queue.append(entries)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            continue
+    return None
 
 def running():
     import requests
@@ -157,27 +237,17 @@ def filter_color(color, frame, tol=10, return_mask=False):
     return frame_filtered
 
 def get_vocab():
-    import json, time, portalocker
+    import time
     from bs4 import BeautifulSoup
     from curl_cffi import requests as curl_requests
+    
+    vocab = set()
     
     other_words = [
         "prince",
         "copter",
     ]
-    
-    data = {}
-    existing_vocab = None
-    for _ in range(1):
-        if CACHE_PATH.exists():
-            with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
-                data = json.load(f)
-                if "vocab" in data:
-                    existing_vocab = set(data["vocab"]["text"] + other_words)
-                    if time.time() - data["vocab"]["last_updated"] > 86400: break
-                    return list(existing_vocab)
-    
-    vocab = set()
+
     endpoints = [
         "A-I",
         "J-P",
@@ -198,18 +268,13 @@ def get_vocab():
                 words = [s for s in e.text.lower().split(" ") if len(s) > 2]
                 vocab = vocab.union(words)
         else:
-            if existing_vocab is not None: return existing_vocab
             raise Exception("Failed to update vocabulary")
     
     vocab = vocab.union(other_words)
     text = sorted(list(vocab))
-    data["vocab"] = {
-        "last_updated": time.time(),
-        "text": text,
-    }
+    Cache_Manager["vocab"] = text
     
-    with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
-        json.dump(data, f, indent=4)
+    save_cache()
 
     return list(vocab)
 
@@ -223,7 +288,7 @@ def spell_check(text, cutoff=70):
         score = 100 - 10 * (lev + length_penalty)
         return score if score >= score_cutoff else 0
     
-    vocab = get_vocab()
+    vocab = Cache_Manager.get("vocab", [])
     words = re.split(r"[ _]+", text)
     results = []
 
@@ -325,6 +390,30 @@ def send_notification(text):
         except (KeyboardInterrupt, SystemExit): raise
         except: pass
 
+def update_status(status):
+    import requests
+    
+    if WEB_APP_URL != "":
+        try:
+            requests.post(
+                f"{WEB_APP_URL}/{INSTANCE_ID}/status",
+                json={"status": status},
+                timeout=(1, 2)
+            )
+        except (KeyboardInterrupt, SystemExit): raise
+        except Exception as e:
+            if configs.DEBUG: print("update_status", e)
+    if gui_port := Cache_Manager.get("gui_port") is not None:
+        try:
+            requests.post(
+                f"http://localhost:{gui_port}/status",
+                json={"status": status},
+                timeout=(1, 2)
+            )
+        except (KeyboardInterrupt, SystemExit): raise
+        except Exception as e:
+            if configs.DEBUG: print("update_status", e)
+
 def extend_pythonanywhere_hosting(username, password):
     import requests
     
@@ -364,9 +453,9 @@ def extend_pythonanywhere_hosting(username, password):
 def to_home_base(ref_cache=False):
     import cv2, time, numpy as np
     
-    if ref_cache and CACHE.get("location") == "home_base": return
+    if ref_cache and Cache_Manager.get("location") == "home_base": return
     
-    CACHE["location"] = "home_base"
+    Cache_Manager["location"] = "home_base"
     
     try:
         get_home_builders(0, return_amount=False)
@@ -437,21 +526,21 @@ def start_coc(timeout=60):
         start = time.time()
         while time.time() - start < timeout:
             if not running(): return False
-            ADB_DEVICE.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
+            ADB_Manager.adbutils_device.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
             Input_Handler.click_exit(4, 0.1)
             
             Frame_Handler.get_frame()
             
             try:
                 get_home_builders(0, return_amount=False, use_cached_frame=True)
-                CACHE["location"] = "home_base"
+                Cache_Manager["location"] = "home_base"
                 break
             except (KeyboardInterrupt, SystemExit): raise
             except: pass
             
             try:
                 get_builder_builders(0, return_amount=False, use_cached_frame=True)
-                CACHE["location"] = "builder_base"
+                Cache_Manager["location"] = "builder_base"
                 break
             except (KeyboardInterrupt, SystemExit): raise
             except: pass
@@ -475,15 +564,15 @@ def start_coc(timeout=60):
 def stop_coc():
     from datetime import datetime
     print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
-    ADB_DEVICE.shell("am force-stop com.supercell.clashofclans")
+    ADB_Manager.adbutils_device.shell("am force-stop com.supercell.clashofclans")
     to_system_home()
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
 def update_coc(timeout=10, from_in_game=False):
     import uiautomator2 as u2
-    conn = u2.connect(ADB_DEVICE)
+    conn = ADB_Manager.uiautomator_device
     if not from_in_game:
-        ADB_DEVICE.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
+        ADB_Manager.adbutils_device.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
     else:
         try:
             conn(text="UPDATE").click(timeout=0)
@@ -504,9 +593,9 @@ def update_coc(timeout=10, from_in_game=False):
 def to_builder_base(ref_cache=False):
     import cv2, time, numpy as np
     
-    if ref_cache and CACHE.get("location") == "builder_base": return
+    if ref_cache and Cache_Manager.get("location") == "builder_base": return
     
-    CACHE["location"] = "builder_base"
+    Cache_Manager["location"] = "builder_base"
     
     try:
         get_builder_builders(0, return_amount=False)
@@ -606,6 +695,44 @@ class Exit_Handler:
 
 Exit_Handler.setup_signal_handlers()
 
+class Scheduler:
+    from apscheduler.schedulers.background import BackgroundScheduler
+    scheduler = BackgroundScheduler()
+    scheduler.start()
+    
+    add_job = scheduler.add_job
+
+class Cache_Instance(collections.UserDict):
+    def __setitem__(self, key, value):
+        from datetime import datetime, timedelta
+        super().__setitem__(key, value)
+        Scheduler.add_job(
+            self.save_cache,
+            trigger="date",
+            run_date=datetime.now() + timedelta(seconds=10),
+            id="save_cache",
+            replace_existing=True
+        )
+
+    def __getitem__(self, key):
+        return super().__getitem__(key)
+    
+    def load_cache(self):
+        import json, portalocker
+        if CACHE_PATH.exists():
+            with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
+                self.update(json.load(f))
+        return self.data
+
+    def save_cache(self):
+        import json, portalocker
+        with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
+            json.dump(self.data, f, indent=4)
+
+Cache_Manager = Cache_Instance()
+Cache_Manager.load_cache()
+Exit_Handler.register(Cache_Manager.save_cache)
+
 class Task_Handler:
     
     cache_valid = False
@@ -626,9 +753,9 @@ class Task_Handler:
                 cls.cache_valid = True
                 cls.cached_exclusions = res.json().get("exclusions", [])
                 return cls.cached_exclusions
-        elif configs.LOCAL_GUI and CACHE.get("gui_port") is not None:
+        elif configs.LOCAL_GUI and Cache_Manager.get("gui_port") is not None:
             res = requests.get(
-                f"http://localhost:{CACHE['gui_port']}/{INSTANCE_ID}/exclude",
+                f"http://localhost:{Cache_Manager['gui_port']}/{INSTANCE_ID}/exclude",
                 timeout=(10, 20)
             )
             if res.status_code == 200:
@@ -888,26 +1015,77 @@ Asset_Manager.load_upgrader_assets()
 Asset_Manager.load_attacker_assets()
 Asset_Manager.load_fonts()
 
+class ADB_Manager:
+    import uiautomator2 as u2
+    from adbutils import AdbDevice
+    from pyminitouch import MNTDevice
+    
+    adbutils_device : AdbDevice | None = None
+    minitouch_device : MNTDevice | None = None
+    uiautomator_device : u2.Device | None = None
+
+    @classmethod
+    def connect_once(cls, addr=None):
+        import subprocess, adbutils, os
+        import uiautomator2 as u2
+        from pyminitouch import MNTDevice
+        
+        if addr is None: addr = ADB_ADDRESS
+        if ADB_ABS_DIR != "": os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
+        subprocess.run(["adb", "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        res = adbutils.adb.connect(addr)
+        if "connected" not in res:
+            subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            raise Exception("Failed to connect to ADB.")
+        devices = []
+        try:
+            d1 = adbutils.device(addr)
+            d2 = MNTDevice(addr)
+            d3 = u2.connect(addr)
+            devices = [d1, d2, d3]
+            Exit_Handler.register(d2.stop)
+        except (KeyboardInterrupt, SystemExit): raise
+        except:
+            subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            raise Exception("Failed to get ADB device.")
+        cls.adbutils_device, cls.minitouch_device, cls.uiautomator_device = devices
+    
+    @classmethod
+    def connect(cls, timeout=60):
+        import time
+        start = time.time()
+        while time.time() - start < timeout:
+            try:
+                cls.connect_once()
+                if configs.DEBUG: print("Connected to ADB.")
+                return True
+            except (KeyboardInterrupt, SystemExit): raise
+            except Exception as e:
+                if configs.DEBUG: print("connect_adb", e)
+            time.sleep(0.5)
+        if configs.DEBUG: print("Failed to connect to ADB.")
+        return False
+
 class Input_Handler:
     @classmethod
     def down(cls, x, y, pointer=0):
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
+        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
         x = int(x * MAX_X)
         y = int(y * MAX_Y)
         builder = CommandBuilder()
         builder.down(pointer, x, y, 100)
-        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.publish(ADB_Manager.minitouch_device.connection)
 
     @classmethod
     def up(cls, pointer=0):
         from pyminitouch import CommandBuilder
         builder = CommandBuilder()
         builder.up(pointer)
-        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.publish(ADB_Manager.minitouch_device.connection)
 
     @classmethod
     def click(cls, x, y, n=1, delay=0, pointer=0):
@@ -915,8 +1093,8 @@ class Input_Handler:
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
+        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
         x = int(x * MAX_X)
         y = int(y * MAX_Y)
         builder = CommandBuilder()
@@ -924,7 +1102,7 @@ class Input_Handler:
             builder.down(pointer, x, y, 100)
             builder.commit()
             builder.up(pointer)
-            builder.publish(MINITOUCH_DEVICE.connection)
+            builder.publish(ADB_Manager.minitouch_device.connection)
             time.sleep(delay)
 
     @classmethod
@@ -933,9 +1111,9 @@ class Input_Handler:
 
     @classmethod
     def multi_click(cls, x1, y1, x2, y2, duration=0):
-        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
-        MINITOUCH_DEVICE.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
+        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
+        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
+        ADB_Manager.minitouch_device.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
 
     @classmethod
     def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0, pointer=0):
@@ -949,8 +1127,8 @@ class Input_Handler:
         
         builder = CommandBuilder()
         
-        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
+        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
         
         x1 = int(x1 * MAX_X)
         y1 = int(y1 * MAX_Y)
@@ -962,14 +1140,14 @@ class Input_Handler:
         dt = duration / (inter_points + 1)
         
         builder.down(pointer, x1, y1, pressure=100)
-        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.publish(ADB_Manager.minitouch_device.connection)
         for x, y in zip(x_points, y_points):
             builder.move(pointer, x, y, pressure=100)
-            builder.publish(MINITOUCH_DEVICE.connection)
+            builder.publish(ADB_Manager.minitouch_device.connection)
             if dt > 0: time.sleep(dt / 1000)
         if hold_end_time > 0: time.sleep(hold_end_time / 1000)
         builder.up(pointer)
-        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.publish(ADB_Manager.minitouch_device.connection)
 
     @classmethod
     def swipe_up(cls, y1=0.5, y2=0.0, x=1.0, **kwargs):
@@ -993,8 +1171,8 @@ class Input_Handler:
         
         builder = CommandBuilder()
         
-        MAX_X = int(MINITOUCH_DEVICE.connection.max_x)
-        MAX_Y = int(MINITOUCH_DEVICE.connection.max_y)
+        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
+        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
         
         left_in = to_int_array((0.15 + 0.30*percent)*MAX_X, 0.5*MAX_Y)
         left_out = to_int_array(0.15*MAX_X, 0.5*MAX_Y)
@@ -1006,14 +1184,14 @@ class Input_Handler:
         
         builder.down(0, *start[0], pressure=100)
         builder.down(1, *start[1], pressure=100)
-        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.publish(ADB_Manager.minitouch_device.connection)
         builder.move(0, *end[0], pressure=100)
         builder.move(1, *end[1], pressure=100)
         builder.commit()
-        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.publish(ADB_Manager.minitouch_device.connection)
         builder.up(0)
         builder.up(1)
-        builder.publish(MINITOUCH_DEVICE.connection)
+        builder.publish(ADB_Manager.minitouch_device.connection)
 
 class Frame_Handler:
     pool = None
@@ -1047,9 +1225,9 @@ class Frame_Handler:
         if use_cached and cls.cached_frame is not None:
             frame = cls.cached_frame.copy()
         else:
-            try: frame = ADB_DEVICE.framebuffer() # faster than screenshot but potentially unstable
+            try: frame = ADB_Manager.adbutils_device.framebuffer() # faster than screenshot but potentially unstable
             except (KeyboardInterrupt, SystemExit): raise
-            except: frame = ADB_DEVICE.screenshot()
+            except: frame = ADB_Manager.adbutils_device.screenshot()
             frame = np.array(frame)[..., :3]
             frame = cv2.resize(frame, WINDOW_DIMS, interpolation=cv2.INTER_NEAREST)
             cls.cached_frame = frame.copy()
@@ -1143,14 +1321,6 @@ class Frame_Handler:
         for template in templates:
             threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, null_val, return_confidence, return_all))
         return [thread.result() for thread in threads]
-
-class Scheduler:
-    from apscheduler.schedulers.background import BackgroundScheduler
-    scheduler = BackgroundScheduler()
-    scheduler.start()
-    # Exit_Handler.register(scheduler.shutdown)
-    
-    add_job = scheduler.add_job
 
 class Dev_Tools:
     @classmethod
