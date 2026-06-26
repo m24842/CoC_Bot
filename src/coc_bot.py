@@ -1,4 +1,3 @@
-import utils
 from utils import *
 from configs import *
 from upgrader import Upgrader
@@ -6,81 +5,10 @@ from attacker import Attacker
 
 class CoC_Bot:
     def __init__(self):
-        self.start_bluestacks()
-        self.connect_adb()
+        start_bluestacks()
+        ADB_Manager.connect(60)
         self.upgrader = Upgrader()
         self.attacker = Attacker()
-
-    # ============================================================
-    # 🖥️ System & Emulator Management
-    # ============================================================
-    
-    def update_status(self, status):
-        import requests
-        
-        if WEB_APP_URL != "":
-            try:
-                requests.post(
-                    f"{WEB_APP_URL}/{utils.INSTANCE_ID}/status",
-                    json={"status": status},
-                    timeout=(1, 2)
-                )
-            except (KeyboardInterrupt, SystemExit): raise
-            except Exception as e:
-                if configs.DEBUG: print("update_status", e)
-        if utils.CACHE.get("gui_port") is not None:
-            try:
-                requests.post(
-                    f"http://localhost:{utils.CACHE['gui_port']}/status",
-                    json={"status": status},
-                    timeout=(1, 2)
-                )
-            except (KeyboardInterrupt, SystemExit): raise
-            except Exception as e:
-                if configs.DEBUG: print("update_status", e)
-    
-    def start_bluestacks(self):
-        import sys, subprocess, time
-        
-        if sys.platform == "darwin":
-            subprocess.Popen([
-                "osascript", "-e",
-                'tell application "BlueStacks" to launch\n'
-                'tell application "BlueStacks" to set visible of front window to false'
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        elif sys.platform == "win32":
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            startupinfo.wShowWindow = 6
-            subprocess.Popen([r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, startupinfo=startupinfo)
-        
-        for _ in range(120):
-            if self.check_bluestacks():
-                if configs.DEBUG: print("BlueStacks started.")
-                return
-            time.sleep(0.5)
-        
-        raise Exception("BlueStacks failed to start.")
-    
-    def check_bluestacks(self):
-        import psutil
-        for proc in psutil.process_iter(['name']):
-            if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
-                return True
-        return False
-
-    def connect_adb(self):
-        import time
-        for _ in range(120):
-            try:
-                connect_adb()
-                if configs.DEBUG: print("Connected to ADB.")
-                return
-            except (KeyboardInterrupt, SystemExit): raise
-            except Exception as e:
-                if configs.DEBUG: print("connect_adb", e)
-            time.sleep(0.5)
-        raise Exception("Failed to connect to ADB.")
     
     # ============================================================
     # ⏱️ Task Execution
@@ -88,15 +16,26 @@ class CoC_Bot:
     
     def run(self):
         import time
+        from datetime import datetime, timedelta
+        
+        last_restarted = datetime.now()
         
         while True:
             try:
+                if all([
+                    BLUESTACKS_RESTART_INTERVAL > 0,
+                    datetime.now() - last_restarted > timedelta(days=BLUESTACKS_RESTART_INTERVAL)
+                ]):
+                    restart_bluestacks()
+                    if not ADB_Manager.connect(60): continue
+                    last_restarted = datetime.now()
+
                 if not running():
                     time.sleep(1)
                     continue
                 
                 if start_coc():
-                    self.update_status("now")
+                    update_status("now")
                     
                     Task_Handler.get_exclusions()
                     exclude_home_base = Task_Handler.home_base_excluded(use_cached=True)
@@ -130,7 +69,7 @@ class CoC_Bot:
                     
                     to_home_base()
                     stop_coc()
-                    self.update_status(time.time())
+                    update_status(time.time())
                 
                 time.sleep(60 * CHECK_INTERVAL)
             
@@ -139,4 +78,4 @@ class CoC_Bot:
                 import traceback
                 traceback.print_exc()
                 stop_coc()
-                self.update_status("error")
+                update_status("error")
