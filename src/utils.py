@@ -17,6 +17,7 @@ else:
     CACHE_PATH = Path(__file__).parent / "cache.json"
 
 INSTANCE_ID, ADB_ADDRESS = None, None
+TEMP_CACHE = {}
 
 def parse_args(debug=None, id=None, gui=None, gui_port=None):
     import argparse
@@ -29,7 +30,7 @@ def parse_args(debug=None, id=None, gui=None, gui_port=None):
     args = parser.parse_args()
     configs.DEBUG = args.debug if debug is None else debug
     configs.LOCAL_GUI = args.gui if gui is None else gui
-    Cache_Manager["gui_port"] = args.gui_port if gui_port is None else gui_port
+    TEMP_CACHE["gui_port"] = args.gui_port if gui_port is None else gui_port
     if id is not None:
         assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
         args.id = id
@@ -89,70 +90,125 @@ def enable_sleep():
 def to_system_home():
     ADB_Manager.adbutils_device.shell("input keyevent KEYCODE_HOME")
 
-def check_bluestacks():
-    import psutil
-    for proc in psutil.process_iter(['name']):
-        if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
-            return True
+def check_bluestacks(bluestacks_instance_name=None):
+    """
+    BlueStacks instance name is NOT the same as the bot instance ID.
+    Generally should be of the form 'Pie64_X' 'Nougat64_X' 'Tiramisu64_X'
+    """
+    
+    import os, psutil
+    
+    # Default checking
+    if bluestacks_instance_name is None:
+        for proc in psutil.process_iter(['name']):
+            if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
+                return True
+        return False
+    
+    # Specific instance checking
+    log_path = None
+    if sys.platform == "darwin":
+        log_path = "/Users/Shared/Library/Application Support/BlueStacks/Logs/Player.log"
+    elif sys.platform == "win32":
+        log_path = r"C:\ProgramData\BlueStacks_nxt\Logs\Player.log"
+
+    if log_path is not None and Path(log_path).exists():
+
+        def rev_read(filename, block_size=64):
+            with open(filename, 'r', errors='ignore') as f:
+                f.seek(0, os.SEEK_END)
+                file_size = f.tell()
+                pointer_position = file_size
+                buffer = ""
+
+                while pointer_position > 0:
+                    to_read = min(block_size, pointer_position)
+                    pointer_position -= to_read
+                    f.seek(pointer_position)
+                    buffer = f.read(to_read) + buffer                    
+                    lines = buffer.split('\n')
+                    buffer = lines[0]
+                    for line in reversed(lines[1:]):
+                        yield line
+                
+                if buffer:
+                    yield buffer
+        
+        # Look for the most recent state of the target instance
+        for line in rev_read(log_path):
+            if f"{bluestacks_instance_name} [Ready]" in line:
+                return True
+            elif f"{bluestacks_instance_name} [Stopping]" in line:
+                return False
+    else:
+        if configs.DEBUG: print("Bluestacks log file not found, assuming Bluestacks is already running.")
     return False
 
-def start_bluestacks():
-    import sys, subprocess, time
+def start_bluestacks(timeout=60):
+    import sys, subprocess, time, json
     
-    if check_bluestacks():
-        if configs.DEBUG: print("BlueStacks already running.")
+    mim_path = None
+    if sys.platform == "darwin":
+        mim_path = "/Users/Shared/Library/Application Support/BlueStacks/Engine/UserData/MimMetaData.json"
+    elif sys.platform == "win32":
+        mim_path = r"C:\ProgramData\BlueStacks_nxt\Engine\UserData\MimMetaData.json"
+    if mim_path is None or not Path(mim_path).exists():
+        mim_path = file_search("/", "MimMetaData.json", ["bluestacks"])
+
+    target_instance_name = None
+    if mim_path is not None and Path(mim_path).exists():
+        mim_data = json.loads(Path(mim_path).read_text())
+        instances = {instance['Name']: instance["InstanceName"] for instance in mim_data["Organization"]}
+        target_instance_name = instances.get(INSTANCE_ID, None)
+    else:
+        if configs.DEBUG: print("MimMetaData.json not found, using default instance.")
+
+    if check_bluestacks(target_instance_name):
+        if configs.DEBUG: print("Bluestacks already running.")
         return
     
-    conf_path = file_search("/", "bluestacks.conf", ["bluestacks"])
-
-    instances = set()
-    for line in open(conf_path).read().splitlines():
-        if line.startswith("bst.instance"):
-            instance_name = line.split(".")[2].strip()
-            instances.add(instance_name)
-    instances = sorted(instances)
-    
+    target_instance_name = target_instance_name if target_instance_name is not None else ""
     if sys.platform == "darwin":
-        for instance in instances:
-            subprocess.Popen(
-                ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", instance],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-                start_new_session=True,
-            )
+        subprocess.Popen(
+            ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", target_instance_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            start_new_session=True,
+        )
     elif sys.platform == "win32":
         bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"
         assert Path(bin_path).exists(), f"BlueStacks executable not found at {bin_path}"
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = 7
-        for instance in instances:
-            subprocess.Popen(
-                [bin_path, "--instance", instance],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-                startupinfo=startupinfo,
-                creationflags=subprocess.DETACHED_PROCESS,
-            )
+        subprocess.Popen(
+            [bin_path, "--instance", target_instance_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            startupinfo=startupinfo,
+            creationflags=subprocess.DETACHED_PROCESS,
+        )
     
-    for _ in range(120):
-        if check_bluestacks():
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if check_bluestacks(target_instance_name):
             if configs.DEBUG: print("BlueStacks started.")
             return
         time.sleep(0.5)
     
     raise Exception("BlueStacks failed to start.")
 
-def stop_bluestacks():
+def stop_bluestacks(timeout=60):
     import psutil, time
     
     for proc in psutil.process_iter(['name']):
         if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
             proc.terminate()
     
-    for _ in range(120):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
         if not check_bluestacks():
             if configs.DEBUG: print("BlueStacks stopped.")
             return
@@ -403,7 +459,7 @@ def update_status(status):
         except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("update_status", e)
-    if gui_port := Cache_Manager.get("gui_port") is not None:
+    if gui_port := TEMP_CACHE.get("gui_port") is not None:
         try:
             requests.post(
                 f"http://localhost:{gui_port}/status",
@@ -453,9 +509,9 @@ def extend_pythonanywhere_hosting(username, password):
 def to_home_base(ref_cache=False):
     import cv2, time, numpy as np
     
-    if ref_cache and Cache_Manager.get("location") == "home_base": return
+    if ref_cache and TEMP_CACHE.get("location") == "home_base": return
     
-    Cache_Manager["location"] = "home_base"
+    TEMP_CACHE["location"] = "home_base"
     
     try:
         get_home_builders(0, return_amount=False)
@@ -533,14 +589,14 @@ def start_coc(timeout=60):
             
             try:
                 get_home_builders(0, return_amount=False, use_cached_frame=True)
-                Cache_Manager["location"] = "home_base"
+                TEMP_CACHE["location"] = "home_base"
                 break
             except (KeyboardInterrupt, SystemExit): raise
             except: pass
             
             try:
                 get_builder_builders(0, return_amount=False, use_cached_frame=True)
-                Cache_Manager["location"] = "builder_base"
+                TEMP_CACHE["location"] = "builder_base"
                 break
             except (KeyboardInterrupt, SystemExit): raise
             except: pass
@@ -593,9 +649,9 @@ def update_coc(timeout=10, from_in_game=False):
 def to_builder_base(ref_cache=False):
     import cv2, time, numpy as np
     
-    if ref_cache and Cache_Manager.get("location") == "builder_base": return
+    if ref_cache and TEMP_CACHE.get("location") == "builder_base": return
     
-    Cache_Manager["location"] = "builder_base"
+    TEMP_CACHE["location"] = "builder_base"
     
     try:
         get_builder_builders(0, return_amount=False)
@@ -702,7 +758,13 @@ class Scheduler:
     
     add_job = scheduler.add_job
 
-class Cache_Instance(collections.UserDict):
+class Disk_Cache(collections.UserDict):
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+        self.load_cache()
+        Exit_Handler.register(self.save_cache)
+    
     def __setitem__(self, key, value):
         from datetime import datetime, timedelta
         super().__setitem__(key, value)
@@ -719,19 +781,17 @@ class Cache_Instance(collections.UserDict):
 
     def load_cache(self):
         import json, portalocker
-        if CACHE_PATH.exists():
-            with portalocker.Lock(CACHE_PATH, "r", timeout=5) as f:
+        if self.path.exists():
+            with portalocker.Lock(self.path, "r", timeout=5) as f:
                 self.update(json.load(f))
         return self.data
 
     def save_cache(self):
         import json, portalocker
-        with portalocker.Lock(CACHE_PATH, "w", timeout=5) as f:
+        with portalocker.Lock(self.path, "w", timeout=5) as f:
             json.dump(self.data, f, indent=4)
 
-Cache_Manager = Cache_Instance()
-Cache_Manager.load_cache()
-Exit_Handler.register(Cache_Manager.save_cache)
+Cache_Manager = Disk_Cache(CACHE_PATH)
 
 class Task_Handler:
     
@@ -753,9 +813,9 @@ class Task_Handler:
                 cls.cache_valid = True
                 cls.cached_exclusions = res.json().get("exclusions", [])
                 return cls.cached_exclusions
-        elif configs.LOCAL_GUI and Cache_Manager.get("gui_port") is not None:
+        elif configs.LOCAL_GUI and TEMP_CACHE.get("gui_port") is not None:
             res = requests.get(
-                f"http://localhost:{Cache_Manager['gui_port']}/{INSTANCE_ID}/exclude",
+                f"http://localhost:{TEMP_CACHE['gui_port']}/{INSTANCE_ID}/exclude",
                 timeout=(10, 20)
             )
             if res.status_code == 200:
