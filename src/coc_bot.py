@@ -5,7 +5,7 @@ from attacker import Attacker
 
 class CoC_Bot:
     def __init__(self):
-        start_bluestacks()
+        BlueStacks_Manager.start()
         ADB_Manager.connect(60)
         self.upgrader = Upgrader()
         self.attacker = Attacker()
