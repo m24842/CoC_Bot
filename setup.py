@@ -1,9 +1,11 @@
 import sys
+import venv
 import shutil
 import subprocess
 from pathlib import Path
 
-py311 = shutil.which("python3.11")
+assert sys.version_info >= (3, 11), "Python 3.11 or higher is required!"
+
 dir_path = Path(__file__).parent.resolve()
 venv_path = dir_path / '.venv'
 if sys.platform == "win32":
@@ -17,7 +19,7 @@ web_app_packages = dir_path / "app" / "requirements.txt"
 bot_setup = input("Install bot dependencies? (y/n): ").lower() == 'y'
 web_app_setup = input("Install web app dependencies? (y/n): ").lower() == 'y'
 
-if not Path.exists(dir_path / ".venv"): subprocess.run([py311, "-m", "venv", venv_path])
+if not Path.exists(dir_path / ".venv"): venv.create(venv_path, system_site_packages=False, with_pip=True)
 
 if bot_setup:
     subprocess.run([venv_python, "-m", "pip", "install", "-r", bot_packages])
