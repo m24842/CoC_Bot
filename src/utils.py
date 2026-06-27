@@ -16,7 +16,7 @@ if getattr(sys, "frozen", False):
 else:
     CACHE_PATH = Path(__file__).parent / "cache.json"
 
-INSTANCE_ID, ADB_ADDRESS = None, None
+INSTANCE_ID, ADB_ADDRESS, BLUESTACKS_PID = [None] * 3
 TEMP_CACHE = {}
 
 def parse_args(debug=None, id=None, gui=None, gui_port=None):
@@ -77,6 +77,8 @@ def disable_sleep():
         )
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
+    else:
+        raise Exception("Unsupported OS")
     Exit_Handler.register(enable_sleep)
 
 def enable_sleep():
@@ -86,146 +88,18 @@ def enable_sleep():
         pass
     elif sys.platform == "win32":
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
+    else:
+        raise Exception("Unsupported OS")
 
 def to_system_home():
     ADB_Manager.adbutils_device.shell("input keyevent KEYCODE_HOME")
-
-def check_bluestacks(bluestacks_instance_name=None):
-    """
-    BlueStacks instance name is NOT the same as the bot instance ID.
-    Generally should be of the form 'Pie64_X' 'Nougat64_X' 'Tiramisu64_X'
-    """
-    
-    import os, psutil
-    
-    # Default checking
-    if bluestacks_instance_name is None:
-        for proc in psutil.process_iter(['name']):
-            if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
-                return True
-        return False
-    
-    # Specific instance checking
-    log_path = None
-    if sys.platform == "darwin":
-        log_path = "/Users/Shared/Library/Application Support/BlueStacks/Logs/Player.log"
-    elif sys.platform == "win32":
-        log_path = r"C:\ProgramData\BlueStacks_nxt\Logs\Player.log"
-
-    if log_path is not None and Path(log_path).exists():
-
-        def rev_read(filename, block_size=64):
-            with open(filename, 'r', errors='ignore') as f:
-                f.seek(0, os.SEEK_END)
-                file_size = f.tell()
-                pointer_position = file_size
-                buffer = ""
-
-                while pointer_position > 0:
-                    to_read = min(block_size, pointer_position)
-                    pointer_position -= to_read
-                    f.seek(pointer_position)
-                    buffer = f.read(to_read) + buffer                    
-                    lines = buffer.split('\n')
-                    buffer = lines[0]
-                    for line in reversed(lines[1:]):
-                        yield line
-                
-                if buffer:
-                    yield buffer
-        
-        # Look for the most recent state of the target instance
-        for line in rev_read(log_path):
-            if f"{bluestacks_instance_name} [Ready]" in line:
-                return True
-            elif f"{bluestacks_instance_name} [Stopping]" in line:
-                return False
-    else:
-        if configs.DEBUG: print("Bluestacks log file not found, assuming Bluestacks is already running.")
-    return False
-
-def start_bluestacks(timeout=60):
-    import sys, subprocess, time, json
-    
-    mim_path = None
-    if sys.platform == "darwin":
-        mim_path = "/Users/Shared/Library/Application Support/BlueStacks/Engine/UserData/MimMetaData.json"
-    elif sys.platform == "win32":
-        mim_path = r"C:\ProgramData\BlueStacks_nxt\Engine\UserData\MimMetaData.json"
-    if mim_path is None or not Path(mim_path).exists():
-        mim_path = file_search("/", "MimMetaData.json", ["bluestacks"])
-
-    target_instance_name = None
-    if mim_path is not None and Path(mim_path).exists():
-        mim_data = json.loads(Path(mim_path).read_text())
-        instances = {instance['Name']: instance["InstanceName"] for instance in mim_data["Organization"]}
-        target_instance_name = instances.get(INSTANCE_ID, None)
-    else:
-        if configs.DEBUG: print("MimMetaData.json not found, using default instance.")
-
-    if check_bluestacks(target_instance_name):
-        if configs.DEBUG: print("Bluestacks already running.")
-        return
-    
-    str_target_instance_name = target_instance_name if target_instance_name is not None else ""
-    if sys.platform == "darwin":
-        subprocess.Popen(
-            ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", str_target_instance_name],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-    elif sys.platform == "win32":
-        bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"
-        assert Path(bin_path).exists(), f"BlueStacks executable not found at {bin_path}"
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        startupinfo.wShowWindow = 7
-        subprocess.Popen(
-            [bin_path, "--instance", str_target_instance_name],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-            startupinfo=startupinfo,
-            creationflags=subprocess.DETACHED_PROCESS,
-        )
-    
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if check_bluestacks(target_instance_name):
-            if configs.DEBUG: print("BlueStacks started.")
-            return
-        time.sleep(0.5)
-    
-    raise Exception("BlueStacks failed to start.")
-
-def stop_bluestacks(timeout=60):
-    import psutil, time
-    
-    for proc in psutil.process_iter(['name']):
-        if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
-            proc.terminate()
-    
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if not check_bluestacks():
-            if configs.DEBUG: print("BlueStacks stopped.")
-            return
-        time.sleep(0.5)
-    
-    raise Exception("BlueStacks failed to stop.")
-
-def restart_bluestacks():
-    stop_bluestacks()
-    start_bluestacks()
 
 def file_search(root, target_name, keywords=[]):
     if cached_path := Cache_Manager.get("file_search", {}).get(target_name, None) is not None:
         return cached_path
     
     keywords = [kw.lower() for kw in keywords]
-    root = Path(root)
+    root = Path(root).resolve()
     queue = collections.deque([root])
     visited = set([root.resolve()])
     while queue:
@@ -234,8 +108,9 @@ def file_search(root, target_name, keywords=[]):
         try:
             for entries in current_dir.iterdir():
                 if entries.is_file() and entries.name == target_name:
-                    Cache_Manager.setdefault("file_search", {})[target_name] = str(entries.resolve())
-                    return entries.resolve()
+                    file_path = str(entries.resolve())
+                    Cache_Manager.setdefault("file_search", {})[target_name] = file_path
+                    return file_path
                 
                 if entries.is_dir():
                     real_path = entries.resolve()
@@ -788,6 +663,183 @@ class Disk_Cache(collections.UserDict):
             json.dump(self.data, f, indent=4)
 
 Cache_Manager = Disk_Cache(CACHE_PATH)
+
+class BlueStacks_Manager:
+    """
+    BlueStacks internal instance name is NOT the same as the bot instance ID or the user-facing instance name.
+    Generally should be of the form 'Pie64_X' 'Nougat64_X' 'Tiramisu64_X'
+    """
+    
+    instance_pid = None
+    internal_instance_name = None
+    mim_path = None
+    
+    @classmethod
+    def check(cls):
+        import os, psutil
+        
+        if cls.internal_instance_name is None and cls.instance_pid is None:
+            # Default checking
+            for proc in psutil.process_iter(['name']):
+                if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
+                    return True
+            return False
+        elif cls.internal_instance_name is None and cls.instance_pid is not None:
+            # PID checking
+            try:
+                psutil.Process(cls.instance_pid)
+                return True
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                return False
+        else:
+            # Specific instance checking
+            log_path = None
+            if sys.platform == "darwin":
+                log_path = "/Users/Shared/Library/Application Support/BlueStacks/Logs/Player.log"
+            elif sys.platform == "win32":
+                log_path = r"C:\ProgramData\BlueStacks_nxt\Logs\Player.log"
+            else:
+                raise Exception("Unsupported OS")
+
+            if log_path is not None and Path(log_path).exists():
+
+                def rev_read(filename, block_size=64):
+                    with open(filename, 'r', errors='ignore') as f:
+                        f.seek(0, os.SEEK_END)
+                        file_size = f.tell()
+                        pointer_position = file_size
+                        buffer = ""
+
+                        while pointer_position > 0:
+                            to_read = min(block_size, pointer_position)
+                            pointer_position -= to_read
+                            f.seek(pointer_position)
+                            buffer = f.read(to_read) + buffer                    
+                            lines = buffer.split('\n')
+                            buffer = lines[0]
+                            for line in reversed(lines[1:]):
+                                yield line
+                        
+                        if buffer:
+                            yield buffer
+                
+                # Look for the most recent logged state of the target instance
+                for line in rev_read(log_path):
+                    if f"{cls.internal_instance_name} [Ready]" in line:
+                        return True
+                    elif f"{cls.internal_instance_name} [Stopping]" in line:
+                        return False
+            else:
+                if configs.DEBUG: print("Bluestacks log file not found, assuming Bluestacks is running.")
+        return False
+
+    @classmethod
+    def start(cls, instance_id=None, timeout=60):
+        import sys, subprocess, time, json
+        
+        instance_id = instance_id if instance_id is not None else INSTANCE_ID
+        
+        if cls.mim_path is None or not Path(cls.mim_path).exists():
+            if sys.platform == "darwin":
+                cls.mim_path = "/Users/Shared/Library/Application Support/BlueStacks/Engine/UserData/MimMetaData.json"
+            elif sys.platform == "win32":
+                cls.mim_path = r"C:\ProgramData\BlueStacks_nxt\Engine\UserData\MimMetaData.json"
+            else:
+                raise Exception("Unsupported OS")
+            if cls.mim_path is None or not Path(cls.mim_path).exists():
+                cls.mim_path = file_search("/", "MimMetaData.json", ["bluestacks"])
+
+        if cls.internal_instance_name is None and cls.mim_path is not None:
+            if cls.mim_path is not None and Path(cls.mim_path).exists():
+                mim_data = json.loads(Path(cls.mim_path).read_text())
+                instances = {instance['Name']: instance["InstanceName"] for instance in mim_data["Organization"]}
+                cls.internal_instance_name = instances.get(instance_id, None)
+            else:
+                if configs.DEBUG: print("MimMetaData.json not found, using default instance.")
+
+        if cls.check():
+            if configs.DEBUG: print("Bluestacks already running.")
+            return
+        
+        str_target_instance_name = cls.internal_instance_name if cls.internal_instance_name is not None else ""
+        if sys.platform == "darwin":
+            proc = subprocess.Popen(
+                ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", str_target_instance_name],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+        elif sys.platform == "win32":
+            bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"
+            if not Path(bin_path).exists():
+                bin_path = file_search("/", "HD-Player.exe", ["bluestacks"])
+            assert Path(bin_path).exists(), f"BlueStacks executable not found at {bin_path}"
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = 7
+            proc = subprocess.Popen(
+                [bin_path, "--instance", str_target_instance_name],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                startupinfo=startupinfo,
+                creationflags=subprocess.DETACHED_PROCESS,
+            )
+        else:
+            raise Exception("Unsupported OS")
+        cls.instance_pid = proc.pid
+        
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if cls.check():
+                if configs.DEBUG: print("BlueStacks started.")
+                return
+            time.sleep(0.5)
+        
+        raise Exception("BlueStacks failed to start.")
+
+    @classmethod
+    def stop(cls, timeout=60):
+        import psutil, time
+        
+        if not cls.check():
+            cls.instance_pid = None
+            if configs.DEBUG: print("BlueStacks stopped.")
+            return
+        
+        if cls.instance_pid is None:
+            found = False
+            for proc in psutil.process_iter(['name']):
+                if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
+                    proc.terminate()
+                    found = True
+            if not found:
+                cls.instance_pid = None
+                if configs.DEBUG: print("BlueStacks stopped.")
+                return
+        else:
+            try:
+                psutil.Process(cls.instance_pid).terminate()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                cls.instance_pid = None
+                if configs.DEBUG: print("BlueStacks stopped.")
+                return
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if not cls.check():
+                cls.instance_pid = None
+                if configs.DEBUG: print("BlueStacks stopped.")
+                return
+            time.sleep(0.5)
+        
+        raise Exception("BlueStacks failed to stop.")
+
+    @classmethod
+    def restart(cls):
+        cls.stop()
+        cls.start()
 
 class Task_Handler:
     
