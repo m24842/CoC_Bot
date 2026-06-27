@@ -32,7 +32,7 @@ UPGRADE_HEROES = True # can be overridden on desktop or web app
 UPGRADE_HOME_BASE = True # can be overridden on desktop or web app
 UPGRADE_HOME_LAB = True # can be overridden on desktop or web app
 ASSIGN_LAB_ASSISTANT = True # can be overridden on desktop or web app
-ASSIGN_BUILDER_ASSISTANT = True # can be overridden on desktop or web app
+ASSIGN_BUILDER_APPRENTICE = True # can be overridden on desktop or web app
 
 PRIORITY_HOME_BASE_UPGRADES = True # if false, will upgrade in random order regardless of priority settings (can be overridden on desktop or web app)
 PRIORITY_HOME_LAB_UPGRADES = True # if false, will upgrade in random order regardless of priority settings (can be overridden on desktop or web app)
