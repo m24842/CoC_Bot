@@ -167,10 +167,10 @@ def start_bluestacks(timeout=60):
         if configs.DEBUG: print("Bluestacks already running.")
         return
     
-    target_instance_name = target_instance_name if target_instance_name is not None else ""
+    str_target_instance_name = target_instance_name if target_instance_name is not None else ""
     if sys.platform == "darwin":
         subprocess.Popen(
-            ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", target_instance_name],
+            ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", str_target_instance_name],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             stdin=subprocess.DEVNULL,
@@ -183,7 +183,7 @@ def start_bluestacks(timeout=60):
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = 7
         subprocess.Popen(
-            [bin_path, "--instance", target_instance_name],
+            [bin_path, "--instance", str_target_instance_name],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             stdin=subprocess.DEVNULL,

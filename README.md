@@ -34,6 +34,7 @@
     * Display resolution: 1920 x 1080
     * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
     * Enable Android Debug Bridge
+    * In Multi-Instance Manager, rename instances to match instance IDs in `configs.py` (the default ID is main, see steps 2 and 5 in [Setup Instructions](#setup-instructions) for more details)
     * Install Clash of Clans from Google Play
         * Default troop deployment size
         * Standard or XL scenery
@@ -90,4 +91,4 @@
 
     > 💡 __Tip__: If not using the bot for development purposes, it can be built into an executable or desktop app for convenience using [build.sh](scripts/build.sh). The desktop app GUI or command-line arguments can be used to specify the instance to run if using multiple bot instances. View a demo of the desktop app [here](https://youtube.com/shorts/zVZwBW8QIeY?feature=share).
 
-    * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager, set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to `INSTANCE_IDS` and `ADB_ADDRESSES` in `configs.py`. Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).
+    * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager (ensuring BlueStacks instance names match bot instance IDs), set up the instance as usual, and append new instance names and their Android Debug Bridge addresses to `INSTANCE_IDS` and `ADB_ADDRESSES` in `configs.py`. Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).
