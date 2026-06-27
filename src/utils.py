@@ -670,24 +670,53 @@ class BlueStacks_Manager:
     Generally should be of the form 'Pie64_X' 'Nougat64_X' 'Tiramisu64_X'
     """
     
-    instance_pid = None
-    internal_instance_name = None
-    mim_path = None
+    _instance_pid = None
+    _internal_instance_name = None
+    _mim_path = None
+    
+    @classmethod
+    def internal_instance_name(cls, instance_id=None):
+        import json
+        
+        if cls._internal_instance_name is not None:
+            return cls._internal_instance_name
+        
+        instance_id = instance_id if instance_id is not None else INSTANCE_ID
+        
+        if cls._mim_path is None or not Path(cls._mim_path).exists():
+            if sys.platform == "darwin":
+                cls._mim_path = "/Users/Shared/Library/Application Support/BlueStacks/Engine/UserData/MimMetaData.json"
+            elif sys.platform == "win32":
+                cls._mim_path = r"C:\ProgramData\BlueStacks_nxt\Engine\UserData\MimMetaData.json"
+            else:
+                raise Exception("Unsupported OS")
+            if cls._mim_path is None or not Path(cls._mim_path).exists():
+                cls._mim_path = file_search("/", "MimMetaData.json", ["bluestacks"])
+
+        if cls._internal_instance_name is None and cls._mim_path is not None:
+            if cls._mim_path is not None and Path(cls._mim_path).exists():
+                mim_data = json.loads(Path(cls._mim_path).read_text())
+                instances = {instance['Name']: instance["InstanceName"] for instance in mim_data["Organization"]}
+                cls._internal_instance_name = instances.get(instance_id, None)
+            else:
+                if configs.DEBUG: print("MimMetaData.json not found, using default instance.")
+        
+        return cls._internal_instance_name
     
     @classmethod
     def check(cls):
         import os, psutil
         
-        if cls.internal_instance_name is None and cls.instance_pid is None:
+        if cls.internal_instance_name() is None and cls._instance_pid is None:
             # Default checking
             for proc in psutil.process_iter(['name']):
                 if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
                     return True
             return False
-        elif cls.internal_instance_name is None and cls.instance_pid is not None:
+        elif cls.internal_instance_name() is None and cls._instance_pid is not None:
             # PID checking
             try:
-                psutil.Process(cls.instance_pid)
+                psutil.Process(cls._instance_pid)
                 return True
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 return False
@@ -725,9 +754,9 @@ class BlueStacks_Manager:
                 
                 # Look for the most recent logged state of the target instance
                 for line in rev_read(log_path):
-                    if f"{cls.internal_instance_name} [Ready]" in line:
+                    if f"{cls.internal_instance_name()} [Ready]" in line:
                         return True
-                    elif f"{cls.internal_instance_name} [Stopping]" in line:
+                    elif f"{cls.internal_instance_name()} [Stopping]" in line:
                         return False
             else:
                 if configs.DEBUG: print("Bluestacks log file not found, assuming Bluestacks is running.")
@@ -735,33 +764,15 @@ class BlueStacks_Manager:
 
     @classmethod
     def start(cls, instance_id=None, timeout=60):
-        import sys, subprocess, time, json
+        import sys, subprocess, time
         
         instance_id = instance_id if instance_id is not None else INSTANCE_ID
         
-        if cls.mim_path is None or not Path(cls.mim_path).exists():
-            if sys.platform == "darwin":
-                cls.mim_path = "/Users/Shared/Library/Application Support/BlueStacks/Engine/UserData/MimMetaData.json"
-            elif sys.platform == "win32":
-                cls.mim_path = r"C:\ProgramData\BlueStacks_nxt\Engine\UserData\MimMetaData.json"
-            else:
-                raise Exception("Unsupported OS")
-            if cls.mim_path is None or not Path(cls.mim_path).exists():
-                cls.mim_path = file_search("/", "MimMetaData.json", ["bluestacks"])
-
-        if cls.internal_instance_name is None and cls.mim_path is not None:
-            if cls.mim_path is not None and Path(cls.mim_path).exists():
-                mim_data = json.loads(Path(cls.mim_path).read_text())
-                instances = {instance['Name']: instance["InstanceName"] for instance in mim_data["Organization"]}
-                cls.internal_instance_name = instances.get(instance_id, None)
-            else:
-                if configs.DEBUG: print("MimMetaData.json not found, using default instance.")
-
         if cls.check():
             if configs.DEBUG: print("Bluestacks already running.")
             return
         
-        str_target_instance_name = cls.internal_instance_name if cls.internal_instance_name is not None else ""
+        str_target_instance_name = cls.internal_instance_name() if cls.internal_instance_name() is not None else ""
         if sys.platform == "darwin":
             proc = subprocess.Popen(
                 ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", str_target_instance_name],
@@ -788,7 +799,7 @@ class BlueStacks_Manager:
             )
         else:
             raise Exception("Unsupported OS")
-        cls.instance_pid = proc.pid
+        cls._instance_pid = proc.pid
         
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -804,32 +815,32 @@ class BlueStacks_Manager:
         import psutil, time
         
         if not cls.check():
-            cls.instance_pid = None
+            cls._instance_pid = None
             if configs.DEBUG: print("BlueStacks stopped.")
             return
         
-        if cls.instance_pid is None:
+        if cls._instance_pid is None:
             found = False
             for proc in psutil.process_iter(['name']):
                 if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
                     proc.terminate()
                     found = True
             if not found:
-                cls.instance_pid = None
+                cls._instance_pid = None
                 if configs.DEBUG: print("BlueStacks stopped.")
                 return
         else:
             try:
-                psutil.Process(cls.instance_pid).terminate()
+                psutil.Process(cls._instance_pid).terminate()
             except (psutil.NoSuchProcess, psutil.AccessDenied):
-                cls.instance_pid = None
+                cls._instance_pid = None
                 if configs.DEBUG: print("BlueStacks stopped.")
                 return
 
         start_time = time.time()
         while time.time() - start_time < timeout:
             if not cls.check():
-                cls.instance_pid = None
+                cls._instance_pid = None
                 if configs.DEBUG: print("BlueStacks stopped.")
                 return
             time.sleep(0.5)
@@ -840,6 +851,8 @@ class BlueStacks_Manager:
     def restart(cls):
         cls.stop()
         cls.start()
+
+Exit_Handler.register(BlueStacks_Manager.stop)
 
 class Task_Handler:
     
@@ -991,7 +1004,6 @@ class Task_Handler:
             raise Exception("No external exclusion source available")
         except (KeyboardInterrupt, SystemExit): raise
         except:
-            print("default")
             return not configs.ATTACK_BUILDER_BASE
 
     @classmethod
