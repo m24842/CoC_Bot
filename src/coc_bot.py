@@ -16,7 +16,7 @@ class CoC_Bot:
     
     def run(self):
         import time
-                
+        
         while True:
             try:
                 if not running():
