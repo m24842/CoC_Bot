@@ -95,7 +95,7 @@ def to_system_home():
     ADB_Manager.adbutils_device.shell("input keyevent KEYCODE_HOME")
 
 def file_search(root, target_name, keywords=[]):
-    if cached_path := Cache_Manager.get("file_search", {}).get(target_name, None) is not None:
+    if (cached_path := Cache_Manager.get("file_search", {}).get(target_name, None)) is not None:
         return cached_path
     
     keywords = [kw.lower() for kw in keywords]
@@ -330,7 +330,7 @@ def update_status(status):
         except (KeyboardInterrupt, SystemExit): raise
         except Exception as e:
             if configs.DEBUG: print("update_status", e)
-    if gui_port := TEMP_CACHE.get("gui_port") is not None:
+    if (gui_port := TEMP_CACHE.get("gui_port")) is not None:
         try:
             requests.post(
                 f"http://localhost:{gui_port}/status",
@@ -590,6 +590,13 @@ def require_exit(n=5, delay=0.1):
         return wrapper
     return decorator
 
+class classproperty:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, obj, owner):
+        return self.func(owner)
+
 class Exit_Handler:
     RUN_AT_EXIT = []
     
@@ -603,9 +610,11 @@ class Exit_Handler:
 
     @classmethod
     def handle_sig(cls, sig, frame):
-        import signal
+        import signal, atexit
         for func in cls.RUN_AT_EXIT:
-            try: func()
+            try:
+                func()
+                atexit.unregister(func)
             except: pass
         if sig == signal.SIGINT:
             raise KeyboardInterrupt
@@ -670,25 +679,14 @@ class BlueStacks_Manager:
     Generally should be of the form 'Pie64_X' 'Nougat64_X' 'Tiramisu64_X'
     """
     
-    _instance_pid = None
     _internal_instance_name = None
     _mim_path = None
     
     @classmethod
-    def instance_pid(cls):
-        import psutil
-
-        if cls._instance_pid is not None:
-            return cls._instance_pid
-        
-        cached = Cache_Manager.get("bluestacks_pids", {}).get(cls._internal_instance_name, None)
-        if cached is not None and psutil.pid_exists(cached):
-            self._instance_pid = cached
-            return cached
-
-        return None
+    def init(cls):
+        Exit_Handler.register(cls.stop)
     
-    @classmethod
+    @classproperty
     def internal_instance_name(cls, instance_id=None):
         import json
         
@@ -719,62 +717,11 @@ class BlueStacks_Manager:
     
     @classmethod
     def check(cls):
-        import os, psutil
-        
-        if cls.internal_instance_name() is None and cls.instance_pid() is None:
-            # Default checking
-            for proc in psutil.process_iter(['name']):
-                if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
-                    return True
-            return False
-        elif cls.internal_instance_name() is None and cls.instance_pid() is not None:
-            # PID checking
-            try:
-                psutil.Process(cls.instance_pid())
-                return True
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                return False
-        else:
-            # Specific instance checking
-            log_path = None
-            if sys.platform == "darwin":
-                log_path = "/Users/Shared/Library/Application Support/BlueStacks/Logs/Player.log"
-            elif sys.platform == "win32":
-                log_path = r"C:\ProgramData\BlueStacks_nxt\Logs\Player.log"
-            else:
-                raise Exception("Unsupported OS")
-
-            if log_path is not None and Path(log_path).exists():
-
-                def rev_read(filename, block_size=64):
-                    with open(filename, 'r', errors='ignore') as f:
-                        f.seek(0, os.SEEK_END)
-                        file_size = f.tell()
-                        pointer_position = file_size
-                        buffer = ""
-
-                        while pointer_position > 0:
-                            to_read = min(block_size, pointer_position)
-                            pointer_position -= to_read
-                            f.seek(pointer_position)
-                            buffer = f.read(to_read) + buffer                    
-                            lines = buffer.split('\n')
-                            buffer = lines[0]
-                            for line in reversed(lines[1:]):
-                                yield line
-                        
-                        if buffer:
-                            yield buffer
-                
-                # Look for the most recent logged state of the target instance
-                for line in rev_read(log_path):
-                    if f"{cls.internal_instance_name()} [Ready]" in line:
-                        return True
-                    elif f"{cls.internal_instance_name()} [Stopping]" in line:
-                        return False
-            else:
-                if configs.DEBUG: print("Bluestacks log file not found, assuming Bluestacks is running.")
-        return False
+        try:
+            ADB_Manager.connect_once()
+            return True
+        except (KeyboardInterrupt, SystemExit): raise
+        except: return False
 
     @classmethod
     def start(cls, instance_id=None, timeout=60):
@@ -786,9 +733,9 @@ class BlueStacks_Manager:
             if configs.DEBUG: print("Bluestacks already running.")
             return
         
-        str_target_instance_name = cls.internal_instance_name() if cls.internal_instance_name() is not None else ""
+        str_target_instance_name = cls.internal_instance_name if cls.internal_instance_name is not None else ""
         if sys.platform == "darwin":
-            proc = subprocess.Popen(
+            subprocess.Popen(
                 ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", str_target_instance_name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -803,7 +750,7 @@ class BlueStacks_Manager:
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             startupinfo.wShowWindow = 7
-            proc = subprocess.Popen(
+            subprocess.Popen(
                 [bin_path, "--instance", str_target_instance_name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -813,8 +760,6 @@ class BlueStacks_Manager:
             )
         else:
             raise Exception("Unsupported OS")
-        cls._instance_pid = proc.pid
-        Cache_Manager.setdefault("bluestacks_pids", {})[cls._internal_instance_name] = cls._instance_pid
         
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -827,35 +772,16 @@ class BlueStacks_Manager:
 
     @classmethod
     def stop(cls, timeout=60):
-        import psutil, time
-        
+        import time
+
         if not cls.check():
-            cls._instance_pid = None
             if configs.DEBUG: print("BlueStacks stopped.")
             return
-        
-        if cls.instance_pid() is None:
-            found = False
-            for proc in psutil.process_iter(['name']):
-                if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
-                    proc.terminate()
-                    found = True
-            if not found:
-                cls._instance_pid = None
-                if configs.DEBUG: print("BlueStacks stopped.")
-                return
-        else:
-            try:
-                psutil.Process(cls.instance_pid()).terminate()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                cls._instance_pid = None
-                if configs.DEBUG: print("BlueStacks stopped.")
-                return
+        ADB_Manager.adbutils_device.shell("reboot -p")
 
         start_time = time.time()
         while time.time() - start_time < timeout:
             if not cls.check():
-                cls._instance_pid = None
                 if configs.DEBUG: print("BlueStacks stopped.")
                 return
             time.sleep(0.5)
@@ -866,8 +792,6 @@ class BlueStacks_Manager:
     def restart(cls):
         cls.stop()
         cls.start()
-
-Exit_Handler.register(BlueStacks_Manager.stop)
 
 class Task_Handler:
     
@@ -1150,14 +1074,65 @@ Asset_Manager.load_upgrader_assets()
 Asset_Manager.load_attacker_assets()
 Asset_Manager.load_fonts()
 
+class DeviceProxy:
+    def __init__(self, manager_cls, private_attr_name):
+        self._manager_cls = manager_cls
+        self._private_attr_name = private_attr_name
+
+    @property
+    def _real_device(self):
+        return getattr(self._manager_cls, self._private_attr_name)
+
+    def __getattr__(self, name):
+        device = self._real_device
+        if device is None:
+            if not self._manager_cls.connect():
+                raise RuntimeError("Device is not connected and auto-reconnect failed.")
+            device = self._real_device
+
+        attr = getattr(device, name)
+
+        if callable(attr):
+            def wrapper(*args, **kwargs):
+                try:
+                    return attr(*args, **kwargs)
+                except Exception as e:
+                    if configs.DEBUG:
+                        print(f"[Auto-Recover] Error on {name}: {e}. Triggering reconnect...")
+                    
+                    if self._manager_cls.connect():
+                        new_device = self._real_device
+                        new_attr = getattr(new_device, name)
+                        return new_attr(*args, **kwargs)
+                    else:
+                        raise RuntimeError("Action failed, and auto-reconnection timed out.") from e
+            return wrapper
+        
+        return attr
+
 class ADB_Manager:
     import uiautomator2 as u2
     from adbutils import AdbDevice
     from pyminitouch import MNTDevice
     
-    adbutils_device : AdbDevice | None = None
-    minitouch_device : MNTDevice | None = None
-    uiautomator_device : u2.Device | None = None
+    _adbutils_device : AdbDevice | None = None
+    _minitouch_device : MNTDevice | None = None
+    _uiautomator_device : u2.Device | None = None
+
+    @classmethod
+    def is_connected(cls):
+        import adbutils
+
+        if cls._adbutils_device is None or cls._minitouch_device is None or cls._uiautomator_device is None:
+            return False
+
+        try:
+            device_list = adbutils.adb.device_list()
+            if cls._adbutils_device.serial not in [d.serial for d in device_list]: return False
+            return True
+        except (KeyboardInterrupt, SystemExit): raise
+        except:
+            return False
 
     @classmethod
     def connect_once(cls, addr=None):
@@ -1167,6 +1142,7 @@ class ADB_Manager:
         
         if addr is None: addr = ADB_ADDRESS
         if ADB_ABS_DIR != "": os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
+        if cls.is_connected(): return
         subprocess.run(["adb", "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         res = adbutils.adb.connect(addr)
         if "connected" not in res:
@@ -1183,7 +1159,7 @@ class ADB_Manager:
         except:
             subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             raise Exception("Failed to get ADB device.")
-        cls.adbutils_device, cls.minitouch_device, cls.uiautomator_device = devices
+        cls._adbutils_device, cls._minitouch_device, cls._uiautomator_device = devices
     
     @classmethod
     def connect(cls, timeout=60):
@@ -1200,6 +1176,21 @@ class ADB_Manager:
             time.sleep(0.5)
         if configs.DEBUG: print("Failed to connect to ADB.")
         return False
+
+    @classproperty
+    def adbutils_device(cls):
+        if cls._adbutils_device is None: cls.connect()
+        return DeviceProxy(cls, "_adbutils_device")
+
+    @classproperty
+    def minitouch_device(cls):
+        if cls._minitouch_device is None: cls.connect()
+        return DeviceProxy(cls, "_minitouch_device")
+
+    @classproperty
+    def uiautomator_device(cls):
+        if cls._uiautomator_device is None: cls.connect()
+        return DeviceProxy(cls, "_uiautomator_device")
 
 class Input_Handler:
     @classmethod
