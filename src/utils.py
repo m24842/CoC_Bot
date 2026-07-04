@@ -675,6 +675,20 @@ class BlueStacks_Manager:
     _mim_path = None
     
     @classmethod
+    def instance_pid(cls):
+        import psutil
+
+        if cls._instance_pid is not None:
+            return cls._instance_pid
+        
+        cached = Cache_Manager.get("bluestacks_pids", {}).get(cls._internal_instance_name, None)
+        if cached is not None and psutil.pid_exists(cached):
+            self._instance_pid = cached
+            return cached
+
+        return None
+    
+    @classmethod
     def internal_instance_name(cls, instance_id=None):
         import json
         
@@ -707,16 +721,16 @@ class BlueStacks_Manager:
     def check(cls):
         import os, psutil
         
-        if cls.internal_instance_name() is None and cls._instance_pid is None:
+        if cls.internal_instance_name() is None and cls.instance_pid() is None:
             # Default checking
             for proc in psutil.process_iter(['name']):
                 if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
                     return True
             return False
-        elif cls.internal_instance_name() is None and cls._instance_pid is not None:
+        elif cls.internal_instance_name() is None and cls.instance_pid() is not None:
             # PID checking
             try:
-                psutil.Process(cls._instance_pid)
+                psutil.Process(cls.instance_pid())
                 return True
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 return False
@@ -800,6 +814,7 @@ class BlueStacks_Manager:
         else:
             raise Exception("Unsupported OS")
         cls._instance_pid = proc.pid
+        Cache_Manager.setdefault("bluestacks_pids", {})[cls._internal_instance_name] = cls._instance_pid
         
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -819,7 +834,7 @@ class BlueStacks_Manager:
             if configs.DEBUG: print("BlueStacks stopped.")
             return
         
-        if cls._instance_pid is None:
+        if cls.instance_pid() is None:
             found = False
             for proc in psutil.process_iter(['name']):
                 if proc.info['name'] and 'bluestacks' in proc.info['name'].lower():
@@ -831,7 +846,7 @@ class BlueStacks_Manager:
                 return
         else:
             try:
-                psutil.Process(cls._instance_pid).terminate()
+                psutil.Process(cls.instance_pid()).terminate()
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 cls._instance_pid = None
                 if configs.DEBUG: print("BlueStacks stopped.")
