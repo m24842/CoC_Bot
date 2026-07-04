@@ -5,8 +5,9 @@ from attacker import Attacker
 
 class CoC_Bot:
     def __init__(self):
+        BlueStacks_Manager.init()
         BlueStacks_Manager.restart()
-        ADB_Manager.connect(60)
+        assert ADB_Manager.connect(60), "Failed to connect to ADB"
         self.upgrader = Upgrader()
         self.attacker = Attacker()
     
