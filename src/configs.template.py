@@ -97,6 +97,8 @@ BUILDER_BASE_UPGRADE_PRIORITY = [
     [
         "Builder Hall",
         "Multi Mortar",
+        "Archer Tower",
+        "Double Cannon",
         "Builder Barracks",
         "Battle Machine",
         "Battle Copter",
