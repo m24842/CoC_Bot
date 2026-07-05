@@ -1381,7 +1381,7 @@ class Frame_Handler:
     @classmethod
     def locate(cls, template, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False, use_cached=False):
         import cv2, numpy as np
-        
+
         if grayscale: template = cls.grayscale(template)
         h, w = template.shape[:2]
         frame = cls.get_frame(grayscale=grayscale, use_cached=use_cached) if frame is None else frame
