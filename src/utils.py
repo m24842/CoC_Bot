@@ -333,7 +333,7 @@ def update_status(status):
     if (gui_port := TEMP_CACHE.get("gui_port")) is not None:
         try:
             requests.post(
-                f"http://localhost:{gui_port}/status",
+                f"http://localhost:{gui_port}/{INSTANCE_ID}/status",
                 json={"status": status},
                 timeout=(1, 2)
             )
