@@ -85,6 +85,8 @@
     * Create an Automation task that runs when CoC opens and is set to run immediately
 
 5. Start the bot: `python src/main.py`
+    > ❗️ __Important__: By default, the bot is configured to start and stop its BlueStacks instance automatically. If this behavior is undesired or causing issues, just set `AUTO_START_BLUESTACKS = False` in `configs.py`
+
     > __Note__: On MacOS, if `DISABLE_DEVICE_SLEEP = True` in `configs.py`, the user password is required to toggle the `disablesleep` flag in power management settings
 
     > 💡 __Tip__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
