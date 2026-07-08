@@ -47,7 +47,9 @@
 
     * GUI and CLI versions are available with each release
 
-1. For MacOS users installing the GUI version of the bot, you must run `xattr -cr <path-to-CoC-Bot.app>` to bypass the "App is Damaged" warning.
+1. For MacOS users:
+    * If installing the GUI version of the bot, you must run `xattr -cr <path-to-CoC-Bot.app>` to bypass the "App is Damaged" warning
+    * If installing the CLI version of the bot, you must allow the binary to run in "Settings > Privacy & Security"
 
 ## Custom Setup Instructions (Recommended)
 1. Install and configure [external dependencies](#dependencies)
