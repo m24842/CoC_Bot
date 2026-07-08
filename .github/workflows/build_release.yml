@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-release:
-    name: Build on ${{ matrix.os }}
+    name: Build for ${{ matrix.os }} ${{ matrix.type }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -16,6 +16,11 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
         type: [gui, cli]
+        include:
+          - os: windows-latest
+            os_name: win
+          - os: macos-latest
+            os_name: mac
 
     steps:
       - name: Checkout repo
@@ -38,7 +43,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: "CoC_Bot-${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.type }}"
+          files: "CoC_Bot-${{ github.ref_name }}-${{ matrix.os_name }}-${{ matrix.type }}"
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
