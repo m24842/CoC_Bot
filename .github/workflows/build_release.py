@@ -34,7 +34,6 @@ if __name__ == "__main__":
                 "pyinstaller",
                 "--name", "CoC Bot",
                 "--windowed",
-                "--target-arch", "universal2",
                 "--icon", "media/CoC_Bot.icns",
                 "--add-data", "assets:assets",
                 "--add-data", "src/gui_server:gui_server",
