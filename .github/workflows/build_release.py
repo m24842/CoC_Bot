@@ -47,7 +47,7 @@ if __name__ == "__main__":
         elif sys.platform == "win32":
             zip_name = f"CoC_Bot-{args.version}-win-gui.zip"
             target_name = "dist/CoC Bot.exe"
-        shutil.make_archive(zip_name, 'zip', target_name)
+        shutil.make_archive(zip_name, 'zip', root_dir="dist", base_dir=target_name)
     if args.cli:
         # Build for cli
         create_build_config(local_gui=False)
@@ -69,4 +69,4 @@ if __name__ == "__main__":
         elif sys.platform == "win32":
             zip_name = f"CoC_Bot-{args.version}-win-cli.zip"
             target_name = "dist/CoC_Bot.exe"
-        shutil.make_archive(zip_name, 'zip', target_name)
+        shutil.make_archive(zip_name, 'zip', root_dir="dist", base_dir=target_name)
