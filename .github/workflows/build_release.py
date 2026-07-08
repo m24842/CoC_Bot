@@ -44,7 +44,7 @@ if __name__ == "__main__":
             check=True
         )
         if sys.platform == "darwin":
-            zip_name = f"CoC_Bot-{args.version}-mac-gui"
+            zip_name = f"CoC_Bot-{args.version}-mac-gui.zip"
             target_name = "dist/CoC Bot.app"
             subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", target_name, zip_name], check=True)
         elif sys.platform == "win32":
