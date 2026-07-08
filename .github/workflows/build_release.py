@@ -43,20 +43,19 @@ if __name__ == "__main__":
             ],
             check=True
         )
-        zip_name = ""
-        target_name = ""
         if sys.platform == "darwin":
             zip_name = f"CoC_Bot-{args.version}-mac-gui"
             target_name = "dist/CoC Bot.app"
+            subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", target_name, zip_name], check=True)
         elif sys.platform == "win32":
             zip_name = f"CoC_Bot-{args.version}-win-gui"
             target_name = "dist/CoC Bot"
-        shutil.make_archive(
-            zip_name,
-            'zip',
-            root_dir=os.path.dirname(target_name),
-            base_dir=os.path.basename(target_name),
-        )
+            shutil.make_archive(
+                zip_name,
+                'zip',
+                root_dir=os.path.dirname(target_name),
+                base_dir=os.path.basename(target_name),
+            )
     if args.cli:
         # Build for cli
         create_build_config(local_gui=False)
