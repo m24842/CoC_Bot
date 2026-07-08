@@ -33,7 +33,7 @@
     * Display resolution: 1920 x 1080
     * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
     * Enable Android Debug Bridge
-    * In Multi-Instance Manager, rename instances to match instance IDs in `configs.py` (the default ID is main, see steps 2 and 5 in [Setup Instructions](#setup-instructions) for more details)
+    * In Multi-Instance Manager, rename instances to match instance IDs in `configs.py` (the default ID is main, see steps 3 and 6 in [Custom Setup Instructions](#custom-setup-instructions-recommended) for more details)
     * Install Clash of Clans from Google Play
         * Default troop deployment size
         * Standard or XL scenery
@@ -94,5 +94,5 @@
 
 ## Miscellaneous
 * Please report issues in the [Issues Tab](https://github.com/m24842/CoC_Bot/issues)
-* For help with setup/usage, open a discussion in [🙏 Q&A](https://github.com/m24842/CoC_Bot/discussions/categories/q-a)
+* For help with setup or usage, open a discussion in [🙏 Q&A](https://github.com/m24842/CoC_Bot/discussions/categories/q-a)
 * Suggest new features in [💡 Ideas](https://github.com/m24842/CoC_Bot/discussions/categories/ideas)
