@@ -43,6 +43,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: "CoC_Bot-${{ github.ref_name }}-${{ matrix.os_name }}-${{ matrix.type }}"
+          files: "CoC_Bot-${{ github.ref_name }}-${{ matrix.os_name }}-${{ matrix.type }}.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
