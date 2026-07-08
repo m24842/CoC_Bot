@@ -39,10 +39,13 @@ if __name__ == "__main__":
             "--additional-hooks-dir", "hooks",
             "src/main.py"
         ])
-        zip_name = f"CoC_Bot-{args.version}-{sys.platform}-gui.zip"
+        zip_name = ""
+        target_name = ""
         if sys.platform == "darwin":
+            zip_name = f"CoC_Bot-{args.version}-mac-gui.zip"
             target_name = "dist/CoC Bot.app"
         elif sys.platform == "win32":
+            zip_name = f"CoC_Bot-{args.version}-win-gui.zip"
             target_name = "dist/CoC Bot.exe"
         shutil.make_archive(zip_name, 'zip', target_name)
     if args.cli:
@@ -58,9 +61,12 @@ if __name__ == "__main__":
             "--additional-hooks-dir", "hooks",
             "src/main.py"
         ])
-        zip_name = f"CoC_Bot-{args.version}-{sys.platform}-cli.zip"
+        zip_name = ""
+        target_name = ""
         if sys.platform == "darwin":
+            zip_name = f"CoC_Bot-{args.version}-mac-cli.zip"
             target_name = "dist/CoC_Bot"
         elif sys.platform == "win32":
+            zip_name = f"CoC_Bot-{args.version}-win-cli.zip"
             target_name = "dist/CoC_Bot.exe"
         shutil.make_archive(zip_name, 'zip', target_name)
