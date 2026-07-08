@@ -12,7 +12,10 @@ sys.path.append(str(path))
 import os
 import time
 from flask import Flask, render_template, jsonify, abort, request
-from configs import *
+try:
+    from configs import *
+except:
+    from configs_build import *
 
 app = Flask(__name__)
 bot_pipe = None
