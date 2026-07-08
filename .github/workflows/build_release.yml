@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller
+          pip install pyinstaller Pillow
 
       - name: Build Project
         run: |
@@ -44,6 +44,5 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: "CoC_Bot-${{ github.ref_name }}-${{ matrix.os_name }}-${{ matrix.type }}"
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

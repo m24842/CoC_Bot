@@ -29,17 +29,20 @@ if __name__ == "__main__":
     if args.gui:
         # Build for gui
         create_build_config(local_gui=True)
-        subprocess.run([
-            "pyinstaller",
-            "--name", "CoC Bot",
-            "--windowed",
-            "--icon", "media/CoC_Bot.icns",
-            "--add-data", "assets:assets",
-            "--add-data", "src/gui_server:gui_server",
-            "--add-data", "src/sleep_helper.sh:.",
-            "--additional-hooks-dir", "hooks",
-            "src/main.py"
-        ])
+        subprocess.run(
+            [
+                "pyinstaller",
+                "--name", "CoC Bot",
+                "--windowed",
+                "--icon", "media/CoC_Bot.icns",
+                "--add-data", "assets:assets",
+                "--add-data", "src/gui_server:gui_server",
+                "--add-data", "src/sleep_helper.sh:.",
+                "--additional-hooks-dir", "hooks",
+                "src/main.py"
+            ],
+            check=True
+        )
         zip_name = ""
         target_name = ""
         if sys.platform == "darwin":
@@ -57,16 +60,19 @@ if __name__ == "__main__":
     if args.cli:
         # Build for cli
         create_build_config(local_gui=False)
-        subprocess.run([
-            "pyinstaller",
-            "--name", "CoC_Bot",
-            "--onefile",
-            "--icon", "media/CoC_Bot.icns",
-            "--add-data", "assets:assets",
-            "--add-data", "src/sleep_helper.sh:.",
-            "--additional-hooks-dir", "hooks",
-            "src/main.py"
-        ])
+        subprocess.run(
+            [
+                "pyinstaller",
+                "--name", "CoC_Bot",
+                "--onefile",
+                "--icon", "media/CoC_Bot.icns",
+                "--add-data", "assets:assets",
+                "--add-data", "src/sleep_helper.sh:.",
+                "--additional-hooks-dir", "hooks",
+                "src/main.py"
+            ],
+            check=True
+        )
         zip_name = ""
         target_name = ""
         if sys.platform == "darwin":
