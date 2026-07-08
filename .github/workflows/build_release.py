@@ -46,6 +46,7 @@ if __name__ == "__main__":
         if sys.platform == "darwin":
             zip_name = f"CoC_Bot-{args.version}-mac-gui.zip"
             target_name = "CoC Bot.app"
+            os.chmod("dist/CoC Bot.app/Contents/MacOS/CoC Bot", 0o755)
             subprocess.run(
                 ["zip", "-ry", os.path.abspath(zip_name), target_name],
                 cwd="dist",

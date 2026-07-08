@@ -18,7 +18,7 @@ ADB_ADDRESSES = ["127.0.0.1:5555"] # Bluestacks ADB addresses in order of instan
 DEFAULT_INSTANCE_ID = INSTANCE_IDS[0]
 
 # REQUIRED: General Settings
-LOCAL_GUI = False # web app not required
+LOCAL_GUI = True # web app not required
 CHECK_INTERVAL = 5 # minutes
 
 # REQUIRED: Upgrade settings
