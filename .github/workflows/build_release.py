@@ -46,10 +46,10 @@ if __name__ == "__main__":
         zip_name = ""
         target_name = ""
         if sys.platform == "darwin":
-            zip_name = f"CoC_Bot-{args.version}-mac-gui.zip"
+            zip_name = f"CoC_Bot-{args.version}-mac-gui"
             target_name = "dist/CoC Bot.app"
         elif sys.platform == "win32":
-            zip_name = f"CoC_Bot-{args.version}-win-gui.zip"
+            zip_name = f"CoC_Bot-{args.version}-win-gui"
             target_name = "dist/CoC Bot.exe"
         shutil.make_archive(
             zip_name,
@@ -76,10 +76,10 @@ if __name__ == "__main__":
         zip_name = ""
         target_name = ""
         if sys.platform == "darwin":
-            zip_name = f"CoC_Bot-{args.version}-mac-cli.zip"
+            zip_name = f"CoC_Bot-{args.version}-mac-cli"
             target_name = "dist/CoC_Bot"
         elif sys.platform == "win32":
-            zip_name = f"CoC_Bot-{args.version}-win-cli.zip"
+            zip_name = f"CoC_Bot-{args.version}-win-cli"
             target_name = "dist/CoC_Bot.exe"
         shutil.make_archive(
             zip_name,
