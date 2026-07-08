@@ -1,6 +1,10 @@
 from utils import *
-import configs
-from configs import *
+try:
+    import configs
+    from configs import *
+except:
+    import configs_build as configs
+    from configs_build import *
 
 class Upgrader:
     

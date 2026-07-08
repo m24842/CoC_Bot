@@ -12,7 +12,7 @@ pyinstaller \
     --add-data "assets:assets" \
     --add-data "src/gui_server:gui_server" \
     --add-data "src/sleep_helper.sh:." \
-    --additional-hooks-dir=hooks \
+    --additional-hooks-dir "hooks" \
     "src/main.py"
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
