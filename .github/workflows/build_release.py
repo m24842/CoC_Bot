@@ -50,7 +50,7 @@ if __name__ == "__main__":
             target_name = "dist/CoC Bot.app"
         elif sys.platform == "win32":
             zip_name = f"CoC_Bot-{args.version}-win-gui"
-            target_name = "dist/CoC Bot.exe"
+            target_name = "dist/CoC Bot"
         shutil.make_archive(
             zip_name,
             'zip',
