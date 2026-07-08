@@ -1,4 +1,7 @@
-import configs
+try:
+    import configs
+except:
+    import configs_build as configs
 
 COC_BOT_GUI = None
 

@@ -1,8 +1,12 @@
 import sys, collections
 from pathlib import Path
 from functools import lru_cache
-import configs
-from configs import *
+try:
+    import configs
+    from configs import *
+except:
+    import configs_build as configs
+    from configs_build import *
 
 if sys.platform == "win32":
     ES_CONTINUOUS = 0x80000000
