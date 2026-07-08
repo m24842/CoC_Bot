@@ -48,9 +48,7 @@
     * Releases are built for MacOS (Apple Silicon) and Windows only
     * GUI and CLI versions are available with each release
 
-1. For MacOS users:
-    * If installing the GUI version of the bot, you must run `xattr -cr <path-to-CoC-Bot.app>` to bypass the "App is Damaged" warning
-    * If installing the CLI version of the bot, you must allow the binary to run in "Settings > Privacy & Security"
+1. MacOS users must allow the app/binary to run by going to "Settings > Privacy & Security" and clicking "Open Anyways"
 
 ## Custom Setup Instructions (Recommended)
 1. Install and configure [external dependencies](#dependencies)
