@@ -45,8 +45,17 @@ if __name__ == "__main__":
         )
         if sys.platform == "darwin":
             zip_name = f"CoC_Bot-{args.version}-mac-gui.zip"
-            target_name = "dist/CoC Bot.app"
-            subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", target_name, zip_name], check=True)
+            target_name = "CoC Bot.app"
+            subprocess.run(
+                [
+                    "ditto",
+                    "-c", "-k",
+                    "--sequesterRsrc", target_name,
+                    os.path.abspath(zip_name)
+                ],
+                cwd="dist",
+                check=True
+            )
         elif sys.platform == "win32":
             zip_name = f"CoC_Bot-{args.version}-win-gui"
             target_name = "dist/CoC Bot"
