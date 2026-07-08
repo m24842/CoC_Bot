@@ -42,7 +42,7 @@
 1. Install and configure [external dependencies](#dependencies)
 
 1. Download the [latest release](https://github.com/m24842/CoC_Bot/releases/latest) for your OS
-    > __Note__: Prebuilt releases are minimally configured and only supports standard features. To set up the bot with custom configurations, see [Custom Setup Instructions](#custom_setup_instructions_recommended).
+    > __Note__: Prebuilt releases are minimally configured and only supports standard features. To set up the bot with custom configurations, see [Custom Setup Instructions](#custom-setup-instructions-recommended).
 
     * GUI and CLI versions are available with each release
 
@@ -94,5 +94,5 @@
 
 ## Miscellaneous
 * Please report issues in the [Issues Tab](https://github.com/m24842/CoC_Bot/issues)
-* For help with setup/usage, open a discussion in [Q&A](https://github.com/m24842/CoC_Bot/discussions/categories/q-a)
-* Suggest new features in [Ideas](https://github.com/m24842/CoC_Bot/discussions/categories/ideas)
+* For help with setup/usage, open a discussion in [🙏 Q&A](https://github.com/m24842/CoC_Bot/discussions/categories/q-a)
+* Suggest new features in [💡 Ideas](https://github.com/m24842/CoC_Bot/discussions/categories/ideas)
