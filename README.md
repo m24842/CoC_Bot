@@ -95,5 +95,5 @@
 
 ## Miscellaneous
 * Please report issues in the [Issues Tab](https://github.com/m24842/CoC_Bot/issues)
-* For help with setup or usage, open a discussion in [🙏 Q&A](https://github.com/m24842/CoC_Bot/discussions/categories/q-a)
-* Suggest new features in [💡 Ideas](https://github.com/m24842/CoC_Bot/discussions/categories/ideas)
+* For help with setup or usage, open a discussion in [Q&A](https://github.com/m24842/CoC_Bot/discussions/categories/q-a)
+* Suggest new features in [Ideas](https://github.com/m24842/CoC_Bot/discussions/categories/ideas)
