@@ -47,12 +47,7 @@ if __name__ == "__main__":
             zip_name = f"CoC_Bot-{args.version}-mac-gui.zip"
             target_name = "CoC Bot.app"
             subprocess.run(
-                [
-                    "ditto",
-                    "-c", "-k",
-                    "--sequesterRsrc", target_name,
-                    os.path.abspath(zip_name)
-                ],
+                ["zip", "-ry", os.path.abspath(zip_name), target_name],
                 cwd="dist",
                 check=True
             )
