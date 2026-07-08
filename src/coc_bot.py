@@ -1,5 +1,8 @@
 from utils import *
-from configs import *
+try:
+    from configs import *
+except:
+    from configs_build import *
 from upgrader import Upgrader
 from attacker import Attacker
 
