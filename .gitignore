@@ -8,5 +8,6 @@ debug
 *.spec
 src/cache.json
 src/configs.py
+src/configs_build.py
 scripts/start.sh
 app/data

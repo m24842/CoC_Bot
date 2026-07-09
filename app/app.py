@@ -50,7 +50,7 @@ class Instance:
     def add_notification(self, data):
         self.notifications.append({"time_stamp": time.time(), "data": str(data)})
         data = get_cache()
-        data["known_instances"][self.id] = self.to_dict()
+        data.setdefault("known_instances", {})[self.id] = self.to_dict()
         with open(CACHE_PATH, "w") as f:
             json.dump(data, f, indent=4)
 
