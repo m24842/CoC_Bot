@@ -136,7 +136,7 @@ def running():
     if WEB_APP_URL == "": return True
     try:
         response = requests.get(
-            f"{WEB_APP_URL}/{INSTANCE_ID}/running",
+            f"{WEB_APP_URL}/instances/{INSTANCE_ID}/running",
             timeout=(1, 2)
         )
         if response.status_code == 200:
@@ -303,7 +303,7 @@ def send_notification(text):
     if WEB_APP_URL != "":
         try:
             requests.post(
-                f"{WEB_APP_URL}/{INSTANCE_ID}/notify",
+                f"{WEB_APP_URL}/instances/{INSTANCE_ID}/notify",
                 json=text,
                 timeout=(1, 2)
             )
@@ -327,7 +327,7 @@ def update_status(status):
     if WEB_APP_URL != "":
         try:
             requests.post(
-                f"{WEB_APP_URL}/{INSTANCE_ID}/status",
+                f"{WEB_APP_URL}/instances/{INSTANCE_ID}/status",
                 json={"status": status},
                 timeout=(1, 2)
             )
@@ -337,7 +337,7 @@ def update_status(status):
     if (gui_port := TEMP_CACHE.get("gui_port")) is not None:
         try:
             requests.post(
-                f"http://localhost:{gui_port}/{INSTANCE_ID}/status",
+                f"http://localhost:{gui_port}/instances/{INSTANCE_ID}/status",
                 json={"status": status},
                 timeout=(1, 2)
             )
@@ -810,7 +810,7 @@ class Task_Handler:
             return cls.cached_exclusions
         if WEB_APP_URL != "":
             res = requests.get(
-                f"{WEB_APP_URL}/{INSTANCE_ID}/exclude",
+                f"{WEB_APP_URL}/instances/{INSTANCE_ID}/exclude",
                 timeout=(10, 20)
             )
             if res.status_code == 200:
@@ -819,7 +819,7 @@ class Task_Handler:
                 return cls.cached_exclusions
         elif configs.LOCAL_GUI and TEMP_CACHE.get("gui_port") is not None:
             res = requests.get(
-                f"http://localhost:{TEMP_CACHE['gui_port']}/{INSTANCE_ID}/exclude",
+                f"http://localhost:{TEMP_CACHE['gui_port']}/instances/{INSTANCE_ID}/exclude",
                 timeout=(10, 20)
             )
             if res.status_code == 200:
