@@ -104,7 +104,7 @@
 
         async function fetchExclusions() {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/exclude` : `/${id}/exclude`;
+                const url = web_app_url ? `${web_app_url}/instances/${id}/exclude` : `/instances/${id}/exclude`;
                 const response = await fetch(url);
                 const data = await response.json();
                 exclusions = data.exclusions;
@@ -115,7 +115,7 @@
 
         async function fetchNotifications() {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/notifications` : `/${id}/notifications`;
+                const url = web_app_url ? `${web_app_url}/instances/${id}/notifications` : `/instances/${id}/notifications`;
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {
@@ -133,7 +133,7 @@
 
         async function fetchCurrentTime() {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/current_time` : `/current_time`;
+                const url = web_app_url ? `${web_app_url}/current_time` : `/current_time`;
                 const response = await fetch(url);
                 const data = await response.json();
                 current_time = data.current_time;
@@ -145,7 +145,7 @@
 
         async function fetchEndTime() {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/end_time` : `/${id}/end_time`;
+                const url = web_app_url ? `${web_app_url}/instances/${id}/end_time` : `/instances/${id}/end_time`;
                 const response = await fetch(url);
                 const data = await response.json();
                 end_time = data.end_time;
@@ -156,7 +156,7 @@
 
         async function fetchStatus() {
             try {
-                url = web_app_url ? `${web_app_url}/${id}/status` : `/${id}/status`;
+                url = web_app_url ? `${web_app_url}/instances/${id}/status` : `/instances/${id}/status`;
                 const response = await fetch(url);
                 const data = await response.json();
                 run_status = data.status;
@@ -167,7 +167,7 @@
 
         async function setEndTime(minutes) {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/end_time` : `/${id}/end_time`;
+                const url = web_app_url ? `${web_app_url}/instances/${id}/end_time` : `/instances/${id}/end_time`;
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {
@@ -188,7 +188,7 @@
 
         async function setExclusion(item, action) {
             try {
-                const url = web_app_url ? `${web_app_url}/${id}/exclude` : `/${id}/exclude`;
+                const url = web_app_url ? `${web_app_url}/instances/${id}/exclude` : `/instances/${id}/exclude`;
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {

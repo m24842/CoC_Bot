@@ -47,7 +47,7 @@ def home():
         ids=sorted(list(instances.keys())),
     )
 
-@app.route("/<id>", methods=["GET"])
+@app.route("/instances/<id>", methods=["GET"])
 def handle_instance(id):
     instance = instances.get(id)
     if not instance: abort(404)
@@ -61,7 +61,7 @@ def handle_instance(id):
         exclusions=list(instance.exclusions),
     )
 
-@app.route("/instance", methods=["POST"])
+@app.route("/instance_action", methods=["POST"])
 def handle_instance_start_stop():
     data = request.json
     action = data.get("action", "")
@@ -84,7 +84,7 @@ def handle_instance_start_stop():
 def handle_current_time():
     return {"current_time": time.time()}
 
-@app.route("/<id>/end_time", methods=["GET", "POST"])
+@app.route("/instances/<id>/end_time", methods=["GET", "POST"])
 def handle_end_time(id):
     instance = instances.get(id)
     if not instance: abort(404)
@@ -93,13 +93,13 @@ def handle_end_time(id):
         instance.end_time = int(data) * 60 + time.time()
     return {"end_time": instance.end_time}
 
-@app.route("/<id>/running", methods=["GET"])
+@app.route("/instances/<id>/running", methods=["GET"])
 def handle_running(id):
     instance = instances.get(id)
     if not instance: abort(404)
     return {"running": instance.end_time == 0 or instance.end_time < time.time()}
 
-@app.route("/<id>/status", methods=["GET", "POST"])
+@app.route("/instances/<id>/status", methods=["GET", "POST"])
 def handle_status(id):
     instance = instances.get(id)
     if not instance: abort(404)
@@ -108,7 +108,7 @@ def handle_status(id):
         instance.run_status = data.get("status", "")
     return {"status": instance.run_status}
 
-@app.route("/<id>/exclude", methods=["GET", "POST"])
+@app.route("/instances/<id>/exclude", methods=["GET", "POST"])
 def handle_exclude(id):
     instance = instances.get(id)
     if not instance: abort(404)

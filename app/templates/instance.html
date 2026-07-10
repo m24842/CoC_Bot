@@ -98,7 +98,7 @@
 
             async function fetchExclusions() {
                 try {
-                    const response = await fetch(`/${id}/exclude`);
+                    const response = await fetch(`/instances/${id}/exclude`);
                     const data = await response.json();
                     exclusions = data.exclusions;
                 } catch (error) {
@@ -108,7 +108,7 @@
 
             async function fetchNotifications() {
                 try {
-                    const response = await fetch(`/${id}/notifications`, {
+                    const response = await fetch(`/instances/${id}/notifications`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -140,7 +140,7 @@
 
             async function fetchEndTime() {
                 try {
-                    const response = await fetch(`/${id}/end_time`);
+                    const response = await fetch(`/instances/${id}/end_time`);
                     const data = await response.json();
                     end_time = data.end_time;
                 } catch (error) {
@@ -150,7 +150,7 @@
 
             async function fetchStatus() {
                 try {
-                    const response = await fetch(`/${id}/status`);
+                    const response = await fetch(`/instances/${id}/status`);
                     const data = await response.json();
                     run_status = data.status;
                 } catch (error) {
@@ -160,7 +160,7 @@
 
             async function setEndTime(minutes) {
                 try {
-                    const response = await fetch(`/${id}/end_time`, {
+                    const response = await fetch(`/instances/${id}/end_time`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"
@@ -180,7 +180,7 @@
 
             async function setExclusion(item, action) {
                 try {
-                    const response = await fetch(`/${id}/exclude`, {
+                    const response = await fetch(`/instances/${id}/exclude`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"

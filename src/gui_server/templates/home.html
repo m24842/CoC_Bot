@@ -25,7 +25,7 @@
 
         async function registerID(new_id) {
             try {
-                const url = `/instance`;
+                const url = `/instance_action`;
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {
@@ -84,7 +84,7 @@
                     if (!valid) return;
                     // ids.add(newID);
                     // updateInstances();
-                    window.location.href = `/${newID}`;
+                    window.location.href = `/instances/${newID}`;
                 }
                 
                 form.reset();
