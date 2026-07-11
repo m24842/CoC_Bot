@@ -5,7 +5,7 @@ let instance_ids = args.shortcutParameter.ids // ex. "main", "alt", etc.
 
 // --- POST REQUESTS ---
 for (let id of instance_ids) {
-  let fullUrl = `${base_url}/${id}/end_time`
+  let fullUrl = `${base_url}/instances/${id}/end_time`
 
   let req = new Request(fullUrl)
   req.method = "POST"
