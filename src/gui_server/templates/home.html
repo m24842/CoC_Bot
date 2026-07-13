@@ -60,7 +60,7 @@
                     idButton.value = id;
                     idButton.innerHTML = `${id}`;
                     idButton.onclick = () => {
-                        window.location.href = `/${id}`;
+                        window.location.href = `/instances/${id}`;
                     };
                     document.querySelector(".stacked-buttons").appendChild(idButton);
                 }
