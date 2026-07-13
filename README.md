@@ -45,6 +45,8 @@
 1. Download the [latest release](https://github.com/m24842/CoC_Bot/releases/latest) for your OS
     > __Note__: Prebuilt releases are minimally configured and only support standard features. To set up the bot with custom configurations, see [Custom Setup Instructions](#custom-setup-instructions-recommended).
 
+    > __Note__: Prebuilt releases generally will not have the most up-to-date features and may contain unpatched bugs. To stay up to date, it is suggested to run from source.
+
     * Releases are built for MacOS (Apple Silicon) and Windows only
     * GUI and CLI versions are available with each release
 
