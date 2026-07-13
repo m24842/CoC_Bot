@@ -442,10 +442,19 @@ class Upgrader:
                                 # Check that located upgrade name is left aligned
                                 if abs(x - menu_left) < 0.01:
                                     return x, y
+
+                                # Or if it is aligned to green discount tag
+                                tag_x, tag_y, c = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.70, grayscale=False, ref="rc", return_confidence=True)
+                                if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/section.shape[1])) < 0.05:
+                                    return x, y
+
+                                continue # Don't do "New" upgrades, requires different process
+
                                 # Or if it is left aligned to "New" label
                                 new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
                                 if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
                                     return x, y
+                                
                 return None, None
             
             x, y = self._scroll_locate_upgrade(
@@ -630,6 +639,12 @@ class Upgrader:
                             # Check that located upgrade name is left aligned
                             if abs(x - menu_left) < 0.01:
                                 return x, y
+
+                            # Or if it is aligned to green discount tag
+                            tag_x, tag_y, c = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.70, grayscale=False, ref="rc", return_confidence=True)
+                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/section.shape[1])) < 0.05:
+                                return x, y
+
                             # Or if it is left aligned to "New" label
                             new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
                             if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
@@ -820,6 +835,14 @@ class Upgrader:
                             # Check that located upgrade name is left aligned
                             if abs(x - menu_left) < 0.01:
                                 return x, y, name
+                            
+                            # Or if it is aligned to green discount tag
+                            tag_x, tag_y, c = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.70, grayscale=False, ref="rc", return_confidence=True)
+                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/section.shape[1])) < 0.05:
+                                return x, y, name
+
+                            continue # Don't do "New" upgrades, requires different process
+
                             # Or if it is left aligned to "New" label
                             new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
                             if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
@@ -967,6 +990,12 @@ class Upgrader:
                             # Check that located upgrade name is left aligned
                             if abs(x - menu_left) < 0.01:
                                 return x, y, name
+                            
+                            # Or if it is aligned to green discount tag
+                            tag_x, tag_y, c = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.70, grayscale=False, ref="rc", return_confidence=True)
+                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/section.shape[1])) < 0.05:
+                                return x, y, name
+
                             # Or if it is left aligned to "New" label
                             new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
                             if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
