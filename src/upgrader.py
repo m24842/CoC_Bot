@@ -458,7 +458,8 @@ class Upgrader:
                                     continue
 
                                 # Or if it is aligned to green discount tag
-                                tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc")
+                                tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc", normalize=False)
+                                print(abs(x - (menu_left + tag_x/WINDOW_DIMS[1])))
                                 if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
                                     return x, y # Prioritize discounted upgrades
 
@@ -874,7 +875,7 @@ class Upgrader:
                                 continue
                             
                             # Or if it is aligned to green discount tag
-                            tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc")
+                            tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc", normalize=False)
                             if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
                                 return x, y, name # Prioritize discounted upgrades
 
@@ -1037,12 +1038,12 @@ class Upgrader:
                                 continue
                             
                             # Or if it is aligned to green discount tag
-                            tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc")
+                            tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc", normalize=False)
                             if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
                                 return x, y, name # Prioritize discounted upgrades
 
                             # Or if it is left aligned to "New" label
-                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
+                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc", normalize=False)
                             if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/WINDOW_DIMS[1])) < 0.02:
                                 non_discounted_upgrades.append((x, y, name))
                                 continue
