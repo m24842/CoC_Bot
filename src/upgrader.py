@@ -329,7 +329,6 @@ class Upgrader:
             
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                frame_gray = Frame_Handler.grayscale(frame)
                 menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
                 x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
 
@@ -340,24 +339,38 @@ class Upgrader:
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
                 
                 # Locate invalid upgrades
-                locs = Frame_Handler.batch_locate(town_hall_template + hero_templates, frame_gray, thresh=0.80, ref="lc", null_val=-1)
+                locs = Frame_Handler.batch_locate(town_hall_template + hero_templates, menu, thresh=0.80, ref="lc", null_val=-1, grayscale=True, normalize=False)
                 town_hall_loc = locs[0]
                 hero_locs = locs[1:]
                 invalid_locs = [town_hall_loc]
                 if heros_excluded:
                     invalid_locs += hero_locs
-                invalid_y_locs = np.array(invalid_locs)[:, 1]
+                invalid_y_locs = np.array(invalid_locs)[:, 1] / WINDOW_DIMS[1] + menu_top
                 
                 # Choose an upgrade
-                x_upgrade, y_upgrade = None, None
-                for y_loc in np.random.permutation(potential_y_locs):
-                    if min(abs(invalid_y_locs - y_loc)) > 0.02:
-                        x_upgrade = menu_center
-                        y_upgrade = y_loc
-                        break
+                valid_y_locs = [y for y in potential_y_locs if min(abs(invalid_y_locs - y)) > 0.02]
+
+                discounted_upgrades = []
+                if len(valid_y_locs) > 0:
+                    discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, normalize=False, return_all=True)
+                    for x, y in discounted_locs:
+                        y_global = y / WINDOW_DIMS[1] + menu_top
+                        min_idx = np.argmin(abs(valid_y_locs - y_global))
+                        if abs(valid_y_locs[min_idx] - y_global) < 0.02:
+                            discounted_upgrades.append(valid_y_locs[min_idx])
+                            valid_y_locs = np.delete(valid_y_locs, min_idx)
+
+                # Prioritize discounted upgrades
+                if len(discounted_upgrades) > 0:
+                    x_upgrade, y_upgrade = menu_center, np.random.choice(discounted_upgrades)
+                elif len(valid_y_locs) > 0:
+                    x_upgrade, y_upgrade = menu_center, np.random.choice(valid_y_locs)
+                else:
+                    x_upgrade, y_upgrade = None, None
+
                 if x_upgrade is None or y_upgrade is None:
                     # If no valid upgrades found but town hall is found, then upgrade it
-                    if invalid_y_locs[0] != -1 and min(abs(town_hall_loc[1] - potential_y_locs)) < 0.02:
+                    if town_hall_loc != -1 and min(abs(town_hall_loc[1] - potential_y_locs)) < 0.02:
                         x_upgrade, y_upgrade = menu_center, town_hall_loc[1]
                     else: return None, None
                 return x_upgrade, y_upgrade
@@ -430,9 +443,9 @@ class Upgrader:
             # Find upgrade text
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                frame_gray = Frame_Handler.grayscale(frame)
                 x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
-                res = Frame_Handler.batch_locate(templates, frame_gray, thresh=0.80, ref="lc", return_all=True)
+                res = Frame_Handler.batch_locate(templates, frame, thresh=0.80, ref="lc", return_all=True, grayscale=True)
+                non_discounted_upgrades = []
                 for items in res:
                     for x, y in items:
                         if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
@@ -441,20 +454,16 @@ class Upgrader:
                             if sufficient_resources:
                                 # Check that located upgrade name is left aligned
                                 if abs(x - menu_left) < 0.01:
-                                    return x, y
+                                    non_discounted_upgrades.append((x, y))
+                                    continue
 
                                 # Or if it is aligned to green discount tag
-                                tag_x, tag_y, c = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.70, grayscale=False, ref="rc", return_confidence=True)
-                                if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/section.shape[1])) < 0.05:
-                                    return x, y
+                                tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc")
+                                if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
+                                    return x, y # Prioritize discounted upgrades
 
-                                continue # Don't do "New" upgrades, requires different process
-
-                                # Or if it is left aligned to "New" label
-                                new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
-                                if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
-                                    return x, y
-                                
+                if len(non_discounted_upgrades) > 0:
+                    return non_discounted_upgrades[0]
                 return None, None
             
             x, y = self._scroll_locate_upgrade(
@@ -569,9 +578,20 @@ class Upgrader:
                 potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
 
+                # Determine discounted upgrades
+                discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
+                discounted_upgrades = []
+                for x, y in discounted_locs:
+                    y_global = y / WINDOW_DIMS[1] + menu_top
+                    min_idx = np.argmin(abs(potential_y_locs - y_global))
+                    if abs(potential_y_locs[min_idx] - y_global) < 0.02:
+                        discounted_upgrades.append(potential_y_locs[min_idx])
+                        potential_y_locs = np.delete(potential_y_locs, min_idx)
+
                 # Choose an upgrade
-                x_upgrade, y_upgrade = menu_center, np.random.choice(potential_y_locs)
-                return x_upgrade, y_upgrade
+                if len(discounted_upgrades) > 0:
+                    return menu_center, np.random.choice(discounted_upgrades)
+                return menu_center, np.random.choice(potential_y_locs)
             
             x_upgrade, y_upgrade = self._scroll_locate_upgrade(
                 locate_upgrade,
@@ -628,9 +648,9 @@ class Upgrader:
             # Find upgrade text
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                frame_gray = Frame_Handler.grayscale(frame)
                 x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
-                xys = Frame_Handler.batch_locate(templates, frame_gray, thresh=0.80, ref="lc")
+                xys = Frame_Handler.batch_locate(templates, frame, thresh=0.80, ref="lc", grayscale=True)
+                non_discounted_upgrades = []
                 for x, y in xys:
                     if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
                         section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
@@ -638,17 +658,22 @@ class Upgrader:
                         if sufficient_resources:
                             # Check that located upgrade name is left aligned
                             if abs(x - menu_left) < 0.01:
-                                return x, y
+                                non_discounted_upgrades.append((x, y))
+                                continue
 
                             # Or if it is aligned to green discount tag
-                            tag_x, tag_y, c = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.70, grayscale=False, ref="rc", return_confidence=True)
-                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/section.shape[1])) < 0.05:
-                                return x, y
+                            tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc", normalize=False)
+                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
+                                return x, y # Prioritize discounted upgrades
 
                             # Or if it is left aligned to "New" label
-                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
-                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
-                                return x, y
+                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc", normalize=False)
+                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/WINDOW_DIMS[1])) < 0.02:
+                                non_discounted_upgrades.append((x, y))
+                                continue
+                
+                if len(non_discounted_upgrades) > 0:
+                    return non_discounted_upgrades[0]
                 return None, None
             
             x, y = self._scroll_locate_upgrade(
@@ -753,9 +778,20 @@ class Upgrader:
                 potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
                 
+                # Determine discounted upgrades
+                discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
+                discounted_upgrades = []
+                for x, y in discounted_locs:
+                    y_global = y / WINDOW_DIMS[1] + menu_top
+                    min_idx = np.argmin(abs(potential_y_locs - y_global))
+                    if abs(potential_y_locs[min_idx] - y_global) < 0.02:
+                        discounted_upgrades.append(potential_y_locs[min_idx])
+                        potential_y_locs = np.delete(potential_y_locs, min_idx)
+
                 # Choose an upgrade
-                x_upgrade, y_upgrade = menu_center, np.random.choice(potential_y_locs)
-                return x_upgrade, y_upgrade
+                if len(discounted_upgrades) > 0:
+                    return menu_center, np.random.choice(discounted_upgrades)
+                return menu_center, np.random.choice(potential_y_locs)
             
             x_upgrade, y_upgrade = self._scroll_locate_upgrade(
                 locate_upgrade,
@@ -824,9 +860,9 @@ class Upgrader:
             # Find upgrade text
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                frame_gray = Frame_Handler.grayscale(frame)
                 x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
-                xys = Frame_Handler.batch_locate(templates, frame_gray, thresh=0.80, ref="lc")
+                xys = Frame_Handler.batch_locate(templates, frame, thresh=0.80, ref="lc", grayscale=True)
+                non_discounted_upgrades = []
                 for (x, y), name in zip(xys, upgrade_text):
                     if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
                         section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
@@ -834,19 +870,16 @@ class Upgrader:
                         if sufficient_resources:
                             # Check that located upgrade name is left aligned
                             if abs(x - menu_left) < 0.01:
-                                return x, y, name
+                                non_discounted_upgrades.append((x, y, name))
+                                continue
                             
                             # Or if it is aligned to green discount tag
-                            tag_x, tag_y, c = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.70, grayscale=False, ref="rc", return_confidence=True)
-                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/section.shape[1])) < 0.05:
-                                return x, y, name
+                            tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc")
+                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
+                                return x, y, name # Prioritize discounted upgrades
 
-                            continue # Don't do "New" upgrades, requires different process
-
-                            # Or if it is left aligned to "New" label
-                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
-                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
-                                return x, y, name
+                if len(non_discounted_upgrades) > 0:
+                    return non_discounted_upgrades[0]
                 return None, None, None
             
             x, y, upgrade_name = self._scroll_locate_upgrade(
@@ -916,9 +949,20 @@ class Upgrader:
                 potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
                 
+                # Determine discounted upgrades
+                discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
+                discounted_upgrades = []
+                for x, y in discounted_locs:
+                    y_global = y / WINDOW_DIMS[1] + menu_top
+                    min_idx = np.argmin(abs(potential_y_locs - y_global))
+                    if abs(potential_y_locs[min_idx] - y_global) < 0.02:
+                        discounted_upgrades.append(potential_y_locs[min_idx])
+                        potential_y_locs = np.delete(potential_y_locs, min_idx)
+
                 # Choose an upgrade
-                x_upgrade, y_upgrade = menu_center, np.random.choice(potential_y_locs)
-                return x_upgrade, y_upgrade
+                if len(discounted_upgrades) > 0:
+                    return menu_center, np.random.choice(discounted_upgrades)
+                return menu_center, np.random.choice(potential_y_locs)
             
             x_upgrade, y_upgrade = self._scroll_locate_upgrade(
                 locate_upgrade,
@@ -979,9 +1023,9 @@ class Upgrader:
             # Find upgrade text
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                frame_gray = Frame_Handler.grayscale(frame)
                 x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
-                xys = Frame_Handler.batch_locate(templates, frame_gray, thresh=0.80, ref="lc")
+                xys = Frame_Handler.batch_locate(templates, frame, thresh=0.80, ref="lc", grayscale=True)
+                non_discounted_upgrades = []
                 for (x, y), name in zip(xys, upgrade_text):
                     if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
                         section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
@@ -989,17 +1033,22 @@ class Upgrader:
                         if sufficient_resources:
                             # Check that located upgrade name is left aligned
                             if abs(x - menu_left) < 0.01:
-                                return x, y, name
+                                non_discounted_upgrades.append((x, y, name))
+                                continue
                             
                             # Or if it is aligned to green discount tag
-                            tag_x, tag_y, c = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.70, grayscale=False, ref="rc", return_confidence=True)
-                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/section.shape[1])) < 0.05:
-                                return x, y, name
+                            tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc")
+                            if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
+                                return x, y, name # Prioritize discounted upgrades
 
                             # Or if it is left aligned to "New" label
                             new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc")
-                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/section.shape[1])) < 0.05:
-                                return x, y, name
+                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/WINDOW_DIMS[1])) < 0.02:
+                                non_discounted_upgrades.append((x, y, name))
+                                continue
+
+                if len(non_discounted_upgrades) > 0:
+                    return non_discounted_upgrades[0]
                 return None, None, None
             
             x, y, upgrade_name = self._scroll_locate_upgrade(

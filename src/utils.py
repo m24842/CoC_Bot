@@ -1383,13 +1383,29 @@ class Frame_Handler:
         cls.save_frame(frame, filename)
     
     @classmethod
-    def locate(cls, template, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False, use_cached=False):
+    def locate(
+        cls,
+        template,
+        frame=None,
+        grayscale=True,
+        thresh=0,
+        ref="cc",
+        null_val=None,
+        normalize=True,
+        return_confidence=False,
+        return_all=False,
+        use_cached=False,
+    ):
         import cv2, numpy as np
 
         if grayscale: template = cls.grayscale(template)
         h, w = template.shape[:2]
-        frame = cls.get_frame(grayscale=grayscale, use_cached=use_cached) if frame is None else frame
+        if frame is None:
+            frame = cls.get_frame(grayscale=grayscale, use_cached=use_cached)
+        elif grayscale: frame = cls.grayscale(frame)
         fh, fw = frame.shape[:2]
+        nh = fh if normalize else 1
+        nw = fw if normalize else 1
         
         if h > fh or w > fw:
             if return_all:
@@ -1416,9 +1432,9 @@ class Frame_Handler:
                     y_loc += h
 
                 if return_confidence:
-                    results.append((x_loc / fw, y_loc / fh, float(val)))
+                    results.append((x_loc / nw, y_loc / nh, float(val)))
                 else:
-                    results.append((x_loc / fw, y_loc / fh))
+                    results.append((x_loc / nw, y_loc / nh))
 
             results.sort(key=lambda r: r[-1] if return_confidence else 0, reverse=True)
             return results
@@ -1430,15 +1446,15 @@ class Frame_Handler:
             if ref[1] == 'c': y_loc += h / 2
             elif ref[1] == 'b': y_loc += h
             if return_confidence:
-                return x_loc / fw, y_loc / fh, max_val
+                return x_loc / nw, y_loc / nh, max_val
             else:
-                return x_loc / fw, y_loc / fh
+                return x_loc / nw, y_loc / nh
         if return_confidence:
             return null_val, null_val, max_val
         return null_val, null_val
 
     @classmethod
-    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, return_confidence=False, return_all=False, use_cached=False):
+    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, normalize=True, return_confidence=False, return_all=False, use_cached=False):
         from concurrent.futures import ThreadPoolExecutor
         
         if cls.pool is None:
@@ -1449,7 +1465,7 @@ class Frame_Handler:
         
         threads = []
         for template in templates:
-            threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, null_val, return_confidence, return_all))
+            threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, null_val, normalize, return_confidence, return_all))
         return [thread.result() for thread in threads]
 
 class Dev_Tools:
