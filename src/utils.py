@@ -20,7 +20,7 @@ if getattr(sys, "frozen", False):
 else:
     CACHE_PATH = Path(__file__).parent / "cache.json"
 
-INSTANCE_ID, ADB_ADDRESS, BLUESTACKS_PID = [None] * 3
+INSTANCE_ID = ADB_ADDRESS = BLUESTACKS_PID = None
 TEMP_CACHE = {}
 
 def parse_args(debug=None, id=None, gui=None, gui_port=None):
