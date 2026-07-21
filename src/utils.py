@@ -25,7 +25,7 @@ TEMP_CACHE = {}
 
 def parse_args(debug=None, id=None, gui=None, gui_port=None):
     import argparse
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", default=configs.DEBUG, help="Enable debug mode")
     parser.add_argument("--id", type=str, default=None, help="Instance ID")
