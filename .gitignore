@@ -1,0 +1,13 @@
+.vscode
+.venv
+.DS_Store
+build
+dist
+debug
+*.pyc
+*.spec
+src/cache.json
+src/configs.py
+src/configs_build.py
+scripts/start.sh
+app/data

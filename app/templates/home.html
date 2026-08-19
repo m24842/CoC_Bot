@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>if ('scrollRestoration' in history) history.scrollRestoration = 'manual';</script>
+    <title>CoC Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='coc_bot_logo.png') }}" alt="CoC Bot">
+        <h1 class="themed_text">CoC Bot</h1>
+    </header>
+
+    <div class="container">
+
+        <div style="margin-bottom:25px;">
+            <strong class="themed_text" style="font-size:4em; padding:0;">Instances</strong>
+        </div>
+
+        <form class="stacked-buttons"></form>
+        
+        <script>
+            let ids = {{ ids|default([])|tojson }};
+
+            async function fetchInstances() {
+                try {
+                    const response = await fetch("/instances");
+                    const data = await response.json();
+                    ids = data.ids;
+                } catch (error) {
+                    console.error('Error fetching instances:', error);
+                }
+            }
+
+            function updateInstances() {
+                let i = 0;
+                while (i < ids.length) {
+                    if (!document.getElementById(`id_${ids[i]}`)) {
+                        const idButton = document.createElement("button");
+                        idButton.type = "submit";
+                        idButton.id = `id_${ids[i]}`;
+                        idButton.value = ids[i];
+                        idButton.innerHTML = `${ids[i]}`;
+                        document.querySelector(".stacked-buttons").appendChild(idButton);
+                    }
+
+                    i++;
+                }
+            }
+
+            function update() {
+                fetchInstances().then(() => {
+                    updateInstances();
+                });
+            }
+            update();
+            setInterval(update, 3000);
+
+            document.body.addEventListener("touchstart", () => {}, false);
+
+            document.querySelectorAll("form").forEach(form => {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    
+                    const submitter = e.submitter;
+
+                    setTimeout(() => {
+                        window.location.href = `/instances/${submitter.value}`;
+                    }, 200);
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

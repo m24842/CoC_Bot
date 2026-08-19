@@ -1,0 +1,36 @@
+name: Deploy Webapp
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests selenium
+
+      - name: Deploy Webapp
+        run: |
+          python .github/workflows/deploy_webapp.py \
+            --host "${{ vars.PA_HOST }}" \
+            --username "${{ secrets.PA_USERNAME }}" \
+            --password "${{ secrets.PA_PASSWORD }}" \
+            --token "${{ secrets.PA_TOKEN }}" \
+            --console-id "${{ vars.PA_CONSOLE_ID }}"
