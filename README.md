@@ -105,25 +105,13 @@
 
 ## Demos
 ### Updated Bot Demo
-<p align="center">
-    <video src="https://github.com/user-attachments/assets/09926729-be49-420a-81c1-f312907b8878" controls width="90%" poster="media/Video_Thumbnail.png" preload="none">
-    </video>
-</p>
+https://github.com/user-attachments/assets/88e4a675-758b-403a-8496-9490ccffe1b3
 
 ### Original Bot Demo
-<p align="center">
-    <video src="https://github.com/user-attachments/assets/577b1cc3-ea94-4a27-a898-fc0a4f621f51" controls width="90%" poster="media/Video_Thumbnail.png" preload="none">
-    </video>
-</p>
+https://github.com/user-attachments/assets/735bb9c0-074d-4dcd-9e3a-e0256b2d9438
 
 ### Web App Demo
-<p align="center">
-    <video src="https://github.com/user-attachments/assets/b86cf745-4cec-4c69-845a-67f8fd2ddc79" width="90%" controls preload="metadata">
-    </video>
-</p>
+https://github.com/user-attachments/assets/3068863a-fa5a-4bef-bfb5-fb35f56ddd16
 
 ### Desktop App Demo
-<p align="center">
-    <video src="https://github.com/user-attachments/assets/a0893115-0feb-4dba-ab29-756a2f422a83" width="50%" controls preload="metadata">
-    </video>
-</p>
+https://github.com/user-attachments/assets/a0893115-0feb-4dba-ab29-756a2f422a83
