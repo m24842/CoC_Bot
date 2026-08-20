@@ -695,9 +695,6 @@ class Disk_Cache(collections.UserDict):
             replace_existing=True
         )
 
-    def __getitem__(self, key):
-        return super().__getitem__(key)
-
     def load_cache(self):
         import json, portalocker
         if self.path.exists():
@@ -871,6 +868,21 @@ class Task_Handler:
     
     cache_valid = False
     cached_exclusions = []
+    task_defaults = {
+        "home_base_priority": "PRIORITY_HOME_BASE_UPGRADES",
+        "home_lab_priority": "PRIORITY_HOME_LAB_UPGRADES",
+        "builder_base_priority": "PRIORITY_BUILDER_BASE_UPGRADES",
+        "builder_lab_priority": "PRIORITY_BUILDER_LAB_UPGRADES",
+        "heroes": "UPGRADE_HEROES",
+        "home_base": "UPGRADE_HOME_BASE",
+        "builder_base": "UPGRADE_BUILDER_BASE",
+        "home_lab": "UPGRADE_HOME_LAB",
+        "builder_lab": "UPGRADE_BUILDER_LAB",
+        "home_attacks": "ATTACK_HOME_BASE",
+        "builder_attacks": "ATTACK_BUILDER_BASE",
+        "lab_assistant": "ASSIGN_LAB_ASSISTANT",
+        "builder_apprentice": "ASSIGN_BUILDER_APPRENTICE",
+    }
     
     @classmethod
     def get_exclusions(cls, use_cached=False):
@@ -899,147 +911,17 @@ class Task_Handler:
         return None
 
     @classmethod
-    def home_base_priority_excluded(cls, **kwargs):
+    def excluded(cls, task_name, use_cached=False):
         try:
-            exclusions = cls.get_exclusions(**kwargs)
+            assert task_name in cls.task_defaults, "Invalid task name"
+            exclusions = cls.get_exclusions(use_cached=use_cached)
             if exclusions is not None:
-                return "home_base_priority" in exclusions
+                return task_name in exclusions
             raise Exception("No external exclusion source available")
         except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.PRIORITY_HOME_BASE_UPGRADES
-
-    @classmethod
-    def home_lab_priority_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "home_lab_priority" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.PRIORITY_HOME_LAB_UPGRADES
-    
-    @classmethod
-    def builder_base_priority_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "builder_base_priority" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.PRIORITY_BUILDER_BASE_UPGRADES
-    
-    @classmethod
-    def builder_lab_priority_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "builder_lab_priority" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.PRIORITY_BUILDER_LAB_UPGRADES
-
-    @classmethod
-    def heroes_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "heroes" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.UPGRADE_HEROES
-
-    @classmethod
-    def home_base_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "home_base" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.UPGRADE_HOME_BASE
-
-    @classmethod
-    def builder_base_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "builder_base" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.UPGRADE_BUILDER_BASE
-
-    @classmethod
-    def home_lab_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "home_lab" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.UPGRADE_HOME_LAB
-
-    @classmethod
-    def builder_lab_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "builder_lab" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.UPGRADE_BUILDER_LAB
-
-    @classmethod
-    def home_attacks_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "home_attacks" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.ATTACK_HOME_BASE
-
-    @classmethod
-    def builder_attacks_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "builder_attacks" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.ATTACK_BUILDER_BASE
-
-    @classmethod
-    def lab_assistant_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "lab_assistant" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.ASSIGN_LAB_ASSISTANT
-
-    @classmethod
-    def builder_apprentice_excluded(cls, **kwargs):
-        try:
-            exclusions = cls.get_exclusions(**kwargs)
-            if exclusions is not None:
-                return "builder_apprentice" in exclusions
-            raise Exception("No external exclusion source available")
-        except (KeyboardInterrupt, SystemExit): raise
-        except:
-            return not configs.ASSIGN_BUILDER_APPRENTICE
+        except Exception as e:
+            print("Task_Manager error:", e)
+            return not getattr(configs, cls.task_defaults[task_name], False)
 
 class OCR_Handler:
     

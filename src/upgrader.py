@@ -316,7 +316,7 @@ class Upgrader:
             town_hall_template = [render_text("Town Hall", "CCBackBeat", 27)]
             hero_templates = [render_text(text, "CCBackBeat", 27) for text in Cache_Manager.get("vocab", get_vocab())["heroes"]]
             seasonal_defense_templates = [render_text(text, "CCBackBeat", 27) for text in Cache_Manager.get("vocab", get_vocab())["buildings/seasonal-defense"]]
-            heros_excluded = Task_Handler.heroes_excluded()
+            heros_excluded = ask_Handler.excluded("heroes")
             
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
@@ -397,7 +397,7 @@ class Upgrader:
             # Hero upgrades go directly to confirm screen now
             in_hero_hall = not get_home_builders(0, return_amount=False, raise_exception=False)
             if in_hero_hall:
-                if Task_Handler.heroes_excluded(): return None
+                if Task_Handler.excluded("heros"): return None
             else:
                 self._click_home_builders()
                 
@@ -428,7 +428,7 @@ class Upgrader:
         try:
             # Render templates
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
-            if Task_Handler.heroes_excluded():
+            if Task_Handler.excluded("heroes"):
                 upgrade_text = list(set(upgrade_text) - set(Cache_Manager.get("vocab", get_vocab())["heroes"]))
             if len(upgrade_text) == 0: return None
             templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
@@ -494,7 +494,7 @@ class Upgrader:
             # Hero upgrades go directly to confirm screen now
             in_hero_hall = not get_home_builders(0, return_amount=False, raise_exception=False)
             if in_hero_hall:
-                if Task_Handler.heroes_excluded(): return None
+                if Task_Handler.excluded("heroes"): return None
             else:
                 self._click_home_builders()
                 
@@ -520,7 +520,7 @@ class Upgrader:
     
     @require_exit()
     def home_upgrade(self):
-        if not Task_Handler.home_base_priority_excluded():
+        if not Task_Handler.excluded("home_base_priority"):
             for priority_level in configs.HOME_BASE_UPGRADE_PRIORITY:
                 upgrade_name = self.home_specified_upgrade(priority_level)
                 if upgrade_name is not None: return upgrade_name
@@ -730,7 +730,7 @@ class Upgrader:
     
     @require_exit()
     def home_lab_upgrade(self):
-        if not Task_Handler.home_lab_priority_excluded():
+        if not Task_Handler.excluded("home_lab_priority"):
             for priority_level in configs.HOME_LAB_UPGRADE_PRIORITY:
                 upgrade_name = self.home_lab_specified_upgrade(priority_level)
                 if upgrade_name is not None: return upgrade_name
@@ -952,7 +952,7 @@ class Upgrader:
     
     @require_exit()
     def builder_upgrade(self):
-        if not Task_Handler.builder_base_priority_excluded():
+        if not Task_Handler.excluded("builder_base_priority"):
             for priority_level in configs.BUILDER_BASE_UPGRADE_PRIORITY:
                 upgrade_name = self.builder_specified_upgrade(priority_level)
                 if upgrade_name is not None: return upgrade_name
@@ -1117,7 +1117,7 @@ class Upgrader:
     
     @require_exit()
     def builder_lab_upgrade(self):
-        if not Task_Handler.builder_lab_priority_excluded():
+        if not Task_Handler.excluded("builder_lab_priority"):
             for priority_level in configs.BUILDER_LAB_UPGRADE_PRIORITY:
                 upgrade_name = self.builder_lab_specified_upgrade(priority_level)
                 if upgrade_name is not None: return upgrade_name
@@ -1152,7 +1152,7 @@ class Upgrader:
                     else: break
                 except (KeyboardInterrupt, SystemExit): raise
                 except: pass
-        if not Task_Handler.builder_apprentice_excluded():
+        if not Task_Handler.excluded("builder_apprentice"):
             self.assign_builder_apprentice()
         
         # Lab upgrades
@@ -1165,7 +1165,7 @@ class Upgrader:
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded.lower())
         except (KeyboardInterrupt, SystemExit): raise
         except: pass
-        if not Task_Handler.lab_assistant_excluded():
+        if not Task_Handler.excluded("lab_assistant"):
             self.assign_lab_assistant()
         
         for upgrade in upgrades_started + lab_upgrades_started:
