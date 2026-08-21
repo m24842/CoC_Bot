@@ -3,6 +3,11 @@ try:
 except:
     from configs_build import *
 
+def gui_disable_sleep():
+    import time, utils
+    utils.disable_sleep()
+    while True: time.sleep(1)
+
 def launch_proc(args):
     from log import enable_logging
     from utils import parse_args, init_instance
@@ -20,7 +25,6 @@ def cmd_launch(args):
 
 def gui_launch(args):
     from multiprocessing import Process
-    import utils
     from gui import init_gui, get_gui
     from copy import deepcopy
     
@@ -28,10 +32,11 @@ def gui_launch(args):
     pipe = init_gui(args.id)
     args.gui_port = get_gui().server_port
     
-    if DISABLE_DEVICE_SLEEP: utils.disable_sleep()
+    if DISABLE_DEVICE_SLEEP:
+        Process(target=gui_disable_sleep, daemon=True).start()
 
     if args.id is not None:
-        p = Process(target=launch_proc, args=(args,))
+        p = Process(target=launch_proc, args=(args,), daemon=True)
         p.start()
         procs[args.id] = p
     try:
