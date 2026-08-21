@@ -48,8 +48,9 @@ def init_instance(id):
     
     assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
     INSTANCE_ID = id
-    if configs.AUTO_START_BLUESTACKS: BlueStacks_Manager.init()
-    ADB_ADDRESS = BlueStacks_Manager.adb_address
+    emulator_manager = {"bluestacks": BlueStacks_Manager, "mumu": MuMu_Manager}[getattr(configs, "EMULATOR_TYPE", "bluestacks")]
+    if getattr(configs, "AUTO_START_EMULATOR", getattr(configs, "AUTO_START_BLUESTACKS", True)): emulator_manager.init()
+    ADB_ADDRESS = emulator_manager.adb_address
     if WEB_APP_URL != "":
         if "pythonanywhere.com" in WEB_APP_URL:
             Scheduler.add_job(extend_pythonanywhere_hosting, args=(configs.PA_USERNAME, configs.PA_PASSWORD), trigger="interval", hours=24)
@@ -864,6 +865,123 @@ class BlueStacks_Manager:
         cls.stop()
         cls.start()
 
+class MuMu_Manager:
+    """
+    Instance identity is resolved via MuMuManager.exe's own "name" field for each vmindex,
+    which must be renamed (in MuMu's multi-instance manager) to match the bot instance ID,
+    same convention as BlueStacks_Manager.internal_instance_name.
+    """
+
+    _vmindex = None
+    _adb_port = None
+    _manager_path = None
+
+    @classmethod
+    def init(cls):
+        Exit_Handler.register(cls.stop)
+        cls.restart()
+
+    @classproperty
+    def manager_path(cls):
+        if cls._manager_path is not None and Path(cls._manager_path).exists():
+            return cls._manager_path
+
+        bin_path = getattr(configs, "MUMU_BIN_PATH", "") or r"C:\Program Files\Netease\MuMuPlayer\nx_main\MuMuManager.exe"
+        if not Path(bin_path).exists():
+            bin_path = file_search("/", "MuMuManager.exe", ["netease", "mumu"])
+        assert bin_path is not None and Path(bin_path).exists(), f"MuMuManager.exe not found at {bin_path}"
+        cls._manager_path = bin_path
+        return cls._manager_path
+
+    @classmethod
+    def _run(cls, *args):
+        import subprocess, json
+        res = subprocess.run([cls.manager_path, *args], capture_output=True, text=True)
+        return json.loads(res.stdout) if res.stdout.strip() else {}
+
+    @classproperty
+    def vmindex(cls, instance_id=None):
+        if cls._vmindex is not None:
+            return cls._vmindex
+
+        instance_id = instance_id if instance_id is not None else INSTANCE_ID
+        info = cls._run("info", "--vmindex", "all")
+        for index, data in info.items():
+            if data.get("name") == instance_id:
+                cls._vmindex = index
+                break
+        else:
+            raise Exception(f"No MuMu instance named '{instance_id}' found. Rename it in MuMu's multi-instance manager to match INSTANCE_IDS.")
+
+        return cls._vmindex
+
+    @classproperty
+    def adb_port(cls):
+        info = cls._run("info", "--vmindex", cls.vmindex)
+        port = info.get("adb_port")
+        if port is not None:
+            cls._adb_port = str(port)
+        elif cls._adb_port is None:
+            # ponytail: MuMu only reports adb_port once the instance is running; before that,
+            # fall back to its default multi-instance port formula (base 16384, step 32/index).
+            # Upgrade path: verify this formula still holds if MuMu changes its port scheme.
+            cls._adb_port = str(16384 + 32 * int(cls.vmindex))
+        return cls._adb_port
+
+    @classproperty
+    def adb_address(cls):
+        return f"127.0.0.1:{cls.adb_port}"
+
+    @classmethod
+    def check(cls):
+        try:
+            ADB_Manager.connect_once(cls.adb_address)
+            return True
+        except (KeyboardInterrupt, SystemExit): raise
+        except: return False
+
+    @classmethod
+    def start(cls, timeout=60):
+        import time
+
+        if cls.check():
+            if configs.DEBUG: print("MuMu already running.")
+            return
+
+        cls._run("control", "--vmindex", cls.vmindex, "launch")
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if cls.check():
+                if configs.DEBUG: print("MuMu started.")
+                return
+            time.sleep(0.5)
+
+        raise Exception("MuMu failed to start.")
+
+    @classmethod
+    def stop(cls, timeout=60):
+        import time
+
+        if not cls.check():
+            if configs.DEBUG: print("MuMu stopped.")
+            return
+        cls._run("control", "--vmindex", cls.vmindex, "shutdown")
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if not cls.check():
+                if configs.DEBUG: print("MuMu stopped.")
+                return
+            time.sleep(0.5)
+
+        raise Exception("MuMu failed to stop.")
+
+    @classmethod
+    def restart(cls):
+        cls.stop()
+        cls.start()
+
 class Task_Handler:
     
     cache_valid = False
@@ -1150,14 +1268,24 @@ class ADB_Manager:
 
 class Input_Handler:
     @classmethod
+    def _to_raw(cls, x_frac, y_frac):
+        raw_w = int(ADB_Manager.minitouch_device.connection.max_x)
+        raw_h = int(ADB_Manager.minitouch_device.connection.max_y)
+        if raw_w >= raw_h:
+            return int(x_frac * raw_w), int(y_frac * raw_h)
+        # ponytail: device reports native-portrait touch axes while the display is
+        # landscape (WINDOW_DIMS) -- compensate for the OS's rotation between the
+        # raw touch device and the composited display (seen on MuMu). Assumes a
+        # 90deg CW rotation, the common case for phone-profile emulators; upgrade
+        # path: detect rotation direction if a 270deg case is ever seen.
+        return int(raw_w - y_frac * raw_w), int(x_frac * raw_h)
+
+    @classmethod
     def down(cls, x, y, pointer=0):
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        x = int(x * MAX_X)
-        y = int(y * MAX_Y)
+        x, y = cls._to_raw(x, y)
         builder = CommandBuilder()
         builder.down(pointer, x, y, 100)
         builder.publish(ADB_Manager.minitouch_device.connection)
@@ -1175,10 +1303,10 @@ class Input_Handler:
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        x = int(x * MAX_X)
-        y = int(y * MAX_Y)
+        x_norm, y_norm = x, y
+        x, y = cls._to_raw(x, y)
+        if configs.DEBUG:
+            Frame_Handler.debug_click(x_norm, y_norm, x, y)
         builder = CommandBuilder()
         for _ in range(n):
             builder.down(pointer, x, y, 100)
@@ -1193,30 +1321,23 @@ class Input_Handler:
 
     @classmethod
     def multi_click(cls, x1, y1, x2, y2, duration=0):
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        ADB_Manager.minitouch_device.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
+        ADB_Manager.minitouch_device.tap([cls._to_raw(x1, y1), cls._to_raw(x2, y2)], duration=duration)
 
     @classmethod
     def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0, pointer=0):
         import time, numpy as np
         from pyminitouch import CommandBuilder
-        
+
         if x1 < 0: x1 = 1 + x1
         if y1 < 0: y1 = 1 + y1
         if x2 < 0: x2 = 1 + x2
         if y2 < 0: y2 = 1 + y2
-        
+
         builder = CommandBuilder()
-        
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        
-        x1 = int(x1 * MAX_X)
-        y1 = int(y1 * MAX_Y)
-        x2 = int(x2 * MAX_X)
-        y2 = int(y2 * MAX_Y)
-        
+
+        x1, y1 = cls._to_raw(x1, y1)
+        x2, y2 = cls._to_raw(x2, y2)
+
         x_points = np.linspace(x1, x2, inter_points + 2, dtype=int)
         y_points = np.linspace(y1, y2, inter_points + 2, dtype=int)
         dt = duration / (inter_points + 1)
@@ -1252,14 +1373,11 @@ class Input_Handler:
         from pyminitouch import CommandBuilder
         
         builder = CommandBuilder()
-        
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        
-        left_in = to_int_array((0.15 + 0.30*percent)*MAX_X, 0.5*MAX_Y)
-        left_out = to_int_array(0.15*MAX_X, 0.5*MAX_Y)
-        right_in = to_int_array((0.85 - 0.30*percent)*MAX_X, 0.5*MAX_Y)
-        right_out = to_int_array(0.85*MAX_X, 0.5*MAX_Y)
+
+        left_in = cls._to_raw(0.15 + 0.30*percent, 0.5)
+        left_out = cls._to_raw(0.15, 0.5)
+        right_in = cls._to_raw(0.85 - 0.30*percent, 0.5)
+        right_out = cls._to_raw(0.85, 0.5)
         
         start = [left_in, right_in] if dir=="in" else [left_out, right_out]
         end = [left_out, right_out] if dir=="in" else [left_in, right_in]
@@ -1278,6 +1396,50 @@ class Input_Handler:
 class Frame_Handler:
     pool = None
     cached_frame = None
+
+    @classmethod
+    def _debug_base_frame(cls):
+        """Return a color frame suitable for temporary debug annotations."""
+        import numpy as np
+
+        frame = cls.cached_frame
+        if frame is None:
+            frame = cls.get_frame(grayscale=False, use_cached=False)
+        frame = np.asarray(frame)
+        if len(frame.shape) == 2:
+            import cv2
+            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+        return frame.copy()
+
+    @classmethod
+    def _save_debug_overlay(cls, frame, label="", filename="debug/click_overlay.png"):
+        import cv2
+        from pathlib import Path
+
+        Path("debug").mkdir(exist_ok=True)
+        if label:
+            cv2.putText(frame, label, (12, 28), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.7, (255, 255, 0), 2, cv2.LINE_AA)
+        cls.save_frame(frame, filename)
+
+    @classmethod
+    def debug_click(cls, x_norm, y_norm, raw_x, raw_y):
+        """Draw the latest click and append its normalized/raw coordinates."""
+        from pathlib import Path
+        import cv2
+
+        frame = cls._debug_base_frame()
+        height, width = frame.shape[:2]
+        px, py = int(x_norm * width), int(y_norm * height)
+        cv2.drawMarker(frame, (px, py), (255, 0, 255), cv2.MARKER_CROSS,
+                       36, 3, cv2.LINE_AA)
+        cv2.circle(frame, (px, py), 14, (255, 0, 255), 3, cv2.LINE_AA)
+        label = f"CLICK norm=({x_norm:.3f},{y_norm:.3f}) raw=({raw_x},{raw_y})"
+        cv2.putText(frame, label, (px + 18, max(28, py - 18)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 255), 2,
+                    cv2.LINE_AA)
+        cls._save_debug_overlay(frame)
+        Path("debug/clicks.log").open("a", encoding="utf-8").write(label + "\n")
     
     @classmethod
     def grayscale(cls, frame):
@@ -1369,6 +1531,17 @@ class Frame_Handler:
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
         if configs.DEBUG: print("locate confidence:", max_val)
+
+        if configs.DEBUG and frame.shape[:2] == tuple(reversed(WINDOW_DIMS)):
+            overlay = cls._debug_base_frame()
+            x_loc, y_loc = max_loc
+            cv2.rectangle(overlay, (x_loc, y_loc),
+                          (x_loc + w, y_loc + h), (0, 255, 255), 2)
+            cv2.putText(overlay, f"ROI conf={max_val:.3f}",
+                        (x_loc, max(24, y_loc - 8)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2,
+                        cv2.LINE_AA)
+            cls._save_debug_overlay(overlay, filename="debug/roi_overlay.png")
         
         if return_all:
             ys, xs = np.where(res >= thresh)

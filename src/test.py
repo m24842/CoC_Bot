@@ -21,6 +21,7 @@ if __name__ == "__main__":
     # bot.upgrader.home_lab_random_upgrade()
     # bot.upgrader.home_lab_specified_upgrade(HOME_LAB_UPGRADE_PRIORITY[0])
     # bot.upgrader.assign_builder_assistant()
+    # bot.attacker.start_normal_attack()
     # bot.attacker.run_home_base()
     # bot.attacker.complete_normal_attack(exclude_clan_troops=EXCLUDE_CLAN_TROOPS)
     # bot.attacker.complete_builder_attack()

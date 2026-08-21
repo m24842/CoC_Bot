@@ -133,7 +133,9 @@ ATTACK_BUILDER_BASE = True # can be overridden on desktop or web app
 ########################
 DEBUG = False
 DISABLE_DEVICE_SLEEP = True
-AUTO_START_BLUESTACKS = True
+EMULATOR_TYPE = "bluestacks" # "bluestacks" or "mumu"
+AUTO_START_EMULATOR = True
 WINDOW_DIMS = (1920, 1080) # width, height
 ADB_ABS_DIR = "" # absolute path to dir with adb executable, leave empty to use system PATH
 BLUESTACKS_BIN_PATH = "" # absolute path to Bluestacks executable, leave empty to use system defaults
+MUMU_BIN_PATH = "" # absolute path to MuMuManager.exe, leave empty to use system defaults
