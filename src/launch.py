@@ -1,3 +1,8 @@
+try:
+    from configs import *
+except:
+    from configs_build import *
+
 def launch_proc(args):
     from log import enable_logging
     from utils import parse_args, init_instance
@@ -10,8 +15,7 @@ def launch_proc(args):
     bot.run()
 
 def cmd_launch(args):
-    import utils
-    if utils.DISABLE_DEVICE_SLEEP: utils.disable_sleep()
+    if DISABLE_DEVICE_SLEEP: utils.disable_sleep()
     launch_proc(args)
 
 def gui_launch(args):
@@ -24,7 +28,7 @@ def gui_launch(args):
     pipe = init_gui(args.id)
     args.gui_port = get_gui().server_port
     
-    if utils.DISABLE_DEVICE_SLEEP: Process(target=utils.disable_sleep).start()
+    if DISABLE_DEVICE_SLEEP: utils.disable_sleep()
 
     if args.id is not None:
         p = Process(target=launch_proc, args=(args,))
