@@ -23,7 +23,7 @@
 * iPhone shortcut to auto resume / pause bot when CoC is opened by user ⏯️
 * Telegram and web app notifications 🔔
 * Automatic CoC app updates 🔼
-* Automatic emulator instance launch / shutdown (BlueStacks or MuMu Player) 🔌
+* Automatic emulator instance launch / shutdown 🔌
 
 ## Dependencies
 1. [Android Debug Bridge](https://developer.android.com/tools/releases/platform-tools)
