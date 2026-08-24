@@ -48,8 +48,9 @@ def init_instance(id):
     
     assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
     INSTANCE_ID = id
-    if configs.AUTO_START_BLUESTACKS: BlueStacks_Manager.init()
-    ADB_ADDRESS = BlueStacks_Manager.adb_address
+    emulator_manager = {"bluestacks": BlueStacks_Manager, "mumu": MuMu_Manager}[getattr(configs, "EMULATOR_TYPE", "bluestacks")]
+    if getattr(configs, "AUTO_START_EMULATOR", True): emulator_manager.init()
+    ADB_ADDRESS = emulator_manager.adb_address
     if WEB_APP_URL != "":
         if "pythonanywhere.com" in WEB_APP_URL:
             Scheduler.add_job(extend_pythonanywhere_hosting, args=(configs.PA_USERNAME, configs.PA_PASSWORD), trigger="interval", hours=24)
@@ -864,6 +865,125 @@ class BlueStacks_Manager:
         cls.stop()
         cls.start()
 
+class MuMu_Manager:
+    """
+    Instance identity is resolved via MuMuManager.exe's own "name" field for each vmindex,
+    which must be renamed (in MuMu's multi-instance manager) to match the bot instance ID,
+    same convention as BlueStacks_Manager.internal_instance_name.
+    """
+
+    _vmindex = None
+    _adb_port = None
+    _manager_path = None
+
+    @classmethod
+    def init(cls):
+        if sys.platform == "darwin":
+            raise Exception("MuMu Player is not supported on macOS yet. Use BlueStacks instead.")
+        Exit_Handler.register(cls.stop)
+        cls.restart()
+
+    @classproperty
+    def manager_path(cls):
+        if cls._manager_path is not None and Path(cls._manager_path).exists():
+            return cls._manager_path
+
+        bin_path = getattr(configs, "MUMU_BIN_PATH", "") or r"C:\Program Files\Netease\MuMuPlayer\nx_main\MuMuManager.exe"
+        if not Path(bin_path).exists():
+            bin_path = file_search("/", "MuMuManager.exe", ["netease", "mumu"])
+        assert bin_path is not None and Path(bin_path).exists(), f"MuMuManager.exe not found at {bin_path}"
+        cls._manager_path = bin_path
+        return cls._manager_path
+
+    @classmethod
+    def _run(cls, *args):
+        import subprocess, json
+        res = subprocess.run([cls.manager_path, *args], capture_output=True, text=True)
+        return json.loads(res.stdout) if res.stdout.strip() else {}
+
+    @classproperty
+    def vmindex(cls, instance_id=None):
+        if cls._vmindex is not None:
+            return cls._vmindex
+
+        instance_id = instance_id if instance_id is not None else INSTANCE_ID
+        info = cls._run("info", "--vmindex", "all")
+        for index, data in info.items():
+            if data.get("name") == instance_id:
+                cls._vmindex = index
+                break
+        else:
+            raise Exception(f"No MuMu instance named '{instance_id}' found. Rename it in MuMu's multi-instance manager to match INSTANCE_IDS.")
+
+        return cls._vmindex
+
+    @classproperty
+    def adb_port(cls):
+        info = cls._run("info", "--vmindex", cls.vmindex)
+        port = info.get("adb_port")
+        if port is not None:
+            cls._adb_port = str(port)
+        elif cls._adb_port is None:
+            # ponytail: MuMu only reports adb_port once the instance is running; before that,
+            # fall back to its default multi-instance port formula (base 16384, step 32/index).
+            # Upgrade path: verify this formula still holds if MuMu changes its port scheme.
+            cls._adb_port = str(16384 + 32 * int(cls.vmindex))
+        return cls._adb_port
+
+    @classproperty
+    def adb_address(cls):
+        return f"127.0.0.1:{cls.adb_port}"
+
+    @classmethod
+    def check(cls):
+        try:
+            ADB_Manager.connect_once(cls.adb_address)
+            return True
+        except (KeyboardInterrupt, SystemExit): raise
+        except: return False
+
+    @classmethod
+    def start(cls, timeout=60):
+        import time
+
+        if cls.check():
+            if configs.DEBUG: print("MuMu already running.")
+            return
+
+        cls._run("control", "--vmindex", cls.vmindex, "launch")
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if cls.check():
+                if configs.DEBUG: print("MuMu started.")
+                return
+            time.sleep(0.5)
+
+        raise Exception("MuMu failed to start.")
+
+    @classmethod
+    def stop(cls, timeout=60):
+        import time
+
+        if not cls.check():
+            if configs.DEBUG: print("MuMu stopped.")
+            return
+        cls._run("control", "--vmindex", cls.vmindex, "shutdown")
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if not cls.check():
+                if configs.DEBUG: print("MuMu stopped.")
+                return
+            time.sleep(0.5)
+
+        raise Exception("MuMu failed to stop.")
+
+    @classmethod
+    def restart(cls):
+        cls.stop()
+        cls.start()
+
 class Task_Handler:
     
     cache_valid = False
@@ -1150,14 +1270,25 @@ class ADB_Manager:
 
 class Input_Handler:
     @classmethod
+    def _to_raw(cls, x_frac, y_frac):
+        raw_w = int(ADB_Manager.minitouch_device.connection.max_x)
+        raw_h = int(ADB_Manager.minitouch_device.connection.max_y)
+        if raw_w >= raw_h:
+            return int(x_frac * raw_w), int(y_frac * raw_h)
+        # ponytail: not a "can't be set to landscape" limitation -- the display is
+        # landscape (WINDOW_DIMS) same as any other emulator. MuMu's virtual touch
+        # device just reports raw axes in native-portrait order regardless of the
+        # display orientation, so we compensate for that rotation here. Assumes a
+        # 90deg CW rotation, the common case for phone-profile emulators; upgrade
+        # path: detect rotation direction if a 270deg case is ever seen.
+        return int(raw_w - y_frac * raw_w), int(x_frac * raw_h)
+
+    @classmethod
     def down(cls, x, y, pointer=0):
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        x = int(x * MAX_X)
-        y = int(y * MAX_Y)
+        x, y = cls._to_raw(x, y)
         builder = CommandBuilder()
         builder.down(pointer, x, y, 100)
         builder.publish(ADB_Manager.minitouch_device.connection)
@@ -1175,10 +1306,7 @@ class Input_Handler:
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        x = int(x * MAX_X)
-        y = int(y * MAX_Y)
+        x, y = cls._to_raw(x, y)
         builder = CommandBuilder()
         for _ in range(n):
             builder.down(pointer, x, y, 100)
@@ -1193,30 +1321,23 @@ class Input_Handler:
 
     @classmethod
     def multi_click(cls, x1, y1, x2, y2, duration=0):
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        ADB_Manager.minitouch_device.tap([(x1*MAX_X, y1*MAX_Y), (x2*MAX_X, y2*MAX_Y)], duration=duration)
+        ADB_Manager.minitouch_device.tap([cls._to_raw(x1, y1), cls._to_raw(x2, y2)], duration=duration)
 
     @classmethod
     def swipe(cls, x1, y1, x2, y2, duration=100, hold_end_time=0, inter_points=0, pointer=0):
         import time, numpy as np
         from pyminitouch import CommandBuilder
-        
+
         if x1 < 0: x1 = 1 + x1
         if y1 < 0: y1 = 1 + y1
         if x2 < 0: x2 = 1 + x2
         if y2 < 0: y2 = 1 + y2
-        
+
         builder = CommandBuilder()
-        
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        
-        x1 = int(x1 * MAX_X)
-        y1 = int(y1 * MAX_Y)
-        x2 = int(x2 * MAX_X)
-        y2 = int(y2 * MAX_Y)
-        
+
+        x1, y1 = cls._to_raw(x1, y1)
+        x2, y2 = cls._to_raw(x2, y2)
+
         x_points = np.linspace(x1, x2, inter_points + 2, dtype=int)
         y_points = np.linspace(y1, y2, inter_points + 2, dtype=int)
         dt = duration / (inter_points + 1)
@@ -1252,14 +1373,11 @@ class Input_Handler:
         from pyminitouch import CommandBuilder
         
         builder = CommandBuilder()
-        
-        MAX_X = int(ADB_Manager.minitouch_device.connection.max_x)
-        MAX_Y = int(ADB_Manager.minitouch_device.connection.max_y)
-        
-        left_in = to_int_array((0.15 + 0.30*percent)*MAX_X, 0.5*MAX_Y)
-        left_out = to_int_array(0.15*MAX_X, 0.5*MAX_Y)
-        right_in = to_int_array((0.85 - 0.30*percent)*MAX_X, 0.5*MAX_Y)
-        right_out = to_int_array(0.85*MAX_X, 0.5*MAX_Y)
+
+        left_in = cls._to_raw(0.15 + 0.30*percent, 0.5)
+        left_out = cls._to_raw(0.15, 0.5)
+        right_in = cls._to_raw(0.85 - 0.30*percent, 0.5)
+        right_out = cls._to_raw(0.85, 0.5)
         
         start = [left_in, right_in] if dir=="in" else [left_out, right_out]
         end = [left_out, right_out] if dir=="in" else [left_in, right_in]
@@ -1278,7 +1396,7 @@ class Input_Handler:
 class Frame_Handler:
     pool = None
     cached_frame = None
-    
+
     @classmethod
     def grayscale(cls, frame):
         import cv2
@@ -1369,7 +1487,7 @@ class Frame_Handler:
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
         if configs.DEBUG: print("locate confidence:", max_val)
-        
+
         if return_all:
             ys, xs = np.where(res >= thresh)
             results = []

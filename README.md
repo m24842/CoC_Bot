@@ -23,21 +23,29 @@
 * iPhone shortcut to auto resume / pause bot when CoC is opened by user ⏯️
 * Telegram and web app notifications 🔔
 * Automatic CoC app updates 🔼
-* Automatic BlueStacks instance launch / shutdown 🔌
+* Automatic emulator instance launch / shutdown (BlueStacks or MuMu Player) 🔌
 
 ## Dependencies
 1. [Android Debug Bridge](https://developer.android.com/tools/releases/platform-tools)
     * Add to system path
         * Verify with: `adb --version`
-2. [BlueStacks](https://www.bluestacks.com/)
-    * Device profile: Samsung Galaxy S22 Ultra
-    * Display resolution: 1920 x 1080
-    * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
+2. An Android emulator — either [BlueStacks](https://www.bluestacks.com/) or [MuMu Player](https://www.mumuplayer.com/) (set `EMULATOR_TYPE` accordingly in `configs.py`)
+    * The specs below apply to whichever emulator you choose:
+        * Device profile: Samsung Galaxy S22 Ultra
+        * Display resolution: 1920 x 1080
+        * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
+        * Install Clash of Clans from Google Play
+            * Default troop deployment size
+            * Standard or XL scenery
+
+    __If using BlueStacks:__
     * Enable Android Debug Bridge in "Advanced" settings
     * In Multi-Instance Manager, rename instances to match instance IDs in `configs.py` (the default ID is main, see steps 3 and 6 in [Custom Setup Instructions](#custom-setup-instructions-recommended) for more details)
-    * Install Clash of Clans from Google Play
-        * Default troop deployment size
-        * Standard or XL scenery
+
+    __If using MuMu Player:__
+    * In MuMu's multi-instance manager, rename instances to match instance IDs in `configs.py` (same convention as BlueStacks above)
+    * The bot drives MuMu through its official `MuMuManager.exe` CLI (found under `<MuMu install dir>/nx_main/MuMuManager.exe`); if it's not auto-detected, set `MUMU_BIN_PATH` in `configs.py`
+    * Windows only — MuMu Player support relies on `MuMuManager.exe`
 
 ## Default Setup Instructions
 1. Install and configure [external dependencies](#dependencies)
@@ -88,15 +96,15 @@
     * Create an Automation task that runs when CoC opens and is set to run immediately
 
 1. Start the bot: `python src/main.py`
-    > ❗️ __Important__: By default, the bot is configured to start and stop its BlueStacks instance automatically. If this behavior is undesired or causing issues, just set `AUTO_START_BLUESTACKS = False` in `configs.py`
+    > ❗️ __Important__: By default, the bot is configured to start and stop its emulator instance automatically. If this behavior is undesired or causing issues, just set `AUTO_START_EMULATOR = False` in `configs.py`
 
     > __Note__: On MacOS, if `DISABLE_DEVICE_SLEEP = True` in `configs.py`, the user password is required to toggle the `disablesleep` flag in power management settings
 
-    > 💡 __Tip__: The BlueStacks window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
+    > 💡 __Tip__: The emulator window can be minimized without disrupting the bot as all interactions are handled through Android Debug Bridge
 
     > 💡 __Tip__: If not using the bot for development purposes, it can be built into an executable or desktop app for convenience using [build.sh](scripts/build.sh). The desktop app GUI or command-line arguments can be used to specify the instance to run if using multiple bot instances. View a demo of the desktop app [here](#desktop-app-demo).
 
-    * To run bots for multiple accounts just create additional BlueStacks instances with BlueStacks' multi-instance manager (ensuring BlueStacks instance names match bot instance IDs), set up the instance as usual, and append new instance names to `INSTANCE_IDS` in `configs.py`. Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).
+    * To run bots for multiple accounts just create additional instances with your emulator's multi-instance manager (ensuring instance names match bot instance IDs), set up the instance as usual, and append new instance names to `INSTANCE_IDS` in `configs.py`. Specify the instance to run using the `--id` flag (e.g. `python src/main.py --id main`).
 
 ## Miscellaneous
 * Please report issues in the [Issues Tab](https://github.com/m24842/CoC_Bot/issues)

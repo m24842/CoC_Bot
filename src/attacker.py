@@ -10,7 +10,7 @@ class Attacker:
     def __init__(self):
         self.assets = Asset_Manager.attacker_assets
         self.misc_assets = Asset_Manager.misc_assets
-    
+
     # ============================================================
     # 📱 Screen Interaction
     # ============================================================
@@ -41,10 +41,10 @@ class Attacker:
 
     def start_normal_attack(self, timeout=60):
         import time
-        
+
         # Click attack
         Input_Handler.click(0.07, 0.9)
-        
+
         # Find a match
         def locate_find_a_match():
             xys = Frame_Handler.locate(self.assets["find_a_match"], thresh=0.9, return_all=True)
@@ -58,13 +58,13 @@ class Attacker:
             locate_find_a_match,
             timeout=5
         ): return False
-        
+
         # Confirm attack
         if not click_with_timeout(
             lambda: Frame_Handler.locate(self.assets["confirm_attack"], thresh=0.9),
             timeout=5
         ): return False
-        
+
         # Wait until "end battle" button is found
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -247,7 +247,7 @@ class Attacker:
     
     def complete_normal_attack(self, restart=True, exclude_clan_troops=False):
         import time, numpy as np
-        
+
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_up()
         
@@ -259,7 +259,7 @@ class Attacker:
             frame = Frame_Handler.get_frame_section(0.0, 0.82, 1.0, 1.0, grayscale=False)
             # Find troops to deploy
             card_centers, card_boundaries, card_types, card_counts, type_gaps_seen = self.detect_troop_positions(frame, clip_left=last_card_left, type_gaps_seen=type_gaps_seen, return_boundaries=True, return_types=True, return_counts=True)
-            
+
             if len(card_centers) == 0: break
 
             # Exclude clan troops if specified
