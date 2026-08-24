@@ -30,12 +30,13 @@
     * Add to system path
         * Verify with: `adb --version`
 2. An Android emulator — either [BlueStacks](https://www.bluestacks.com/) or [MuMu Player](https://www.mumuplayer.com/) (set `EMULATOR_TYPE` accordingly in `configs.py`)
-    * Device profile: Samsung Galaxy S22 Ultra
-    * Display resolution: 1920 x 1080
-    * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
-    * Install Clash of Clans from Google Play
-        * Default troop deployment size
-        * Standard or XL scenery
+    * The specs below apply to whichever emulator you choose:
+        * Device profile: Samsung Galaxy S22 Ultra
+        * Display resolution: 1920 x 1080
+        * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
+        * Install Clash of Clans from Google Play
+            * Default troop deployment size
+            * Standard or XL scenery
 
     __If using BlueStacks:__
     * Enable Android Debug Bridge in "Advanced" settings
@@ -44,7 +45,7 @@
     __If using MuMu Player:__
     * In MuMu's multi-instance manager, rename instances to match instance IDs in `configs.py` (same convention as BlueStacks above)
     * The bot drives MuMu through its official `MuMuManager.exe` CLI (found under `<MuMu install dir>/nx_main/MuMuManager.exe`); if it's not auto-detected, set `MUMU_BIN_PATH` in `configs.py`
-    * Windows only — MuMu Player support has not been tested on other platforms
+    * Windows only — MuMu Player support relies on `MuMuManager.exe`
 
 ## Default Setup Instructions
 1. Install and configure [external dependencies](#dependencies)

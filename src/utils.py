@@ -49,7 +49,7 @@ def init_instance(id):
     assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
     INSTANCE_ID = id
     emulator_manager = {"bluestacks": BlueStacks_Manager, "mumu": MuMu_Manager}[getattr(configs, "EMULATOR_TYPE", "bluestacks")]
-    if getattr(configs, "AUTO_START_EMULATOR", getattr(configs, "AUTO_START_BLUESTACKS", True)): emulator_manager.init()
+    if getattr(configs, "AUTO_START_EMULATOR", True): emulator_manager.init()
     ADB_ADDRESS = emulator_manager.adb_address
     if WEB_APP_URL != "":
         if "pythonanywhere.com" in WEB_APP_URL:
@@ -878,6 +878,8 @@ class MuMu_Manager:
 
     @classmethod
     def init(cls):
+        if sys.platform == "darwin":
+            raise Exception("MuMu Player is not supported on macOS yet. Use BlueStacks instead.")
         Exit_Handler.register(cls.stop)
         cls.restart()
 
@@ -1273,9 +1275,10 @@ class Input_Handler:
         raw_h = int(ADB_Manager.minitouch_device.connection.max_y)
         if raw_w >= raw_h:
             return int(x_frac * raw_w), int(y_frac * raw_h)
-        # ponytail: device reports native-portrait touch axes while the display is
-        # landscape (WINDOW_DIMS) -- compensate for the OS's rotation between the
-        # raw touch device and the composited display (seen on MuMu). Assumes a
+        # ponytail: not a "can't be set to landscape" limitation -- the display is
+        # landscape (WINDOW_DIMS) same as any other emulator. MuMu's virtual touch
+        # device just reports raw axes in native-portrait order regardless of the
+        # display orientation, so we compensate for that rotation here. Assumes a
         # 90deg CW rotation, the common case for phone-profile emulators; upgrade
         # path: detect rotation direction if a 270deg case is ever seen.
         return int(raw_w - y_frac * raw_w), int(x_frac * raw_h)
@@ -1303,10 +1306,7 @@ class Input_Handler:
         from pyminitouch import CommandBuilder
         if x < 0: x = 1 + x
         if y < 0: y = 1 + y
-        x_norm, y_norm = x, y
         x, y = cls._to_raw(x, y)
-        if configs.DEBUG:
-            Frame_Handler.debug_click(x_norm, y_norm, x, y)
         builder = CommandBuilder()
         for _ in range(n):
             builder.down(pointer, x, y, 100)
@@ -1398,50 +1398,6 @@ class Frame_Handler:
     cached_frame = None
 
     @classmethod
-    def _debug_base_frame(cls):
-        """Return a color frame suitable for temporary debug annotations."""
-        import numpy as np
-
-        frame = cls.cached_frame
-        if frame is None:
-            frame = cls.get_frame(grayscale=False, use_cached=False)
-        frame = np.asarray(frame)
-        if len(frame.shape) == 2:
-            import cv2
-            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-        return frame.copy()
-
-    @classmethod
-    def _save_debug_overlay(cls, frame, label="", filename="debug/click_overlay.png"):
-        import cv2
-        from pathlib import Path
-
-        Path("debug").mkdir(exist_ok=True)
-        if label:
-            cv2.putText(frame, label, (12, 28), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.7, (255, 255, 0), 2, cv2.LINE_AA)
-        cls.save_frame(frame, filename)
-
-    @classmethod
-    def debug_click(cls, x_norm, y_norm, raw_x, raw_y):
-        """Draw the latest click and append its normalized/raw coordinates."""
-        from pathlib import Path
-        import cv2
-
-        frame = cls._debug_base_frame()
-        height, width = frame.shape[:2]
-        px, py = int(x_norm * width), int(y_norm * height)
-        cv2.drawMarker(frame, (px, py), (255, 0, 255), cv2.MARKER_CROSS,
-                       36, 3, cv2.LINE_AA)
-        cv2.circle(frame, (px, py), 14, (255, 0, 255), 3, cv2.LINE_AA)
-        label = f"CLICK norm=({x_norm:.3f},{y_norm:.3f}) raw=({raw_x},{raw_y})"
-        cv2.putText(frame, label, (px + 18, max(28, py - 18)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 255), 2,
-                    cv2.LINE_AA)
-        cls._save_debug_overlay(frame)
-        Path("debug/clicks.log").open("a", encoding="utf-8").write(label + "\n")
-    
-    @classmethod
     def grayscale(cls, frame):
         import cv2
         if len(frame.shape) == 3:
@@ -1532,17 +1488,6 @@ class Frame_Handler:
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
         if configs.DEBUG: print("locate confidence:", max_val)
 
-        if configs.DEBUG and frame.shape[:2] == tuple(reversed(WINDOW_DIMS)):
-            overlay = cls._debug_base_frame()
-            x_loc, y_loc = max_loc
-            cv2.rectangle(overlay, (x_loc, y_loc),
-                          (x_loc + w, y_loc + h), (0, 255, 255), 2)
-            cv2.putText(overlay, f"ROI conf={max_val:.3f}",
-                        (x_loc, max(24, y_loc - 8)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2,
-                        cv2.LINE_AA)
-            cls._save_debug_overlay(overlay, filename="debug/roi_overlay.png")
-        
         if return_all:
             ys, xs = np.where(res >= thresh)
             results = []

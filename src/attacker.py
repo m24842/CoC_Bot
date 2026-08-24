@@ -10,31 +10,7 @@ class Attacker:
     def __init__(self):
         self.assets = Asset_Manager.attacker_assets
         self.misc_assets = Asset_Manager.misc_assets
-        self._debug_attack_step = 0
 
-    def _debug_stage(self, name):
-        """Save a labeled full-screen snapshot for the home-base attack flow."""
-        if not configs.DEBUG:
-            return
-
-        from pathlib import Path
-        import cv2
-
-        self._debug_attack_step += 1
-        frame = Frame_Handler.get_frame(grayscale=False)
-        frame = frame.copy()
-        label = f"HOME ATTACK {self._debug_attack_step:02d}: {name}"
-        cv2.putText(frame, label, (16, 34), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8, (0, 255, 0), 2, cv2.LINE_AA)
-        Path("debug").mkdir(exist_ok=True)
-        Frame_Handler.save_frame(
-            frame,
-            f"debug/attack_{self._debug_attack_step:02d}_{name}.png",
-        )
-        Path("debug/attack_flow.log").open("a", encoding="utf-8").write(
-            label + "\n"
-        )
-    
     # ============================================================
     # 📱 Screen Interaction
     # ============================================================
@@ -66,13 +42,9 @@ class Attacker:
     def start_normal_attack(self, timeout=60):
         import time
 
-        self._debug_attack_step = 0
-        self._debug_stage("01_before_attack")
-
         # Click attack
         Input_Handler.click(0.07, 0.9)
-        self._debug_stage("02_attack_menu")
-        
+
         # Find a match
         def locate_find_a_match():
             xys = Frame_Handler.locate(self.assets["find_a_match"], thresh=0.9, return_all=True)
@@ -85,29 +57,20 @@ class Attacker:
         if not click_with_timeout(
             locate_find_a_match,
             timeout=5
-        ):
-            self._debug_stage("03_find_match_not_found")
-            return False
-        self._debug_stage("03_find_match")
-        
+        ): return False
+
         # Confirm attack
         if not click_with_timeout(
             lambda: Frame_Handler.locate(self.assets["confirm_attack"], thresh=0.9),
             timeout=5
-        ):
-            self._debug_stage("04_confirm_not_found")
-            return False
-        self._debug_stage("04_confirmed")
-        
+        ): return False
+
         # Wait until "end battle" button is found
         start_time = time.time()
         while time.time() - start_time < timeout:
             x, y = Frame_Handler.locate(self.assets["end_battle"], thresh=0.9)
-            if x is not None and y is not None:
-                self._debug_stage("05_battle_started")
-                return True
+            if x is not None and y is not None: return True
             time.sleep(0.1)
-        self._debug_stage("05_battle_timeout")
         return False
     
     def start_builder_attack(self, timeout=60):
@@ -285,7 +248,6 @@ class Attacker:
     def complete_normal_attack(self, restart=True, exclude_clan_troops=False):
         import time, numpy as np
 
-        self._debug_stage("06_battle_before_troops")
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_up()
         
@@ -298,8 +260,6 @@ class Attacker:
             # Find troops to deploy
             card_centers, card_boundaries, card_types, card_counts, type_gaps_seen = self.detect_troop_positions(frame, clip_left=last_card_left, type_gaps_seen=type_gaps_seen, return_boundaries=True, return_types=True, return_counts=True)
 
-            self._debug_stage(f"07_troop_cards_{total_slots_seen}")
-            
             if len(card_centers) == 0: break
 
             # Exclude clan troops if specified
@@ -315,7 +275,6 @@ class Attacker:
             # Deploy troops up until the last one visible
             total_slots_seen += len(card_centers) - 1
             self.deploy_troops(card_centers[:-1], available_slots[:-1], card_types[:-1], card_counts[:-1])
-            self._debug_stage(f"08_deployed_{total_slots_seen}")
             # Scroll over and look for the new position of the last card
             last_card_frame = frame[:, int(card_boundaries[-2] * frame.shape[1]):int(card_boundaries[-1] * frame.shape[1])]
             Input_Handler.swipe_left(x1=card_centers[-1], x2=0.038, y=0.9, hold_end_time=500)
@@ -330,7 +289,6 @@ class Attacker:
                 break
         
         # Close and reopen CoC to auto complete battle
-        self._debug_stage("09_battle_complete")
         if restart:
             start_coc()
         else:
