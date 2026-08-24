@@ -30,7 +30,7 @@
     * Add to system path
         * Verify with: `adb --version`
 2. An Android emulator — either [BlueStacks](https://www.bluestacks.com/) or [MuMu Player](https://www.mumuplayer.com/) (set `EMULATOR_TYPE` accordingly in `configs.py`)
-    * The specs below apply to whichever emulator you choose:
+    * The specs below apply to both emulators:
         * Device profile: Samsung Galaxy S22 Ultra
         * Display resolution: 1920 x 1080
         * Frame rate: 60 (__NOTE__: Inconsistent touch events at lower fps)
@@ -38,14 +38,14 @@
             * Default troop deployment size
             * Standard or XL scenery
 
-    __If using BlueStacks:__
+    __BlueStacks:__
     * Enable Android Debug Bridge in "Advanced" settings
     * In Multi-Instance Manager, rename instances to match instance IDs in `configs.py` (the default ID is main, see steps 3 and 6 in [Custom Setup Instructions](#custom-setup-instructions-recommended) for more details)
 
-    __If using MuMu Player:__
+    __MuMu Player:__
+    * Currently, ONLY supported on Windows
     * In MuMu's multi-instance manager, rename instances to match instance IDs in `configs.py` (same convention as BlueStacks above)
-    * The bot drives MuMu through its official `MuMuManager.exe` CLI (found under `<MuMu install dir>/nx_main/MuMuManager.exe`); if it's not auto-detected, set `MUMU_BIN_PATH` in `configs.py`
-    * Windows only — MuMu Player support relies on `MuMuManager.exe`
+    * The bot controls MuMu through its official `MuMuManager.exe` CLI (found under `<MuMu install dir>/nx_main/MuMuManager.exe`); if it's not auto-detected, set `MUMU_BIN_PATH` in `configs.py`
 
 ## Default Setup Instructions
 1. Install and configure [external dependencies](#dependencies)
