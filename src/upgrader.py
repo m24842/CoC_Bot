@@ -316,7 +316,7 @@ class Upgrader:
             town_hall_template = [render_text("Town Hall", "CCBackBeat", 27)]
             hero_templates = [render_text(text, "CCBackBeat", 27) for text in Cache_Manager.get("vocab", get_vocab())["heroes"]]
             seasonal_defense_templates = [render_text(text, "CCBackBeat", 27) for text in Cache_Manager.get("vocab", get_vocab())["buildings/seasonal-defense"]]
-            heros_excluded = ask_Handler.excluded("heroes")
+            heros_excluded = Task_Handler.excluded("heroes")
             
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
