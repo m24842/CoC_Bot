@@ -48,7 +48,8 @@ def init_instance(id):
     
     assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
     INSTANCE_ID = id
-    if getattr(configs, "AUTO_START_EMULATOR", True): Emulator_Manager.init()
+    request_perms()
+    if configs.AUTO_START_EMULATOR: Emulator_Manager.init()
     ADB_ADDRESS = Emulator_Manager.adb_address
     if WEB_APP_URL != "":
         if "pythonanywhere.com" in WEB_APP_URL:
@@ -95,6 +96,30 @@ def enable_sleep():
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
     else:
         raise Exception("Unsupported OS")
+
+def request_perms():
+    if sys.platform == "darwin":
+        import time, subprocess, ApplicationServices
+
+        def perms_granted():
+            script = 'tell application "System Events" to return UI elements enabled'
+            try:
+                res = subprocess.run(
+                    ["osascript", "-e", script],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                return res.stdout.strip().lower() == "true"
+            except subprocess.SubprocessError:
+                return False
+
+        if not perms_granted():
+            ApplicationServices.AXIsProcessTrustedWithOptions({'AXTrustedCheckOptionPrompt': True})
+            while not perms_granted(): time.sleep(0.5)
+
+    elif sys.platform == "win32":
+        pass
 
 def to_system_home():
     ADB_Manager.adbutils_device.shell("input keyevent KEYCODE_HOME")

@@ -8,6 +8,7 @@ rm -rf build dist *.spec
 pyinstaller \
     --name "CoC Bot" \
     --windowed \
+    --osx-bundle-identifier "com.m24842.cocbot" \
     --icon "media/CoC_Bot.icns" \
     --add-data "assets:assets" \
     --add-data "src/gui_server:gui_server" \

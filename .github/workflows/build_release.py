@@ -33,6 +33,7 @@ if __name__ == "__main__":
             [
                 "pyinstaller",
                 "--name", "CoC Bot",
+                "--osx-bundle-identifier", "com.m24842.cocbot",
                 "--windowed",
                 "--icon", "media/CoC_Bot.icns",
                 "--add-data", "assets:assets",
@@ -67,6 +68,7 @@ if __name__ == "__main__":
             [
                 "pyinstaller",
                 "--name", "CoC_Bot",
+                "--osx-bundle-identifier", "com.m24842.cocbot",
                 "--onefile",
                 "--icon", "media/CoC_Bot.icns",
                 "--add-data", "assets:assets",

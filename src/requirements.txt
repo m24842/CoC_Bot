@@ -15,6 +15,7 @@ pure-python-adb
 PyGithub
 pyinstaller
 pyminitouch
+pyobjc; sys_platform == 'darwin'
 pywebview
 psutil
 rapidfuzz
