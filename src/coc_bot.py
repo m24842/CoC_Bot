@@ -58,7 +58,7 @@ class CoC_Bot:
                         self.attacker.run_builder_base()
                     
                     to_home_base()
-                    stop_coc()
+                    stop_coc(sleep=True)
                     update_status(time.time())
                 
                 time.sleep(60 * CHECK_INTERVAL)

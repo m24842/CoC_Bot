@@ -20,7 +20,7 @@ if getattr(sys, "frozen", False):
 else:
     CACHE_PATH = Path(__file__).parent / "cache.json"
 
-INSTANCE_ID = ADB_ADDRESS = BLUESTACKS_PID = None
+INSTANCE_ID = ADB_ADDRESS = None
 TEMP_CACHE = {}
 
 def parse_args(debug=None, id=None, gui=None, gui_port=None):
@@ -48,9 +48,8 @@ def init_instance(id):
     
     assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
     INSTANCE_ID = id
-    emulator_manager = {"bluestacks": BlueStacks_Manager, "mumu": MuMu_Manager}[getattr(configs, "EMULATOR_TYPE", "bluestacks")]
-    if getattr(configs, "AUTO_START_EMULATOR", True): emulator_manager.init()
-    ADB_ADDRESS = emulator_manager.adb_address
+    if getattr(configs, "AUTO_START_EMULATOR", True): Emulator_Manager.init()
+    ADB_ADDRESS = Emulator_Manager.adb_address
     if WEB_APP_URL != "":
         if "pythonanywhere.com" in WEB_APP_URL:
             Scheduler.add_job(extend_pythonanywhere_hosting, args=(configs.PA_USERNAME, configs.PA_PASSWORD), trigger="interval", hours=24)
@@ -482,6 +481,7 @@ def start_coc(timeout=60):
     from datetime import datetime
     
     try:
+        Emulator_Manager.wake()
         if not running(): return False
         to_system_home()
         print("Starting CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
@@ -528,11 +528,12 @@ def start_coc(timeout=60):
     except:
         return False
 
-def stop_coc():
+def stop_coc(sleep=False):
     from datetime import datetime
     print("Stopping CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
     ADB_Manager.adbutils_device.shell("am force-stop com.supercell.clashofclans")
     to_system_home()
+    if sleep: Emulator_Manager.sleep()
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
 def update_coc(timeout=10, from_in_game=False):
@@ -710,21 +711,108 @@ class Disk_Cache(collections.UserDict):
 
 Cache_Manager = Disk_Cache(CACHE_PATH)
 
-class BlueStacks_Manager:
+class _Emulator_Manager:
+
+    _pid = None
+    _adb_port = None
+
+    @classproperty
+    def adb_port(cls):
+        raise NotImplementedError
+
+    @classproperty
+    def adb_address(cls):
+        return f"127.0.0.1:{cls.adb_port}"
+
+    @classproperty
+    def pid(cls):
+        return cls._pid
+
+    @classmethod
+    def init(cls):
+        Exit_Handler.register(cls.stop)
+        cls.restart()
+
+    @classmethod
+    def check(cls):
+        try:
+            ADB_Manager.connect_once(cls.adb_address)
+            return True
+        except (KeyboardInterrupt, SystemExit): raise
+        except: return False
+
+    @classmethod
+    def start(cls, instance_id=None, timeout=60):
+        raise NotImplementedError
+
+    @classmethod
+    def stop(cls, timeout=60):
+        raise NotImplementedError
+
+    @classmethod
+    def restart(cls):
+        cls.stop()
+        cls.start()
+
+    @classmethod
+    def sleep(cls):
+        import sys, subprocess
+
+        if cls.pid is None:
+            print("BlueStacks PID unset. Cannot sleep BlueStacks.")
+            return
+        
+        if sys.platform == "darwin":
+            subprocess.Popen(
+                ["kill", "-STOP", str(cls.pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+            )
+        elif sys.platform == "win32":
+            subprocess.Popen(
+                ["powershell", "-Command", f"(Get-Process -Id {cls.pid}).Suspend()"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+            )
+        else:
+            raise Exception("Unsupported OS")
+
+    @classmethod
+    def wake(cls):
+        import sys, subprocess
+
+        if cls.pid is None:
+            print("BlueStacks PID unset. Cannot wake BlueStacks.")
+            return
+        
+        if sys.platform == "darwin":
+            subprocess.Popen(
+                ["kill", "-CONT", str(cls.pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+            )
+        elif sys.platform == "win32":
+            subprocess.Popen(
+                ["powershell", "-Command", f"(Get-Process -Id {cls.pid}).Resume()"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+            )
+        else:
+            raise Exception("Unsupported OS")
+
+class BlueStacks_Manager(_Emulator_Manager):
     """
     BlueStacks internal instance name is NOT the same as the bot instance ID or the user-facing instance name.
     Generally should be of the form 'Pie64_X' 'Nougat64_X' 'Tiramisu64_X'
     """
     
     _internal_instance_name = None
-    _adb_port = None
     _mim_path = None
     _conf_path = None
-    
-    @classmethod
-    def init(cls):
-        Exit_Handler.register(cls.stop)
-        cls.restart()
     
     @classproperty
     def internal_instance_name(cls, instance_id=None):
@@ -783,37 +871,32 @@ class BlueStacks_Manager:
 
         return cls._adb_port
 
-    @classproperty
-    def adb_address(cls):
-        return f"127.0.0.1:{cls.adb_port}"
-
-    @classmethod
-    def check(cls):
-        try:
-            ADB_Manager.connect_once(cls.adb_address)
-            return True
-        except (KeyboardInterrupt, SystemExit): raise
-        except: return False
-
     @classmethod
     def start(cls, instance_id=None, timeout=60):
         import sys, subprocess, time
         
         instance_id = instance_id if instance_id is not None else INSTANCE_ID
         
+        cls.wake()
+
         if cls.check():
             if configs.DEBUG: print("Bluestacks already running.")
             return
         
         str_target_instance_name = cls.internal_instance_name if cls.internal_instance_name is not None else ""
         if sys.platform == "darwin":
-            subprocess.Popen(
-                ["open", "-n", "-g", "-a", "BlueStacks", "--args", "--instance", str_target_instance_name],
+            bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else "/Applications/BlueStacks.app/Contents/MacOS/BlueStacks"
+            if not Path(bin_path).exists():
+                bin_path = file_search("/", "BlueStacks", ["bluestacks"])
+            assert Path(bin_path).exists(), f"BlueStacks executable not found at {bin_path}"
+            p = subprocess.Popen(
+                [bin_path, "--instance", str_target_instance_name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,
                 start_new_session=True,
             )
+            cls._pid = p.pid
         elif sys.platform == "win32":
             bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"
             if not Path(bin_path).exists():
@@ -822,7 +905,7 @@ class BlueStacks_Manager:
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             startupinfo.wShowWindow = 7
-            subprocess.Popen(
+            p = subprocess.Popen(
                 [bin_path, "--instance", str_target_instance_name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -830,6 +913,7 @@ class BlueStacks_Manager:
                 startupinfo=startupinfo,
                 creationflags=subprocess.DETACHED_PROCESS,
             )
+            cls._pid = p.pid
         else:
             raise Exception("Unsupported OS")
         
@@ -846,6 +930,8 @@ class BlueStacks_Manager:
     def stop(cls, timeout=60):
         import time
 
+        cls.wake()
+
         if not cls.check():
             if configs.DEBUG: print("BlueStacks stopped.")
             return
@@ -860,12 +946,7 @@ class BlueStacks_Manager:
         
         raise Exception("BlueStacks failed to stop.")
 
-    @classmethod
-    def restart(cls):
-        cls.stop()
-        cls.start()
-
-class MuMu_Manager:
+class MuMu_Manager(_Emulator_Manager):
     """
     Instance identity is resolved via MuMuManager.exe's own "name" field for each vmindex,
     which must be renamed (in MuMu's multi-instance manager) to match the bot instance ID,
@@ -878,10 +959,8 @@ class MuMu_Manager:
 
     @classmethod
     def init(cls):
-        if sys.platform == "darwin":
-            raise Exception("MuMu Player is not supported on macOS yet. Use BlueStacks instead.")
-        Exit_Handler.register(cls.stop)
-        cls.restart()
+        assert sys.platform == "darwin", "MuMu Player is not supported on macOS yet. Use BlueStacks instead."
+        super().init()
 
     @classproperty
     def manager_path(cls):
@@ -919,11 +998,14 @@ class MuMu_Manager:
 
     @classproperty
     def adb_port(cls):
+        if cls._adb_port is not None:
+            return cls._adb_port
+
         info = cls._run("info", "--vmindex", cls.vmindex)
         port = info.get("adb_port")
         if port is not None:
             cls._adb_port = str(port)
-        elif cls._adb_port is None:
+        else:
             # ponytail: MuMu only reports adb_port once the instance is running; before that,
             # fall back to its default multi-instance port formula (base 16384, step 32/index).
             # Upgrade path: verify this formula still holds if MuMu changes its port scheme.
@@ -931,20 +1013,21 @@ class MuMu_Manager:
         return cls._adb_port
 
     @classproperty
-    def adb_address(cls):
-        return f"127.0.0.1:{cls.adb_port}"
+    def pid(cls):
+        if cls._pid is not None:
+            return cls._pid
 
-    @classmethod
-    def check(cls):
-        try:
-            ADB_Manager.connect_once(cls.adb_address)
-            return True
-        except (KeyboardInterrupt, SystemExit): raise
-        except: return False
+        info = cls._run("info", "--vmindex", cls.vmindex)
+        pid = info.get("pid")
+        if pid is not None:
+            cls._pid = int(pid)
+        return cls._pid
 
     @classmethod
     def start(cls, timeout=60):
         import time
+        
+        cls.wake()
 
         if cls.check():
             if configs.DEBUG: print("MuMu already running.")
@@ -965,6 +1048,8 @@ class MuMu_Manager:
     def stop(cls, timeout=60):
         import time
 
+        cls.wake()
+
         if not cls.check():
             if configs.DEBUG: print("MuMu stopped.")
             return
@@ -979,10 +1064,7 @@ class MuMu_Manager:
 
         raise Exception("MuMu failed to stop.")
 
-    @classmethod
-    def restart(cls):
-        cls.stop()
-        cls.start()
+Emulator_Manager = {"bluestacks": BlueStacks_Manager, "mumu": MuMu_Manager}[getattr(configs, "EMULATOR_TYPE", "bluestacks")]
 
 class Task_Handler:
     
@@ -1290,14 +1372,22 @@ class Input_Handler:
         if y < 0: y = 1 + y
         x, y = cls._to_raw(x, y)
         builder = CommandBuilder()
-        builder.down(pointer, x, y, 100)
+        if isinstance(pointer, int):
+            builder.down(pointer, x, y, 100)
+        elif isinstance(pointer, (list, tuple)):
+            for p in enumerate(pointer):
+                builder.down(p, x, y, 100)
         builder.publish(ADB_Manager.minitouch_device.connection)
 
     @classmethod
     def up(cls, pointer=0):
         from pyminitouch import CommandBuilder
         builder = CommandBuilder()
-        builder.up(pointer)
+        if isinstance(pointer, int):
+            builder.up(pointer)
+        elif isinstance(pointer, (list, tuple)):
+            for p in enumerate(pointer):
+                builder.up(p)
         builder.publish(ADB_Manager.minitouch_device.connection)
 
     @classmethod

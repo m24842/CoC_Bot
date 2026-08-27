@@ -214,7 +214,7 @@ class Attacker:
         if card_types is None: card_types = [None] * len(card_centers)
         if card_counts is None: card_counts = [0] * len(card_centers)
         
-        # Start holding deploy position w/ secondary touch pointer
+        # Start holding deploy position w/ additional touch pointer
         Input_Handler.down(0.5, 0.8, pointer=1)
         
         for i in range(len(card_centers)):
@@ -239,7 +239,7 @@ class Attacker:
                 else:
                     Input_Handler.click(0.5, 0.8, n=max(0, card_counts[i]))
         
-        # Release secondary pointer
+        # Release additional pointer
         Input_Handler.up(pointer=1)
         
         # Unselect last card
