@@ -781,53 +781,32 @@ class _Emulator_Manager:
 
     @classmethod
     def sleep(cls):
-        import sys, subprocess
+        # psutil.Process.suspend()/resume() wrap the native suspend APIs on every
+        # platform (NtSuspendProcess on Windows) -- PowerShell's Get-Process has
+        # no Suspend()/Resume() method, that call used to fail silently.
+        import psutil
 
         if cls.pid is None:
-            print("BlueStacks PID unset. Cannot sleep BlueStacks.")
+            print(f"{cls.__name__} PID unset. Cannot sleep.")
             return
-        
-        if sys.platform == "darwin":
-            subprocess.Popen(
-                ["kill", "-STOP", str(cls.pid)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-            )
-        elif sys.platform == "win32":
-            subprocess.Popen(
-                ["powershell", "-Command", f"(Get-Process -Id {cls.pid}).Suspend()"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-            )
-        else:
-            raise Exception("Unsupported OS")
+
+        try:
+            psutil.Process(cls.pid).suspend()
+        except psutil.NoSuchProcess:
+            pass
 
     @classmethod
     def wake(cls):
-        import sys, subprocess
+        import psutil
 
         if cls.pid is None:
-            print("BlueStacks PID unset. Cannot wake BlueStacks.")
+            print(f"{cls.__name__} PID unset. Cannot wake.")
             return
-        
-        if sys.platform == "darwin":
-            subprocess.Popen(
-                ["kill", "-CONT", str(cls.pid)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-            )
-        elif sys.platform == "win32":
-            subprocess.Popen(
-                ["powershell", "-Command", f"(Get-Process -Id {cls.pid}).Resume()"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-            )
-        else:
-            raise Exception("Unsupported OS")
+
+        try:
+            psutil.Process(cls.pid).resume()
+        except psutil.NoSuchProcess:
+            pass
 
 class BlueStacks_Manager(_Emulator_Manager):
     """
@@ -984,7 +963,8 @@ class MuMu_Manager(_Emulator_Manager):
 
     @classmethod
     def init(cls):
-        assert sys.platform == "darwin", "MuMu Player is not supported on macOS yet. Use BlueStacks instead."
+        if sys.platform == "darwin":
+            raise Exception("MuMu Player is not supported on macOS yet. Use BlueStacks instead.")
         super().init()
 
     @classproperty
