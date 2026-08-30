@@ -781,9 +781,7 @@ class _Emulator_Manager:
 
     @classmethod
     def sleep(cls):
-        # psutil.Process.suspend()/resume() wrap the native suspend APIs on every
-        # platform (NtSuspendProcess on Windows) -- PowerShell's Get-Process has
-        # no Suspend()/Resume() method, that call used to fail silently.
+        # psutil.Process.suspend()/resume() wrap the native suspend APIs on every platform
         import psutil
 
         if cls.pid is None:
