@@ -49,8 +49,8 @@ def init_instance(id):
     assert id in configs.INSTANCE_IDS, f"Invalid instance ID. Must be one of: {configs.INSTANCE_IDS}"
     INSTANCE_ID = id
     request_perms()
-    if configs.AUTO_START_EMULATOR: Emulator_Manager.init()
     ADB_ADDRESS = Emulator_Manager.adb_address
+    if configs.AUTO_START_EMULATOR: Emulator_Manager.init()
     if WEB_APP_URL != "":
         if "pythonanywhere.com" in WEB_APP_URL:
             Scheduler.add_job(extend_pythonanywhere_hosting, args=(configs.PA_USERNAME, configs.PA_PASSWORD), trigger="interval", hours=24)
@@ -501,13 +501,15 @@ def get_home_builders(timeout=60, return_amount=True, raise_exception=True, use_
         if time.time() > start + timeout: break
     raise Exception("Failed to get home builders")
 
-def start_coc(timeout=60):
+def start_coc(timeout=60, detailed=False):
     import time
     from datetime import datetime
     
     try:
         Emulator_Manager.wake()
-        if not running(): return False
+        if not running():
+            if not detailed: return False
+            else: return False, "paused"
         to_system_home()
         print("Starting CoC...", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
@@ -516,7 +518,10 @@ def start_coc(timeout=60):
         i = 0
         start = time.time()
         while time.time() - start < timeout:
-            if not running(): return False
+            if not running():
+                if not detailed: return False
+                else: return False, "paused"
+
             ADB_Manager.adbutils_device.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
             Input_Handler.click_exit(4, 0.1)
             
@@ -548,10 +553,13 @@ def start_coc(timeout=60):
             stop_coc()
             raise Exception("Failed to start CoC")
         print("CoC started", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
-        return True
+        if not detailed: return True
+        else: return True, "running"
     except (KeyboardInterrupt, SystemExit): raise
-    except:
-        return False
+    except Exception as e:
+        if configs.DEBUG: print("start_coc", e)
+        if not detailed: return False
+        else: return False, "error"
 
 def stop_coc(sleep=False):
     from datetime import datetime
@@ -562,7 +570,6 @@ def stop_coc(sleep=False):
     print("CoC stopped", datetime.now().strftime("%I:%M:%S %p %m-%d-%Y"))
 
 def update_coc(timeout=10, from_in_game=False):
-    import uiautomator2 as u2
     conn = ADB_Manager.uiautomator_device
     if not from_in_game:
         ADB_Manager.adbutils_device.shell('am start -a android.intent.action.VIEW -d "market://details?id=com.supercell.clashofclans"')
@@ -751,6 +758,8 @@ class _Emulator_Manager:
 
     @classproperty
     def pid(cls):
+        if cls._pid is None:
+            cls._pid = Cache_Manager.get(f"{INSTANCE_ID}_emulator_pid", None)
         return cls._pid
 
     @classmethod
@@ -760,11 +769,22 @@ class _Emulator_Manager:
 
     @classmethod
     def check(cls):
-        try:
-            ADB_Manager.connect_once(cls.adb_address)
-            return True
-        except (KeyboardInterrupt, SystemExit): raise
-        except: return False
+        if cls.pid is not None:
+            import psutil
+            try:
+                proc = psutil.Process(cls.pid)
+                if proc.status() == psutil.STATUS_ZOMBIE:
+                    return False
+                return proc.is_running()
+            except psutil.NoSuchProcess:
+                return False
+        elif cls.adb_address is not None:
+            try:
+                ADB_Manager.connect_once(cls.adb_address)
+                return True
+            except (KeyboardInterrupt, SystemExit): raise
+            except: return False
+        return False
 
     @classmethod
     def start(cls, instance_id=None, timeout=60):
@@ -899,6 +919,7 @@ class BlueStacks_Manager(_Emulator_Manager):
                 start_new_session=True,
             )
             cls._pid = p.pid
+            Cache_Manager[f"{INSTANCE_ID}_emulator_pid"] = cls._pid
         elif sys.platform == "win32":
             bin_path = BLUESTACKS_BIN_PATH if BLUESTACKS_BIN_PATH != "" else r"C:\Program Files\BlueStacks_nxt\HD-Player.exe"
             if not Path(bin_path).exists():
@@ -916,6 +937,7 @@ class BlueStacks_Manager(_Emulator_Manager):
                 creationflags=subprocess.DETACHED_PROCESS,
             )
             cls._pid = p.pid
+            Cache_Manager[f"{INSTANCE_ID}_emulator_pid"] = cls._pid
         else:
             raise Exception("Unsupported OS")
         
@@ -930,14 +952,18 @@ class BlueStacks_Manager(_Emulator_Manager):
 
     @classmethod
     def stop(cls, timeout=60):
-        import time
+        import time, psutil
 
         cls.wake()
 
         if not cls.check():
             if configs.DEBUG: print("BlueStacks stopped.")
             return
-        ADB_Manager.adbutils_device.shell("reboot -p")
+
+        try:
+            ADB_Manager.adbutils_device.shell("reboot -p")
+        except (KeyboardInterrupt, SystemExit): raise
+        except: psutil.Process(cls.pid).terminate()
 
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -1244,13 +1270,30 @@ class DeviceProxy:
     def _real_device(self):
         return getattr(self._manager_cls, self._private_attr_name)
 
-    def __getattr__(self, name):
+    def _ensure_device(self):
         device = self._real_device
         if device is None:
             if not self._manager_cls.connect():
                 raise RuntimeError("Device is not connected and auto-reconnect failed.")
             device = self._real_device
+        return device
 
+    def __call__(self, *args, **kwargs):
+        device = self._ensure_device()
+        try:
+            return device(*args, **kwargs)
+        except Exception as e:
+            if configs.DEBUG:
+                print(f"[Auto-Recover] Error on __call__: {e}. Triggering reconnect...")
+            
+            if self._manager_cls.connect():
+                new_device = self._real_device
+                return new_device(*args, **kwargs)
+            else:
+                raise RuntimeError("Action failed, and auto-reconnection timed out.") from e
+
+    def __getattr__(self, name):
+        device = self._ensure_device()
         attr = getattr(device, name)
 
         if callable(attr):

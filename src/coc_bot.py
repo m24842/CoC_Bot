@@ -11,10 +11,6 @@ class CoC_Bot:
         self.upgrader = Upgrader()
         self.attacker = Attacker()
     
-    # ============================================================
-    # ⏱️ Task Execution
-    # ============================================================
-    
     def run(self):
         import time
         
@@ -24,7 +20,8 @@ class CoC_Bot:
                     time.sleep(1)
                     continue
                 
-                if start_coc():
+                started, res = start_coc(detailed=True)
+                if started:
                     update_status("now")
                     
                     Task_Handler.get_exclusions()
@@ -60,6 +57,8 @@ class CoC_Bot:
                     to_home_base()
                     stop_coc(sleep=True)
                     update_status(time.time())
+                elif res == "error":
+                    update_status("error")
                 
                 time.sleep(60 * CHECK_INTERVAL)
             
