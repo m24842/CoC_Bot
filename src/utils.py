@@ -1282,6 +1282,8 @@ class DeviceProxy:
         device = self._ensure_device()
         try:
             return device(*args, **kwargs)
+        except (KeyboardInterrupt, SystemExit): raise
+        except (AttributeError, NotImplementedError): raise
         except Exception as e:
             if configs.DEBUG:
                 print(f"[Auto-Recover] Error on __call__: {e}. Triggering reconnect...")
@@ -1300,6 +1302,8 @@ class DeviceProxy:
             def wrapper(*args, **kwargs):
                 try:
                     return attr(*args, **kwargs)
+                except (KeyboardInterrupt, SystemExit): raise
+                except (AttributeError, NotImplementedError): raise
                 except Exception as e:
                     if configs.DEBUG:
                         print(f"[Auto-Recover] Error on {name}: {e}. Triggering reconnect...")
