@@ -32,8 +32,10 @@ def gui_launch(args):
     pipe = init_gui(args.id)
     args.gui_port = get_gui().server_port
     
+    sleep_proc = None
     if DISABLE_DEVICE_SLEEP:
-        Process(target=gui_disable_sleep, daemon=True).start()
+        sleep_proc = Process(target=gui_disable_sleep, daemon=True)
+        sleep_proc.start()
 
     if args.id is not None:
         p = Process(target=launch_proc, args=(args,), daemon=True)
@@ -58,6 +60,7 @@ def gui_launch(args):
     except (EOFError, KeyboardInterrupt, SystemExit):
         get_gui().stop()
         pipe.close()
+        if sleep_proc is not None: sleep_proc.terminate()
         for p in procs.values():
             if p and p.is_alive():
                 p.terminate()

@@ -156,6 +156,24 @@ def file_search(root, target_name, keywords=[]):
             continue
     return None
 
+def online(timeout=1):
+    if sys.platform == "darwin":
+        try:
+            from SystemConfiguration import SCNetworkReachabilityCreateWithName, SCNetworkReachabilityGetFlags
+            target = SCNetworkReachabilityCreateWithName(None, b"8.8.8.8")
+            flags = SCNetworkReachabilityGetFlags(target, None)[1]
+            return bool(flags & 2)
+        except Exception:
+            return True
+    elif sys.platform == "win32":
+        try:
+            import ctypes
+            flags = ctypes.c_ulong()
+            return bool(ctypes.windll.wininet.InternetGetConnectedState(ctypes.byref(flags), 0))
+        except Exception:
+            return False
+    return True
+
 def running():
     import requests
     
@@ -578,7 +596,7 @@ def update_coc(timeout=10, from_in_game=False):
             conn(text="UPDATE").click(timeout=0)
         except (KeyboardInterrupt, SystemExit): raise
         except:
-            print("Failed to click update button")
+            if configs.DEBUG: print("Failed to click update button")
             if not from_in_game: to_system_home()
             return
     
@@ -586,7 +604,7 @@ def update_coc(timeout=10, from_in_game=False):
         conn(text="Update").click(timeout=timeout)
     except (KeyboardInterrupt, SystemExit): raise
     except:
-        print("Failed to click update button")
+        if configs.DEBUG: print("Failed to click update button")
         pass
     if not from_in_game: to_system_home()
 

@@ -16,8 +16,12 @@ class CoC_Bot:
         
         while True:
             try:
-                if not running():
+                if not online():
                     time.sleep(1)
+                    continue
+
+                if not running():
+                    time.sleep(10)
                     continue
                 
                 started, res = start_coc(detailed=True)
@@ -68,3 +72,4 @@ class CoC_Bot:
                 traceback.print_exc()
                 stop_coc()
                 update_status("error")
+                time.sleep(60 * CHECK_INTERVAL)
