@@ -851,47 +851,34 @@ class BlueStacks_Manager(_Emulator_Manager):
     """
     
     _internal_instance_name = None
-    _mim_path = None
     _conf_path = None
     
     @classproperty
     def internal_instance_name(cls, instance_id=None):
-        import json, re
+        import re
         
         if cls._internal_instance_name is not None:
             return cls._internal_instance_name
         
         instance_id = instance_id if instance_id is not None else INSTANCE_ID
         
-        if cls._mim_path is None or not Path(cls._mim_path).exists():
+        if cls._conf_path is None or not Path(cls._conf_path).exists():
             if sys.platform == "darwin":
-                cls._mim_path = "/Users/Shared/Library/Application Support/BlueStacks/Engine/UserData/MimMetaData.json"
+                cls._conf_path = "/Users/Shared/Library/Application Support/BlueStacks/bluestacks.conf"
             elif sys.platform == "win32":
-                cls._mim_path = r"C:\ProgramData\BlueStacks_nxt\Engine\UserData\MimMetaData.json"
+                cls._conf_path = r"C:\ProgramData\BlueStacks_nxt\bluestacks.conf"
             else:
                 raise Exception("Unsupported OS")
+            if not Path(cls._conf_path).exists():
+                cls._conf_path = file_search("/", "bluestacks.conf", ["bluestacks"])
 
-        if cls._internal_instance_name is None and Path(cls._mim_path).exists():
-            mim_data = json.loads(Path(cls._mim_path).read_text())
-            instances = {instance['Name']: instance["InstanceName"] for instance in mim_data["Organization"]}
-            cls._internal_instance_name = instances.get(instance_id, None)
-
-        # Newer BlueStacks versions store the display name in bluestacks.conf
-        # instead of generating MimMetaData.json.
-        if cls._internal_instance_name is None:
-            conf_path = cls._conf_path
-            if conf_path is None:
-                if sys.platform == "darwin":
-                    conf_path = "/Users/Shared/Library/Application Support/BlueStacks/bluestacks.conf"
-                elif sys.platform == "win32":
-                    conf_path = r"C:\ProgramData\BlueStacks_nxt\bluestacks.conf"
-            if conf_path is not None and Path(conf_path).exists():
-                pattern = re.compile(r'^bst\.instance\.([^.]+)\.display_name="?(.*?)"?$')
-                for line in Path(conf_path).read_text().splitlines():
-                    match = pattern.match(line)
-                    if match and match.group(2) == instance_id:
-                        cls._internal_instance_name = match.group(1)
-                        break
+        if cls._conf_path is not None and Path(cls._conf_path).exists():
+            pattern = re.compile(r'^bst\.instance\.([^.]+)\.display_name="?(.*?)"?$')
+            for line in Path(cls._conf_path).read_text().splitlines():
+                match = pattern.match(line)
+                if match and match.group(2) == instance_id:
+                    cls._internal_instance_name = match.group(1)
+                    break
 
         if cls._internal_instance_name is None:
             raise RuntimeError(
@@ -1387,15 +1374,11 @@ class ADB_Manager:
         from pyminitouch import MNTDevice
         
         if addr is None: addr = ADB_ADDRESS
-        if ADB_ABS_DIR != "":
-            os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
-
+        if ADB_ABS_DIR != "": os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
         adb_executable = shutil.which("adb")
-        if ADB_ABS_DIR == "" and sys.platform == "win32" and getattr(configs, "EMULATOR_TYPE", "bluestacks") == "bluestacks":
-            wrapper = Path(__file__).parent.parent / "scripts" / "adb.cmd"
+        if sys.platform == "win32" and getattr(configs, "EMULATOR_TYPE", "bluestacks") == "bluestacks":
             bluestacks_adb = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "BlueStacks_nxt" / "HD-Adb.exe"
-            if wrapper.exists() and bluestacks_adb.exists():
-                adb_executable = str(wrapper.resolve())
+            if bluestacks_adb.exists(): adb_executable = str(bluestacks_adb)
         if adb_executable is None:
             raise FileNotFoundError("ADB executable not found. Set ADB_ABS_DIR to its directory.")
         os.environ["ADBUTILS_ADB_PATH"] = adb_executable
@@ -1403,7 +1386,6 @@ class ADB_Manager:
         pyminitouch.config.ADB_EXECUTOR = adb_executable
         import pyminitouch.connection
         pyminitouch.connection._ADB = adb_executable
-
         if cls.is_connected(): return
         subprocess.run([adb_executable, "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         res = adbutils.adb.connect(addr)
