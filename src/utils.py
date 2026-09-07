@@ -851,36 +851,41 @@ class BlueStacks_Manager(_Emulator_Manager):
     """
     
     _internal_instance_name = None
-    _mim_path = None
     _conf_path = None
     
     @classproperty
     def internal_instance_name(cls, instance_id=None):
-        import json
+        import re
         
         if cls._internal_instance_name is not None:
             return cls._internal_instance_name
         
         instance_id = instance_id if instance_id is not None else INSTANCE_ID
         
-        if cls._mim_path is None or not Path(cls._mim_path).exists():
+        if cls._conf_path is None or not Path(cls._conf_path).exists():
             if sys.platform == "darwin":
-                cls._mim_path = "/Users/Shared/Library/Application Support/BlueStacks/Engine/UserData/MimMetaData.json"
+                cls._conf_path = "/Users/Shared/Library/Application Support/BlueStacks/bluestacks.conf"
             elif sys.platform == "win32":
-                cls._mim_path = r"C:\ProgramData\BlueStacks_nxt\Engine\UserData\MimMetaData.json"
+                cls._conf_path = r"C:\ProgramData\BlueStacks_nxt\bluestacks.conf"
             else:
                 raise Exception("Unsupported OS")
-            if cls._mim_path is None or not Path(cls._mim_path).exists():
-                cls._mim_path = file_search("/", "MimMetaData.json", ["bluestacks"])
+            if not Path(cls._conf_path).exists():
+                cls._conf_path = file_search("/", "bluestacks.conf", ["bluestacks"])
 
-        if cls._internal_instance_name is None and cls._mim_path is not None:
-            if cls._mim_path is not None and Path(cls._mim_path).exists():
-                mim_data = json.loads(Path(cls._mim_path).read_text())
-                instances = {instance['Name']: instance["InstanceName"] for instance in mim_data["Organization"]}
-                cls._internal_instance_name = instances.get(instance_id, None)
-            else:
-                if configs.DEBUG: print("MimMetaData.json not found, using default instance.")
-        
+        if cls._conf_path is not None and Path(cls._conf_path).exists():
+            pattern = re.compile(r'^bst\.instance\.([^.]+)\.display_name="?(.*?)"?$')
+            for line in Path(cls._conf_path).read_text().splitlines():
+                match = pattern.match(line)
+                if match and match.group(2) == instance_id:
+                    cls._internal_instance_name = match.group(1)
+                    break
+
+        if cls._internal_instance_name is None:
+            raise RuntimeError(
+                f"BlueStacks instance '{instance_id}' was not found. "
+                "Rename the emulator instance to match INSTANCE_IDS."
+            )
+
         return cls._internal_instance_name
     
     @classproperty
@@ -899,15 +904,17 @@ class BlueStacks_Manager(_Emulator_Manager):
                 cls._conf_path = file_search("/", "bluestacks.conf", ["bluestacks"])
 
         if cls._adb_port is None and cls._conf_path is not None:
-            if cls._conf_path is not None and Path(cls._conf_path).exists():
+            if Path(cls._conf_path).exists():
                 conf_data = Path(cls._conf_path).read_text()
                 for line in conf_data.splitlines():
                     if line.startswith(f"bst.instance.{cls.internal_instance_name}.adb_port"):
-                        cls._adb_port = line.split("=")[1].strip().replace('"', '')
+                        cls._adb_port = line.split("=", 1)[1].strip().replace('"', '')
                         break
-            else:
-                if configs.DEBUG: print("bluestacks.conf not found, using default adb port.")
-                cls._adb_port = "5555"
+
+        if cls._adb_port is None:
+            raise RuntimeError(
+                f"ADB port for BlueStacks instance '{cls.internal_instance_name}' was not found."
+            )
 
         return cls._adb_port
 
@@ -1362,17 +1369,28 @@ class ADB_Manager:
 
     @classmethod
     def connect_once(cls, addr=None):
-        import subprocess, adbutils, os
+        import subprocess, adbutils, os, shutil
         import uiautomator2 as u2
         from pyminitouch import MNTDevice
         
         if addr is None: addr = ADB_ADDRESS
         if ADB_ABS_DIR != "": os.environ["PATH"] = ADB_ABS_DIR + os.pathsep + os.environ["PATH"]
+        adb_executable = shutil.which("adb")
+        if sys.platform == "win32" and getattr(configs, "EMULATOR_TYPE", "bluestacks") == "bluestacks":
+            bluestacks_adb = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "BlueStacks_nxt" / "HD-Adb.exe"
+            if bluestacks_adb.exists(): adb_executable = str(bluestacks_adb)
+        if adb_executable is None:
+            raise FileNotFoundError("ADB executable not found. Set ADB_ABS_DIR to its directory.")
+        os.environ["ADBUTILS_ADB_PATH"] = adb_executable
+        import pyminitouch.config
+        pyminitouch.config.ADB_EXECUTOR = adb_executable
+        import pyminitouch.connection
+        pyminitouch.connection._ADB = adb_executable
         if cls.is_connected(): return
-        subprocess.run(["adb", "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run([adb_executable, "start-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         res = adbutils.adb.connect(addr)
         if "connected" not in res:
-            subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run([adb_executable, "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             raise Exception("Failed to connect to ADB.")
         devices = []
         try:
@@ -1383,7 +1401,7 @@ class ADB_Manager:
             Exit_Handler.register(d2.stop)
         except (KeyboardInterrupt, SystemExit): raise
         except:
-            subprocess.run(["adb", "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run([adb_executable, "kill-server"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             raise Exception("Failed to get ADB device.")
         cls._adbutils_device, cls._minitouch_device, cls._uiautomator_device = devices
     
