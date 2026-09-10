@@ -1722,13 +1722,14 @@ class Dev_Tools:
         templates = [render_text(text, font, size, color) for size in range(font_size_range[0], font_size_range[1] + 1)]
         results = Frame_Handler.batch_locate(templates, frame=frame, grayscale=grayscale, return_confidence=True)
         confidences = [res[2] for res in results]
-        optimal_size = confidences.index(max(confidences)) + font_size_range[0]
+        highest_conf = max(confidences)
+        optimal_size = confidences.index(highest_conf) + font_size_range[0]
         
         if plot_results:
             plt.plot(np.arange(font_size_range[0], font_size_range[1] + 1), confidences)
             plt.xlabel("Font Size")
             plt.ylabel("Confidence")
-            plt.title(f"Optimal Font Size: {optimal_size}")
+            plt.title(f"Optimal Font Size: {optimal_size} ({highest_conf:.2f})")
             plt.show()
         
         if return_results:

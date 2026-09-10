@@ -40,25 +40,31 @@ class Attacker:
         )
 
     def start_normal_attack(self, timeout=60):
-        import time
+        import time, numpy as np
 
         # Click attack
         Input_Handler.click(0.07, 0.9)
 
         # Find a match
+        find_a_match_temp = render_text("Find a Match", "SupercellMagic", 29)
+        battle_temp = render_text("Battle", "SupercellMagic", 37)
         def locate_find_a_match():
-            xys = Frame_Handler.locate(self.assets["find_a_match"], thresh=0.9, return_all=True)
+            frame = Frame_Handler.get_frame(grayscale=True, high_contrast=True)
+            bx, by = Frame_Handler.locate(battle_temp, frame, thresh=0.9)
+            if bx is None or by is None: return None, None
+            xys = Frame_Handler.locate(find_a_match_temp, frame, thresh=0.9, return_all=True)
             if len(xys) == 0: return None, None
-            xys = sorted(xys, key=lambda xy: xy[0])
-            x, y = xys[0]
+            xys = np.array(xys)
+            dists = abs(xys[:, 0] - bx)
+            if min(dists) > 0.01: return None, None
+            x, y = xys[np.argmin(dists)]
             if x is None or y is None: return None, None
-            if x > 0.2: return None, None
             return x, y
         if not click_with_timeout(
             locate_find_a_match,
             timeout=5
         ):
-            if configs.DEBUG: print("Failed to click 'Find a Match' button")
+            if configs.DEBUG: print("Failed to click find a match button")
             return False
 
         # Confirm attack
@@ -66,7 +72,7 @@ class Attacker:
             lambda: Frame_Handler.locate(self.assets["confirm_attack"], thresh=0.9),
             timeout=5
         ):
-            if configs.DEBUG: print("Failed to click 'Confirm Attack' button")
+            if configs.DEBUG: print("Failed to confirm attack")
             return False
 
         # Wait until "end battle" button is found
