@@ -57,13 +57,17 @@ class Attacker:
         if not click_with_timeout(
             locate_find_a_match,
             timeout=5
-        ): return False
+        ):
+            if configs.DEBUG: print("Failed to click 'Find a Match' button")
+            return False
 
         # Confirm attack
         if not click_with_timeout(
             lambda: Frame_Handler.locate(self.assets["confirm_attack"], thresh=0.9),
             timeout=5
-        ): return False
+        ):
+            if configs.DEBUG: print("Failed to click 'Confirm Attack' button")
+            return False
 
         # Wait until "end battle" button is found
         start_time = time.time()
@@ -71,6 +75,7 @@ class Attacker:
             x, y = Frame_Handler.locate(self.assets["end_battle"], thresh=0.9)
             if x is not None and y is not None: return True
             time.sleep(0.1)
+        if configs.DEBUG: print("Failed to search for attack")
         return False
     
     def start_builder_attack(self, timeout=60):
