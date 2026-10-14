@@ -289,6 +289,18 @@ def get_vocab():
     
     return data
 
+def get_vocab_in_categories(categories):
+    vocab = Cache_Manager.get("vocab", get_vocab())
+    if isinstance(categories, str):
+        categories = [categories]
+    out = []
+    if "all" in categories:
+        for cat in vocab: out.extend(vocab[cat])
+    else:
+        for cat in categories:
+            if cat in vocab: out.extend(vocab[cat])
+    return out
+
 def spell_check(text, vocab_categories=["all"], phrase_level=False, cutoff=70):
     import re
     from rapidfuzz import process, distance
@@ -299,16 +311,7 @@ def spell_check(text, vocab_categories=["all"], phrase_level=False, cutoff=70):
         score = 100 - 10 * (lev + length_penalty)
         return score if score >= score_cutoff else 0
     
-    vocab = Cache_Manager.get("vocab", get_vocab())
-    if isinstance(vocab_categories, str):
-        vocab_categories = [vocab_categories]
-    temp = []
-    if "all" in vocab_categories:
-        for cat in vocab: temp.extend(vocab[cat])
-    else:
-        for cat in vocab_categories:
-            if cat in vocab: temp.extend(vocab[cat])
-    vocab = temp
+    vocab = get_vocab_in_categories(vocab_categories)
     for i in range(len(vocab)): vocab[i] = vocab[i].lower()
     
     keys = []

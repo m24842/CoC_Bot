@@ -78,6 +78,16 @@ HOME_LAB_UPGRADE_PRIORITY = [
     ],
 ]
 
+PET_HOUSE_UPGRADE_PRIORITY = [
+    [
+        "Unicorn",
+        "Frosty",
+        "Phoenix",
+        "Spirit Fox",
+        "Angry Jelly",
+    ],
+]
+
 #   Builder base upgrade settings
 OPEN_BUILDER_BUILDERS = 0 # number of builder base builders to keep open (not upgrading), suggested to be 0 for maximum efficiency
 
