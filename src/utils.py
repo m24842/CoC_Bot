@@ -513,7 +513,6 @@ def to_home_base(ref_cache=False):
 
 def start_coc(timeout=60, detailed=False):
     import time
-    from datetime import datetime
     
     try:
         Emulator_Manager.wake()
@@ -544,7 +543,7 @@ def start_coc(timeout=60, detailed=False):
                 TEMP_CACHE["location"] = "builder_base"
                 break
 
-            cont_locs = Frame_Handler.batch_locate(cont_templates, grayscale=True, thresh=0.7, prefilter=True, ref="cc", use_cached=True)
+            cont_locs = Frame_Handler.batch_locate(cont_templates, grayscale=False, thresh=0.7, prefilter=True, ref="cc", use_cached=True)
             for x, y in cont_locs:
                 if x is not None and y is not None:
                     Input_Handler.click(x, y)
@@ -1077,6 +1076,7 @@ class Task_Handler:
     task_defaults = {
         "home_base_priority": "PRIORITY_HOME_BASE_UPGRADES",
         "home_lab_priority": "PRIORITY_HOME_LAB_UPGRADES",
+        "pet_house_priority": "PRIORITY_PETS_UPGRADES",
         "builder_base_priority": "PRIORITY_BUILDER_BASE_UPGRADES",
         "builder_lab_priority": "PRIORITY_BUILDER_LAB_UPGRADES",
         "heroes": "UPGRADE_HEROES",
@@ -1084,6 +1084,7 @@ class Task_Handler:
         "builder_base": "UPGRADE_BUILDER_BASE",
         "home_lab": "UPGRADE_HOME_LAB",
         "builder_lab": "UPGRADE_BUILDER_LAB",
+        "pet_house": "UPGRADE_PETS",
         "home_attacks": "ATTACK_HOME_BASE",
         "builder_attacks": "ATTACK_BUILDER_BASE",
         "lab_assistant": "ASSIGN_LAB_ASSISTANT",

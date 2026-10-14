@@ -31,7 +31,8 @@ class CoC_Bot:
                     Task_Handler.get_exclusions()
                     exclude_home_base = Task_Handler.excluded("home_base", use_cached=True)
                     exclude_home_lab = Task_Handler.excluded("home_lab", use_cached=True)
-                    skip_home_base_upgrades = exclude_home_base and exclude_home_lab
+                    exclude_pets = Task_Handler.excluded("pet_house", use_cached=True)
+                    skip_home_base_upgrades = exclude_home_base and exclude_home_lab and exclude_pets
                     exclude_home_attacks = Task_Handler.excluded("home_attacks", use_cached=True)
                     
                     exclude_builder_base = Task_Handler.excluded("builder_base", use_cached=True)
@@ -44,7 +45,7 @@ class CoC_Bot:
                         to_home_base(ref_cache=True)
                     
                     if not skip_home_base_upgrades:
-                        self.upgrader.run_home_base(exclude_home_base, exclude_home_lab)
+                        self.upgrader.run_home_base(exclude_home_base, exclude_home_lab, exclude_pets)
                     if not exclude_home_attacks:
                         self.attacker.run_home_base(restart=not skip_home_base_upgrades or not skip_builder_base_upgrades)
                     
