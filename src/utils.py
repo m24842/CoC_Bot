@@ -532,7 +532,7 @@ def start_coc(timeout=60, detailed=False):
                 else: return False, "paused"
 
             ADB_Manager.adbutils_device.shell(f"am start {'-S' if i==0 else ''} -W -n com.supercell.clashofclans/com.supercell.titan.GameApp")
-            Input_Handler.click_exit(4, 0.1)
+            Input_Handler.click_exit(x=0.99, y=0.01, n=4, delay=0.1)
             
             Frame_Handler.get_frame()
             
