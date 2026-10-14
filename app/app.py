@@ -20,14 +20,14 @@ class Instance:
         id,
         run_status="",
         end_time=0,
-        exclusions=set(),
-        notifications=deque(maxlen=NOTIFICATION_CACHE_SIZE)
+        exclusions=None,
+        notifications=None
     ):
         self.id = id
         self.run_status = run_status
         self.end_time = end_time
-        self.exclusions = exclusions
-        self.notifications = notifications
+        self.exclusions = set(exclusions) if exclusions is not None else set()
+        self.notifications = deque(notifications, maxlen=NOTIFICATION_CACHE_SIZE) if notifications is not None else deque(maxlen=NOTIFICATION_CACHE_SIZE)
     
     def __eq__(self, other):
         return self.id == other.id
