@@ -15,23 +15,38 @@ class Upgrader:
     # 📱 Screen Interaction
     # ============================================================
     
+    def _click_build_button(self):
+        Input_Handler.click(0.95, -0.05)
+    
     def _click_home_builders(self):
-        Input_Handler.click(0.5, 0.05)
+        Input_Handler.click(0.77, -0.05)
     
     def _click_home_lab(self):
-        Input_Handler.click(0.4, 0.05)
+        Input_Handler.click(0.84, -0.05)
+    
+    def _click_pet_house(self):
+        Input_Handler.click(0.97, -0.05)
 
     def _click_builder_builders(self):
-        Input_Handler.click(0.6, 0.05)
+        Input_Handler.click(0.8, -0.05)
     
     def _click_builder_lab(self):
-        Input_Handler.click(0.45, 0.05)
+        Input_Handler.click(0.94, -0.05)
 
     def _click_upgrade(self, timeout=5):
-        return click_with_timeout(
-            lambda: Frame_Handler.locate(self.assets["upgrade"], thresh=0.90, grayscale=False),
-            timeout=timeout
-        )
+        import cv2, numpy as np
+        scale_templates = []
+        for scale in np.arange(0.9, 1.1, 0.1):
+            scale_templates.append(cv2.resize(self.assets["upgrade"], (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST))
+        
+        def locate():
+            xys = Frame_Handler.batch_locate(scale_templates, thresh=0.90, grayscale=False)
+            for x, y in xys:
+                if x is None or y is None: continue
+                return x, y
+            return None, None
+
+        return click_with_timeout(locate, timeout=timeout)
 
     def _click_home_confirm(self, timeout=5):
         return click_with_timeout(
@@ -50,7 +65,7 @@ class Upgrader:
         menu_center = (menu_left + menu_right) / 2
         for _ in range(max_scrolls):
             menu_prev = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, high_contrast=True)
-            Input_Handler.swipe_up(x=menu_center, y1=menu_bottom-0.05, y2=0.15, duration=0, hold_end_time=0, inter_points=10)
+            Input_Handler.swipe_up(x=menu_center, y1=menu_bottom-0.05, y2=menu_top, duration=0, hold_end_time=0)
             menu_curr = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, high_contrast=True)
             diff = np.abs(menu_curr - menu_prev).mean() / 255
             if diff < 0.01: break
@@ -58,21 +73,81 @@ class Upgrader:
     # ============================================================
     # 💰 Resource & Builder Tracking
     # ============================================================
+    
+    def get_home_builders(self, timeout=60, use_cached_frame=False):
+            import time
+            
+            start = time.time()
+            while True:
+                try:
+                    section = Frame_Handler.get_frame_section(0.89, 0.75, -0.07, -0.21, high_contrast=True, use_cached=use_cached_frame)
+                    if configs.DEBUG: Frame_Handler.save_frame(section, "home_builders.png")
+                    
+                    slash = render_text("/", "SupercellMagic", 24)
+                    x, y, c = Frame_Handler.locate(
+                        slash,
+                        section,
+                        grayscale=True,
+                        return_confidence=True
+                    )
+                    if c < 0.9: continue
+                    
+                    text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
+                    available = int(text[0])
+                    return available
+                except (KeyboardInterrupt, SystemExit): raise
+                except Exception as e:
+                    logger.error(f"Upgrader.get_home_builders: {e}")
+                time.sleep(0.1)
+                if time.time() > start + timeout: break
+            raise Exception("Failed to get home builders")
+    
+    def get_builder_builders(self, timeout=60, use_cached_frame=False):
+        import time
+        
+        start = time.time()
+        while True:
+            try:
+                section = Frame_Handler.get_frame_section(0.89, 0.75, -0.07, -0.21, high_contrast=True, use_cached=use_cached_frame)
+                if configs.DEBUG: Frame_Handler.save_frame(section, "builder_builders.png")
+                
+                slash = render_text("/", "SupercellMagic", 24)
+                x, y, c = Frame_Handler.locate(
+                    slash,
+                    section,
+                    grayscale=True,
+                    return_confidence=True
+                )
+                if c < 0.9: continue
+                
+                text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
+                available = int(text[0])
+                return available
+            except (KeyboardInterrupt, SystemExit): raise
+            except Exception as e:
+                logger.error(f"Upgrader.get_builder_builders: {e}")
+            time.sleep(0.1)
+            if time.time() > start + timeout: break
+        raise Exception("Failed to get builder builders")
 
-    def home_lab_available(self, timeout=60):
-        import time, cv2
+    def home_lab_available(self, timeout=60, use_cached_frame=False):
+        import time
         
         start = time.time()
         while time.time() < start + timeout:
             try:
-                section = Frame_Handler.get_frame_section(0.368, 0.04, -0.59, 0.08, high_contrast=True)
+                section = Frame_Handler.get_frame_section(0.94, 0.75, -0.02, -0.21, high_contrast=True, use_cached=use_cached_frame)
                 if configs.DEBUG: Frame_Handler.save_frame(section, "home_lab.png")
                 
                 # Find the backslash
-                slash = cv2.cvtColor(self.misc_assets["slash"], cv2.COLOR_RGB2GRAY)
-                res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, _ = cv2.minMaxLoc(res)
-                if max_val < 0.9: continue
+                slash = render_text("/", "SupercellMagic", 24)
+                x, y, c = Frame_Handler.locate(
+                    slash,
+                    section,
+                    grayscale=True,
+                    return_confidence=True
+                )
+                if c < 0.9: continue
                 
                 # Extract text
                 text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
@@ -84,20 +159,24 @@ class Upgrader:
             time.sleep(0.5)
         raise Exception("Failed to get home lab availability")
 
-    def builder_lab_available(self, timeout=60):
-        import time, cv2
+    def builder_lab_available(self, timeout=60, use_cached_frame=False):
+        import time
         
         start = time.time()
         while time.time() < start + timeout:
             try:
-                section = Frame_Handler.get_frame_section(0.45, 0.04, -0.505, 0.08, high_contrast=True)
+                section = Frame_Handler.get_frame_section(0.94, 0.75, -0.02, -0.21, high_contrast=True, use_cached=use_cached_frame)
                 if configs.DEBUG: Frame_Handler.save_frame(section, "builder_lab.png")
                 
                 # Find the backslash
-                slash = cv2.cvtColor(self.misc_assets["slash"], cv2.COLOR_RGB2GRAY)
-                res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, _ = cv2.minMaxLoc(res)
-                if max_val < 0.9: continue
+                slash = render_text("/", "SupercellMagic", 24)
+                x, y, c = Frame_Handler.locate(
+                    slash,
+                    section,
+                    grayscale=True,
+                    return_confidence=True
+                )
+                if c < 0.9: continue
                 
                 # Extract text
                 text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
@@ -108,6 +187,37 @@ class Upgrader:
                 logger.error(f"Upgrader.builder_lab_available: {e}")
             time.sleep(0.5)
         raise Exception("Failed to get builder lab availability")
+    
+    @require_exit(x=0.99, y=0.01)
+    def pet_house_available(self, timeout=60, use_cached_frame=False):
+            import time
+            
+            self._click_build_button()
+            start = time.time()
+            while time.time() < start + timeout:
+                try:
+                    section = Frame_Handler.get_frame_section(0.95, 0.94, -0.02, -0.02, high_contrast=True, use_cached=use_cached_frame)
+                    if configs.DEBUG: Frame_Handler.save_frame(section, "pet_house.png")
+                    
+                    # Find the backslash
+                    slash = render_text("/", "SupercellMagic", 16)
+                    x, y, c = Frame_Handler.locate(
+                        slash,
+                        section,
+                        grayscale=True,
+                        return_confidence=True
+                    )
+                    if c < 0.9: continue
+                    
+                    # Extract text
+                    text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
+                    available = int(text[0])
+                    return available > 0
+                except (KeyboardInterrupt, SystemExit): raise
+                except Exception as e:
+                    logger.error(f"Upgrader.pet_house_available: {e}")
+                time.sleep(0.5)
+            raise Exception("Failed to get pet house availability")
 
     def collect_builder_attack_elixir(self):
         import time
@@ -152,37 +262,42 @@ class Upgrader:
     # ============================================================
 
     def _get_suggested_upgrade_template(self):
-        template = render_text("Suggested upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
-        h, w = template.shape[:2]
-        return template, w / WINDOW_DIMS[0], h / WINDOW_DIMS[1]
-
-    def _get_other_upgrade_template(self):
-        template = render_text("Other upgrades:", "CCBackBeat", 27, color=(211, 253, 127))
-        h, w = template.shape[:2]
-        return template, w / WINDOW_DIMS[0], h / WINDOW_DIMS[1]
+        template = render_text("Suggested upgrades", "SupercellMagic", 15, color=(195, 172, 166))
+        return template
+    
+    def _get_assistant_available_template(self):
+        return render_text("Available", "CCBackBeat", 25)
+    
+    def _get_upgrade_templates(self, upgrade_text, include_new=True):
+        templates = [render_text(text, "SupercellMagic", 17) for text in upgrade_text]
+        if include_new:
+            templates += [render_text(text, "SupercellMagic", 17, color=(180, 247, 86)) for text in upgrade_text]
+        return templates
+    
+    def _get_sufficient_resources(self, section):
+        return not check_color((255, 123, 114), section, tol=10)
 
     def _get_upgrade_name(self, categories=["all"]):
         import re
         x, y = Frame_Handler.locate(self.assets["upgrade_name"], ref="lc", thresh=0.9)
+        assert x is not None and y is not None, "Failed to locate upgrade name"
         section = Frame_Handler.get_frame_section(x+0.122, y-0.04, 1-x, y+0.035, high_contrast=True, thresh=255, use_cached=True)
         if configs.DEBUG: Frame_Handler.save_frame(section, "upgrade_name.png")
         upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()[:-3]), categories, phrase_level=True)
         return upgrade_name
 
-    def _get_upgrade_menu(self, frame, sug_loc, sug_width, return_bounds=False):
-        x_sug, y_sug = sug_loc
-        menu_top = 0.15
-        menu_left = x_sug - 0.5*sug_width
-        menu_right = x_sug + 0.5*sug_width + 0.11
-        menu = Frame_Handler.crop(frame, menu_left, y_sug, menu_right, 1.0)
-        menu_high_contrast = Frame_Handler.high_contrast(menu, thresh=255) / 255
-        menu_bottom = y_sug + menu_high_contrast.mean(axis=1).argmax() / WINDOW_DIMS[1]
+    def _get_upgrade_menu(self, frame, return_bounds=False):
+        menu_left = 0.775
+        menu_top = 0.06
+        menu_right = 1.0
+        menu_bottom = 0.9
         menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
         if return_bounds: return menu, menu_left, menu_top, menu_right, menu_bottom
         return menu
 
-    def _get_potential_upgrade_locs(self, menu):
+    def _get_potential_upgrade_locs(self, menu, exclude_new=False):
         import numpy as np
+        from scipy.ndimage import gaussian_filter1d
         
         def profile_bounds(profile):
             bounds = []
@@ -199,15 +314,21 @@ class Upgrader:
             centers = (bounds[:, 0] + bounds[:, 1]) / 2
             return bounds, centers
         
-        menu_white = (filter_color([255, 255, 255], menu, tol=0, return_mask=True)[1])
-        menu_red = filter_color((255, 136, 127), menu, tol=10, return_mask=True)[1]
-        white_profile = np.where(menu_white.mean(axis=1) > 0.01, 1, 0)
-        red_profile = np.where(menu_red.mean(axis=1) > 0.01, 1, 0)
+        menu_white = filter_color([255, 255, 255], menu, tol=0, return_mask=True)[1]
+        menu_green = filter_color([180, 247, 86], menu, tol=0, return_mask=True)[1]
+        # menu_red = filter_color((255, 123, 114), menu, tol=0, return_mask=True)[1]
+        white_profile = np.where(gaussian_filter1d(menu_white.mean(axis=1), sigma=1) > 0.01, 1, 0)
+        green_profile = np.where(gaussian_filter1d(menu_green.mean(axis=1), sigma=1) > 0.01, 1, 0)
+        # red_profile = np.where(gaussian_filter1d(menu_red.mean(axis=1), sigma=1) > 0.01, 1, 0)
         white_bounds, white_centers = profile_bounds(white_profile)
-        red_bounds, red_centers = profile_bounds(red_profile)
+        green_bounds, green_centers = profile_bounds(green_profile)
+        # red_bounds, red_centers = profile_bounds(red_profile)
         potential_y_locs = [] # in pixels
-        for wc in white_centers:
-            if len(red_centers) == 0 or abs(red_centers - wc).min() > 12.5:
+        
+        for i in range(len(white_centers)-1):
+            wc = white_centers[i]
+            wc_next = white_centers[i+1]
+            if (abs(wc_next - wc) < 50) and (not exclude_new or all(abs(green_centers - wc) > 50)):
                 potential_y_locs.append(wc)
         return np.array(potential_y_locs)
 
@@ -246,10 +367,10 @@ class Upgrader:
             prev_section = Frame_Handler.get_frame_section(menu_left, menu_top, menu_right, menu_bottom, high_contrast=True, thresh=255)
             for _ in range(20):
                 if dir == "down":
-                    y1, y2 = menu_bottom-0.05, menu_top+0.05
+                    y1, y2 = menu_bottom-0.075, menu_top
                 elif dir == "up":
-                    y1, y2 = menu_top+0.05, menu_bottom-0.05
-                Input_Handler.swipe(x1=menu_center, y1=y1, x2=menu_center, y2=y2, duration=0, hold_end_time=100, inter_points=10)
+                    y1, y2 = menu_top+0.075, menu_bottom
+                Input_Handler.swipe(x1=menu_center, y1=y1, x2=menu_center, y2=y2, duration=0, hold_end_time=100)
                 time.sleep(0.1)
                 
                 # Check if at end of upgrade menu
@@ -262,51 +383,51 @@ class Upgrader:
                 if res[0] is not None and res[1] is not None: break
         return res
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def home_random_upgrade(self):
         import time, numpy as np
 
         try:
             # Open upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_home_builders()
             time.sleep(0.5)
             
             # Locate menu boundaries
-            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
-            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
+            sug_template = self._get_suggested_upgrade_template()
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=True, prefilter=True)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=menu_center, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=menu_center, y1=y_sug, y2=menu_top, duration=0, hold_end_time=100)
             else:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
-            town_hall_template = [render_text("Town Hall", "CCBackBeat", 27)]
-            hero_templates = [render_text(text, "CCBackBeat", 27) for text in Cache_Manager.get("vocab", get_vocab())["heroes"]]
-            seasonal_defense_templates = [render_text(text, "CCBackBeat", 27) for text in Cache_Manager.get("vocab", get_vocab())["buildings/seasonal-defense"]]
+            town_hall_template = [render_text("Town Hall", "SupercellMagic", 17)]
+            hero_templates = [render_text(text, "SupercellMagic", 17) for text in Cache_Manager.get("vocab", get_vocab())["heroes"]]
+            seasonal_defense_template = [render_text("Crafting Station", "SupercellMagic", 17)]
             heros_excluded = Task_Handler.excluded("heroes")
             
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
                 menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
-                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=True, prefilter=True)
 
                 # Find a valid upgrade
-                potential_y_locs = self._get_potential_upgrade_locs(menu)
+                potential_y_locs = self._get_potential_upgrade_locs(menu, exclude_new=True)
                 if len(potential_y_locs) == 0: return None, None
                 potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
                 
                 # Locate invalid upgrades
-                invalid_templates = town_hall_template + hero_templates + seasonal_defense_templates
+                invalid_templates = town_hall_template + hero_templates + seasonal_defense_template
                 locs = Frame_Handler.batch_locate(invalid_templates, menu, thresh=0.75, ref="lc", null_val=-1, grayscale=True, normalize=False, return_all=True)
-                town_hall_loc, hero_locs, seasonal_defense_locs = chunk_list(locs, [1, len(hero_templates), len(seasonal_defense_templates)])
-                flat_seasonal_defense_locs = []
-                for locs in seasonal_defense_locs: flat_seasonal_defense_locs += locs
-                invalid_locs = town_hall_loc[0] + flat_seasonal_defense_locs
-                town_hall_loc = town_hall_loc[0]
+                town_hall_loc, hero_locs, seasonal_defense_locs = chunk_list(locs, [1, len(hero_templates), 1])
+                invalid_locs = town_hall_loc[0] + seasonal_defense_locs[0]
+                town_hall_loc = town_hall_loc[0][0]
                 if heros_excluded:
                     for locs in hero_locs: invalid_locs += locs
                 invalid_y_locs = np.array(invalid_locs)[:, 1] / WINDOW_DIMS[1] + menu_top
@@ -314,28 +435,18 @@ class Upgrader:
                 # Choose an upgrade
                 valid_y_locs = [y for y in potential_y_locs if min(abs(invalid_y_locs - y)) > 0.02]
 
-                # Ignore New upgrades since logic is not implemented
-                new_locs = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), menu), thresh=0.70, grayscale=False, ref="lc", normalize=False, return_all=True)
-                for x, y in new_locs:
-                    if len(potential_y_locs) == 0: return None, None
-                    if x is None or y is None: continue
-                    y_global = y / WINDOW_DIMS[1] + menu_top
-                    min_idx = np.argmin(abs(potential_y_locs - y_global))
-                    if abs(potential_y_locs[min_idx] - y_global) < 0.02:
-                        potential_y_locs = np.delete(potential_y_locs, min_idx)
-
                 # Prioritize discounted upgrades
                 discounted_upgrades = []
-                if len(valid_y_locs) > 0:
-                    discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, normalize=False, return_all=True)
-                    for x, y in discounted_locs:
-                        if len(valid_y_locs) == 0: break
-                        if x is None or y is None: continue
-                        y_global = y / WINDOW_DIMS[1] + menu_top
-                        min_idx = np.argmin(abs(valid_y_locs - y_global))
-                        if abs(valid_y_locs[min_idx] - y_global) < 0.02:
-                            discounted_upgrades.append(valid_y_locs[min_idx])
-                            valid_y_locs = np.delete(valid_y_locs, min_idx)
+                # if len(valid_y_locs) > 0:
+                #     discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, normalize=False, return_all=True)
+                #     for x, y in discounted_locs:
+                #         if len(valid_y_locs) == 0: break
+                #         if x is None or y is None: continue
+                #         y_global = y / WINDOW_DIMS[1] + menu_top
+                #         min_idx = np.argmin(abs(valid_y_locs - y_global))
+                #         if abs(valid_y_locs[min_idx] - y_global) < 0.02:
+                #             discounted_upgrades.append(valid_y_locs[min_idx])
+                #             valid_y_locs = np.delete(valid_y_locs, min_idx)
 
                 if len(discounted_upgrades) > 0:
                     x_upgrade, y_upgrade = menu_center, np.random.choice(discounted_upgrades)
@@ -346,7 +457,7 @@ class Upgrader:
 
                 if x_upgrade is None or y_upgrade is None:
                     # If no valid upgrades found but town hall is found, then upgrade it
-                    if town_hall_loc != -1 and min(abs(town_hall_loc[1] - potential_y_locs)) < 0.02:
+                    if town_hall_loc != (-1, -1) and min(abs(town_hall_loc[1] - potential_y_locs)) < 0.02:
                         x_upgrade, y_upgrade = menu_center, town_hall_loc[1]
                     else: return None, None
                 return x_upgrade, y_upgrade
@@ -364,15 +475,9 @@ class Upgrader:
             Input_Handler.click(x_upgrade, y_upgrade)
             time.sleep(0.5)
             
-            # Hero upgrades go directly to confirm screen now
-            in_hero_hall = not get_home_builders(0, return_amount=False, raise_exception=False)
-            if in_hero_hall:
-                if Task_Handler.excluded("heros"): return None
-            else:
-                self._click_home_builders()
-                
-                if not self._click_upgrade(): return None
-                time.sleep(0.5)
+            # Try to click upgrade button (only for walls)
+            self._click_upgrade(0.5)
+            time.sleep(0.5)
             
             # Get upgrade name
             upgrade_name = self._get_upgrade_name([
@@ -381,6 +486,10 @@ class Upgrader:
                 "heroes",
                 "guardians",
             ])
+            
+            # Hero upgrades go directly to confirm screen now
+            in_hero_hall = upgrade_name in Cache_Manager.get("vocab", get_vocab())["heroes"]
+            if in_hero_hall and Task_Handler.excluded("heros"): return None
             
             # Click confirm button
             if not self._click_home_confirm(): return None
@@ -391,7 +500,7 @@ class Upgrader:
             logger.exception("Upgrader.home_random_upgrade:")
             return None
 
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def home_specified_upgrade(self, upgrade_text):
         import time, numpy as np
         
@@ -401,48 +510,52 @@ class Upgrader:
             if Task_Handler.excluded("heroes"):
                 upgrade_text = list(set(upgrade_text) - set(Cache_Manager.get("vocab", get_vocab())["heroes"]))
             if len(upgrade_text) == 0: return None
-            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+            templates = self._get_upgrade_templates(upgrade_text, include_new=False)
             np.random.shuffle(templates)
             
             # Open upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_home_builders()
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
-            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
+            sug_template = self._get_suggested_upgrade_template()
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=True, prefilter=True)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
             
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=menu_top, duration=0, hold_end_time=100)
             else:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
-                res = Frame_Handler.batch_locate(templates, frame, thresh=0.80, ref="lc", return_all=True, grayscale=True)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=True, prefilter=True)
+                res = Frame_Handler.batch_locate(templates, frame, thresh=0.70, ref="lc", return_all=True, grayscale=False, prefilter=True)
                 non_discounted_upgrades = []
                 for items in res:
                     for x, y in items:
-                        if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
-                            section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
-                            sufficient_resources = not check_color((255, 136, 127), section, tol=10)
+                        if (
+                            x is not None and y is not None
+                            and (y_sug is None or (y_sug is not None and y > y_sug))
+                            and y + 0.025 < menu_bottom
+                        ):
+                            section = Frame_Handler.crop(frame, menu_left, y, menu_right, y+0.025)
+                            sufficient_resources = self._get_sufficient_resources(section)
                             if sufficient_resources:
-                                # Check that located upgrade name is left aligned
-                                if abs(x - menu_left) < 0.01:
-                                    non_discounted_upgrades.append((x, y))
-                                    continue
+                                non_discounted_upgrades.append((x, y))
+                                continue
 
                                 # Or if it is aligned to green discount tag
                                 tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc", normalize=False)
                                 if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
                                     return x, y # Prioritize discounted upgrades
-
+                
                 if len(non_discounted_upgrades) > 0:
                     return non_discounted_upgrades[0]
                 return None, None
@@ -460,15 +573,9 @@ class Upgrader:
             Input_Handler.click(x_sug, y)
             time.sleep(0.5)
             
-            # Hero upgrades go directly to confirm screen now
-            in_hero_hall = not get_home_builders(0, return_amount=False, raise_exception=False)
-            if in_hero_hall:
-                if Task_Handler.excluded("heroes"): return None
-            else:
-                self._click_home_builders()
-                
-                if not self._click_upgrade(): return None
-                time.sleep(0.5)
+            # Try to click upgrade button (only for walls)
+            self._click_upgrade(0.5)
+            time.sleep(0.5)
             
             # Get upgrade name
             upgrade_name = self._get_upgrade_name([
@@ -477,6 +584,11 @@ class Upgrader:
                 "heroes",
                 "guardians",
             ])
+            
+            # Hero upgrades go directly to confirm screen now
+            in_hero_hall = upgrade_name in Cache_Manager.get("vocab", get_vocab())["heroes"]
+            if in_hero_hall:
+                if Task_Handler.excluded("heroes"): return None
             
             # Click confirm button
             if not self._click_home_confirm(): return None
@@ -487,7 +599,7 @@ class Upgrader:
             logger.exception("Upgrader.home_specified_upgrade:")
             return None
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def home_upgrade(self):
         if not Task_Handler.excluded("home_base_priority"):
             for priority_level in configs.HOME_BASE_UPGRADE_PRIORITY:
@@ -495,17 +607,19 @@ class Upgrader:
                 if upgrade_name is not None: return upgrade_name
         return self.home_random_upgrade()
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def assign_builder_apprentice(self):
         import time
         
         try:
             # Open upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_home_builders()
             time.sleep(0.5)
             
             # Find assistant available label
-            xys = Frame_Handler.locate(self.assets["assistant_available"], thresh=0.8, return_all=True)
+            xys = Frame_Handler.locate(self._get_assistant_available_template(), thresh=0.8, return_all=True)
             xys = sorted(xys, key=lambda pair: pair[1])
             if len(xys) == 0: return
             x, y = xys[0]
@@ -534,31 +648,33 @@ class Upgrader:
         except Exception:
             logger.exception("Upgrader.assign_builder_apprentice:")
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def home_lab_random_upgrade(self):
         import time, numpy as np
         
         try:
             # Open lab upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_home_lab()
             time.sleep(0.5)
             
             # Locate menu boundaries
-            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
-            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
+            sug_template = self._get_suggested_upgrade_template()
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=True, prefilter=True)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=menu_top, duration=0, hold_end_time=100)
             else:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
                 menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
-                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=True, prefilter=True)
 
                 # Find a valid upgrade
                 potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -567,16 +683,16 @@ class Upgrader:
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
 
                 # Determine discounted upgrades
-                discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
                 discounted_upgrades = []
-                for x, y in discounted_locs:
-                    if len(potential_y_locs) == 0: break
-                    if x is None or y is None: continue
-                    y_global = y / WINDOW_DIMS[1] + menu_top
-                    min_idx = np.argmin(abs(potential_y_locs - y_global))
-                    if abs(potential_y_locs[min_idx] - y_global) < 0.02:
-                        discounted_upgrades.append(potential_y_locs[min_idx])
-                        potential_y_locs = np.delete(potential_y_locs, min_idx)
+                # discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
+                # for x, y in discounted_locs:
+                #     if len(potential_y_locs) == 0: break
+                #     if x is None or y is None: continue
+                #     y_global = y / WINDOW_DIMS[1] + menu_top
+                #     min_idx = np.argmin(abs(potential_y_locs - y_global))
+                #     if abs(potential_y_locs[min_idx] - y_global) < 0.02:
+                #         discounted_upgrades.append(potential_y_locs[min_idx])
+                #         potential_y_locs = np.delete(potential_y_locs, min_idx)
 
                 # Choose an upgrade
                 if len(discounted_upgrades) > 0:
@@ -610,7 +726,7 @@ class Upgrader:
             logger.exception("Upgrader.home_lab_random_upgrade:")
             return None
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def home_lab_specified_upgrade(self, upgrade_text):
         import time, numpy as np
         
@@ -618,52 +734,50 @@ class Upgrader:
             # Render templates
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
             if len(upgrade_text) == 0: return None
-            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+            templates = self._get_upgrade_templates(upgrade_text, include_new=True)
             np.random.shuffle(templates)
             
             # Open lab upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_home_lab()
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
-            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
+            sug_template = self._get_suggested_upgrade_template()
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=True, prefilter=True)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
             
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=menu_top, duration=0, hold_end_time=100)
             else:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=True, prefilter=True)
                 xys = Frame_Handler.batch_locate(templates, frame, thresh=0.80, ref="lc", grayscale=True)
                 non_discounted_upgrades = []
                 for x, y in xys:
-                    if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
-                        section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
-                        sufficient_resources = not check_color((255, 136, 127), section, tol=10)
+                    if (
+                        x is not None and y is not None
+                        and (y_sug is None or (y_sug is not None and y > y_sug))
+                        and y + 0.025 < menu_bottom
+                    ):
+                        section = Frame_Handler.crop(frame, menu_left, y, menu_right, y+0.025)
+                        sufficient_resources = self._get_sufficient_resources(section)
                         if sufficient_resources:
-                            # Check that located upgrade name is left aligned
-                            if abs(x - menu_left) < 0.01:
-                                non_discounted_upgrades.append((x, y))
-                                continue
+                            non_discounted_upgrades.append((x, y))
+                            continue
 
                             # Or if it is aligned to green discount tag
                             tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc", normalize=False)
                             if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
                                 return x, y # Prioritize discounted upgrades
-
-                            # Or if it is left aligned to "New" label
-                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc", normalize=False)
-                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/WINDOW_DIMS[1])) < 0.02:
-                                non_discounted_upgrades.append((x, y))
-                                continue
                 
                 if len(non_discounted_upgrades) > 0:
                     return non_discounted_upgrades[0]
@@ -697,7 +811,7 @@ class Upgrader:
             logger.exception("Upgrader.home_lab_specified_upgrade:")
             return None
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def home_lab_upgrade(self):
         if not Task_Handler.excluded("home_lab_priority"):
             for priority_level in configs.HOME_LAB_UPGRADE_PRIORITY:
@@ -705,17 +819,19 @@ class Upgrader:
                 if upgrade_name is not None: return upgrade_name
         return self.home_lab_random_upgrade()
 
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def assign_lab_assistant(self):
         import time
         
         try:
             # Open upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_home_lab()
             time.sleep(0.5)
             
             # Find assistant available label
-            xys = Frame_Handler.locate(self.assets["assistant_available"], thresh=0.8, return_all=True)
+            xys = Frame_Handler.locate(self._get_assistant_available_template(), thresh=0.8, return_all=True)
             xys = sorted(xys, key=lambda pair: pair[1])
             if len(xys) == 0: return
             x, y = xys[0]
@@ -744,59 +860,63 @@ class Upgrader:
         except Exception:
             logger.exception("Upgrader.assign_lab_assistant:")
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
+    def pet_house_random_upgrade(self):
+        import time, numpy as np
+        
+        ...
+    
+    @require_exit(x=0.99, y=0.01)
+    def pet_house_specified_upgrade(self, upgrade_text):
+        import time, numpy as np
+        
+        ...
+    
+    @require_exit(x=0.99, y=0.01)
     def builder_random_upgrade(self):
         import time, re, numpy as np
         
         try:
             # Open upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_builder_builders()
             time.sleep(0.5)
             
             # Locate menu boundaries
-            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
-            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
+            sug_template = self._get_suggested_upgrade_template()
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=True, prefilter=True)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=menu_top, duration=0, hold_end_time=100)
             else:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
                 menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
-                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=True, prefilter=True)
 
                 # Find a valid upgrade
-                potential_y_locs = self._get_potential_upgrade_locs(menu)
+                potential_y_locs = self._get_potential_upgrade_locs(menu, exclude_new=True)
                 if len(potential_y_locs) == 0: return None, None
                 potential_y_locs = potential_y_locs / WINDOW_DIMS[1] + menu_top
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
                 
-                # Ignore New upgrades since logic is not implemented
-                new_locs = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), menu), thresh=0.70, grayscale=False, ref="lc", normalize=False, return_all=True)
-                for x, y in new_locs:
-                    if len(potential_y_locs) == 0: return None, None
-                    if x is None or y is None: continue
-                    y_global = y / WINDOW_DIMS[1] + menu_top
-                    min_idx = np.argmin(abs(potential_y_locs - y_global))
-                    if abs(potential_y_locs[min_idx] - y_global) < 0.02:
-                        potential_y_locs = np.delete(potential_y_locs, min_idx)
-                
                 # Determine discounted upgrades
-                discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
                 discounted_upgrades = []
-                for x, y in discounted_locs:
-                    if len(potential_y_locs) == 0: break
-                    if x is None or y is None: continue
-                    y_global = y / WINDOW_DIMS[1] + menu_top
-                    min_idx = np.argmin(abs(potential_y_locs - y_global))
-                    if abs(potential_y_locs[min_idx] - y_global) < 0.02:
-                        discounted_upgrades.append(potential_y_locs[min_idx])
-                        potential_y_locs = np.delete(potential_y_locs, min_idx)
+                # discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
+                # for x, y in discounted_locs:
+                #     if len(potential_y_locs) == 0: break
+                #     if x is None or y is None: continue
+                #     y_global = y / WINDOW_DIMS[1] + menu_top
+                #     min_idx = np.argmin(abs(potential_y_locs - y_global))
+                #     if abs(potential_y_locs[min_idx] - y_global) < 0.02:
+                #         discounted_upgrades.append(potential_y_locs[min_idx])
+                #         potential_y_locs = np.delete(potential_y_locs, min_idx)
 
                 # Choose an upgrade
                 if len(discounted_upgrades) > 0:
@@ -814,17 +934,15 @@ class Upgrader:
             if x_upgrade is None or y_upgrade is None: return None
             
             # Get upgrade name
-            section = Frame_Handler.high_contrast(Frame_Handler.get_frame_section(menu_left, y_upgrade - 0.035, menu_center, y_upgrade + 0.025))
+            section = Frame_Handler.get_frame_section(menu_left, y_upgrade - 0.025, menu_center, y_upgrade + 0.025, high_contrast=True)
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()), ["buildings/builder-base", "traps/builder-base"], phrase_level=True)
+            
+            # Try to click upgrade button (only for walls)
+            self._click_upgrade(0.5)
+            time.sleep(0.5)
             
             # Select upgrade
             Input_Handler.click(x_upgrade, y_upgrade)
-            
-            # Exit upgrade menu
-            self._click_builder_builders()
-            
-            # Click upgrade button
-            if not self._click_upgrade(): return None
             
             # Click confirm button
             if not self._click_builder_confirm(): return None
@@ -835,7 +953,7 @@ class Upgrader:
             logger.exception("Upgrader.builder_random_upgrade:")
             return None
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def builder_specified_upgrade(self, upgrade_text):
         import time, numpy as np
         
@@ -843,43 +961,47 @@ class Upgrader:
             # Render templates
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
             if len(upgrade_text) == 0: return None
-            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+            templates = self._get_upgrade_templates(upgrade_text, include_new=False)
             combined = list(zip(templates, upgrade_text))
             np.random.shuffle(combined)
             templates, upgrade_text = zip(*combined)
             
             # Open upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_builder_builders()
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
-            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
+            sug_template = self._get_suggested_upgrade_template()
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=True, prefilter=True)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
 
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=menu_top, duration=0, hold_end_time=100)
             else:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=True, prefilter=True)
                 xys = Frame_Handler.batch_locate(templates, frame, thresh=0.80, ref="lc", grayscale=True)
                 non_discounted_upgrades = []
                 for (x, y), name in zip(xys, upgrade_text):
-                    if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
-                        section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
-                        sufficient_resources = not check_color((255, 136, 127), section, tol=10)
+                    if (
+                        x is not None and y is not None
+                        and (y_sug is None or (y_sug is not None and y > y_sug))
+                        and y + 0.025 < menu_bottom
+                    ):
+                        section = Frame_Handler.crop(frame, menu_left, y, menu_right, y+0.025)
+                        sufficient_resources = self._get_sufficient_resources(section)
                         if sufficient_resources:
-                            # Check that located upgrade name is left aligned
-                            if abs(x - menu_left) < 0.01:
-                                non_discounted_upgrades.append((x, y, name))
-                                continue
+                            non_discounted_upgrades.append((x, y, name))
+                            continue
                             
                             # Or if it is aligned to green discount tag
                             tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc", normalize=False)
@@ -903,10 +1025,9 @@ class Upgrader:
             Input_Handler.click(x, y)
             time.sleep(0.5)
             
-            self._click_builder_builders()
-            
-            # Click upgrade
-            if not self._click_upgrade(): return None
+            # Try to click upgrade button (only for walls)
+            self._click_upgrade(0.5)
+            time.sleep(0.5)
             
             # Click confirm button
             if not self._click_builder_confirm(): return None
@@ -917,7 +1038,7 @@ class Upgrader:
             logger.exception("Upgrader.builder_specified_upgrade:")
             return None
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def builder_upgrade(self):
         if not Task_Handler.excluded("builder_base_priority"):
             for priority_level in configs.BUILDER_BASE_UPGRADE_PRIORITY:
@@ -925,31 +1046,33 @@ class Upgrader:
                 if upgrade_name is not None: return upgrade_name
         return self.builder_random_upgrade()
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def builder_lab_random_upgrade(self):
         import time, re, numpy as np
         
         try:
             # Open lab upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_builder_lab()
             time.sleep(0.5)
             
             # Locate menu boundaries
-            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
-            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
+            sug_template = self._get_suggested_upgrade_template()
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=True, prefilter=True)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
             menu_center = (menu_left + menu_right) / 2
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=menu_top, duration=0, hold_end_time=100)
             else:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
                 menu = Frame_Handler.crop(frame, menu_left, menu_top, menu_right, menu_bottom)
-                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=True, prefilter=True)
                 
                 # Find a valid upgrade
                 potential_y_locs = self._get_potential_upgrade_locs(menu)
@@ -958,16 +1081,16 @@ class Upgrader:
                 if y_sug is not None: potential_y_locs = potential_y_locs[potential_y_locs > y_sug]
                 
                 # Determine discounted upgrades
-                discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
                 discounted_upgrades = []
-                for x, y in discounted_locs:
-                    if len(potential_y_locs) == 0: break
-                    if x is None or y is None: continue
-                    y_global = y / WINDOW_DIMS[1] + menu_top
-                    min_idx = np.argmin(abs(potential_y_locs - y_global))
-                    if abs(potential_y_locs[min_idx] - y_global) < 0.02:
-                        discounted_upgrades.append(potential_y_locs[min_idx])
-                        potential_y_locs = np.delete(potential_y_locs, min_idx)
+                # discounted_locs = Frame_Handler.locate(self.assets["green_tag"], menu, thresh=0.80, grayscale=False, return_all=True, normalize=False)
+                # for x, y in discounted_locs:
+                #     if len(potential_y_locs) == 0: break
+                #     if x is None or y is None: continue
+                #     y_global = y / WINDOW_DIMS[1] + menu_top
+                #     min_idx = np.argmin(abs(potential_y_locs - y_global))
+                #     if abs(potential_y_locs[min_idx] - y_global) < 0.02:
+                #         discounted_upgrades.append(potential_y_locs[min_idx])
+                #         potential_y_locs = np.delete(potential_y_locs, min_idx)
 
                 # Choose an upgrade
                 if len(discounted_upgrades) > 0:
@@ -985,7 +1108,7 @@ class Upgrader:
             if x_upgrade is None or y_upgrade is None: return None
             
             # Get upgrade name
-            section = Frame_Handler.high_contrast(Frame_Handler.get_frame_section(menu_left, y_upgrade - 0.035, menu_center, y_upgrade + 0.025))
+            section = Frame_Handler.get_frame_section(menu_left, y_upgrade - 0.025, menu_center, y_upgrade + 0.025, high_contrast=True)
             upgrade_name = spell_check(re.sub(r"\s*x\d+$", "", OCR_Handler.get_text(section)[0].lower()), "troops", phrase_level=True)
             
             # Select upgrade
@@ -1000,7 +1123,7 @@ class Upgrader:
             logger.exception("Upgrader.builder_lab_random_upgrade:")
             return None
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def builder_lab_specified_upgrade(self, upgrade_text):
         import time, numpy as np
         
@@ -1008,54 +1131,52 @@ class Upgrader:
             # Render templates
             if type(upgrade_text) == str: upgrade_text = [upgrade_text]
             if len(upgrade_text) == 0: return None
-            templates = [render_text(text, "CCBackBeat", 27) for text in upgrade_text]
+            templates = self._get_upgrade_templates(upgrade_text, include_new=True)
             combined = list(zip(templates, upgrade_text))
             np.random.shuffle(combined)
             templates, upgrade_text = zip(*combined)
             
             # Open lab upgrade list menu
+            self._click_build_button()
+            time.sleep(0.5)
             self._click_builder_lab()
             time.sleep(0.5)
             
             # Find suggested upgrades label
-            sug_template, sug_width, sug_height = self._get_suggested_upgrade_template()
-            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=False)
+            sug_template = self._get_suggested_upgrade_template()
+            x_sug, y_sug = Frame_Handler.locate(sug_template, thresh=0.70, grayscale=True, prefilter=True)
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
-            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, (x_sug, y_sug), sug_width, return_bounds=True)
+            menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
 
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
-                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=0.15, duration=0, hold_end_time=100, inter_points=10)
+                Input_Handler.swipe_up(x=x_sug, y1=y_sug, y2=menu_top, duration=0, hold_end_time=100)
             else:
                 self._scroll_to_menu_bottom(menu_left, menu_right, menu_top, menu_bottom)
             
             # Find upgrade text
             def locate_upgrade():
                 frame = Frame_Handler.get_frame(grayscale=False)
-                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=False)
+                x_sug, y_sug = Frame_Handler.locate(sug_template, frame, thresh=0.70, grayscale=True, prefilter=True)
                 xys = Frame_Handler.batch_locate(templates, frame, thresh=0.80, ref="lc", grayscale=True)
                 non_discounted_upgrades = []
                 for (x, y), name in zip(xys, upgrade_text):
-                    if x is not None and y is not None and (y_sug is None or (y_sug is not None and y > y_sug)):
-                        section = Frame_Handler.crop(frame, menu_left, y-0.02, menu_right, y+0.02)
-                        sufficient_resources = not check_color((255, 136, 127), section, tol=10)
+                    if (
+                        x is not None and y is not None
+                        and (y_sug is None or (y_sug is not None and y > y_sug))
+                        and y + 0.025 < menu_bottom
+                    ):
+                        section = Frame_Handler.crop(frame, menu_left, y, menu_right, y+0.025)
+                        sufficient_resources = self._get_sufficient_resources(section)
                         if sufficient_resources:
-                            # Check that located upgrade name is left aligned
-                            if abs(x - menu_left) < 0.01:
-                                non_discounted_upgrades.append((x, y, name))
-                                continue
+                            non_discounted_upgrades.append((x, y, name))
+                            continue
                             
                             # Or if it is aligned to green discount tag
                             tag_x, tag_y = Frame_Handler.locate(self.assets["green_tag"], section, thresh=0.80, grayscale=False, ref="rc", normalize=False)
                             if tag_x is not None and tag_y is not None and abs(x - (menu_left + tag_x/WINDOW_DIMS[1])) < 0.02:
                                 return x, y, name # Prioritize discounted upgrades
-
-                            # Or if it is left aligned to "New" label
-                            new_x, new_y = Frame_Handler.locate(render_text("New", "CCBackBeat", 27, color=(13, 255, 13)), filter_color((13, 255, 13), section), thresh=0.70, grayscale=False, ref="rc", normalize=False)
-                            if new_x is not None and new_y is not None and abs(x - (menu_left + new_x/WINDOW_DIMS[1])) < 0.02:
-                                non_discounted_upgrades.append((x, y, name))
-                                continue
 
                 if len(non_discounted_upgrades) > 0:
                     return non_discounted_upgrades[0]
@@ -1082,7 +1203,7 @@ class Upgrader:
             logger.exception("Upgrader.builder_lab_specified_upgrade:")
             return None
     
-    @require_exit()
+    @require_exit(x=0.99, y=0.01)
     def builder_lab_upgrade(self):
         if not Task_Handler.excluded("builder_lab_priority"):
             for priority_level in configs.BUILDER_LAB_UPGRADE_PRIORITY:
@@ -1094,7 +1215,7 @@ class Upgrader:
     # 📡 Upgrade Monitoring
     # ============================================================
     
-    def run_home_base(self, exclude_base=False, exclude_lab=False):
+    def run_home_base(self, exclude_base=False, exclude_lab=False, exclude_pet=False):
         import time
         
         Input_Handler.zoom(dir="out")
@@ -1107,11 +1228,11 @@ class Upgrader:
             while counter < MAX_UPGRADES_PER_CHECK:
                 counter += 1
                 try:
-                    initial_builders = get_home_builders(1)
+                    initial_builders = self.get_home_builders(1)
                     if initial_builders <= max(0, OPEN_HOME_BUILDERS): break
                     upgraded = self.home_upgrade()
                     time.sleep(0.5)
-                    final_builders = get_home_builders(1)
+                    final_builders = self.get_home_builders(1)
                     if upgraded is not None:
                         upgraded = upgraded.lower()
                         if final_builders < initial_builders: upgrades_started.append(upgraded)
@@ -1135,7 +1256,18 @@ class Upgrader:
         if not Task_Handler.excluded("lab_assistant"):
             self.assign_lab_assistant()
         
-        for upgrade in upgrades_started + lab_upgrades_started:
+        # Pet house upgrades
+        pet_upgrades_started = []
+        try:
+            if not exclude_pet and self.pet_house_available(1):
+                upgraded = self.pet_house_upgrade()
+                time.sleep(0.5)
+                final_pet_avail = self.pet_house_available(1)
+                if upgraded is not None and not final_pet_avail: pet_upgrades_started.append(upgraded.lower())
+        except (KeyboardInterrupt, SystemExit): raise
+        except: pass
+
+        for upgrade in upgrades_started + lab_upgrades_started + pet_upgrades_started:
             send_notification(f"Started upgrading {upgrade}")
     
     def run_builder_base(self, exclude_base=False, exclude_lab=False):

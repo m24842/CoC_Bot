@@ -260,7 +260,7 @@ class Attacker:
         import time, numpy as np
 
         Input_Handler.zoom(dir="out")
-        Input_Handler.swipe_up()
+        Input_Handler.swipe_up(y1=0.5)
         
         type_gaps_seen = 0
         total_slots_seen = 0
@@ -309,7 +309,7 @@ class Attacker:
         import numpy as np
         
         Input_Handler.zoom(dir="out")
-        Input_Handler.swipe_up()
+        Input_Handler.swipe_up(y1=0.5)
         
         card_centers = np.linspace(0.1, 0.9, 11)
         self.deploy_troops(card_centers, card_counts=[4]*len(card_centers))
@@ -332,11 +332,7 @@ class Attacker:
             # Make sure in home base
             start_time = time.time()
             while time.time() - start_time < timeout:
-                try:
-                    get_home_builders(1)
-                    break
-                except (KeyboardInterrupt, SystemExit): raise
-                except: pass
+                if in_home_base(): break
             if time.time() - start_time >= timeout: return
             
             # Complete an attack
@@ -354,11 +350,7 @@ class Attacker:
             # Make sure in builder base
             start_time = time.time()
             while time.time() - start_time < timeout:
-                try:
-                    get_builder_builders(1)
-                    break
-                except (KeyboardInterrupt, SystemExit): raise
-                except: pass
+                if in_builder_base(): break
             if time.time() - start_time >= timeout: return
             
             # Complete an attack

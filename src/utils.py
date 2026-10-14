@@ -1,6 +1,7 @@
 import sys, collections
 from pathlib import Path
 from functools import lru_cache
+from tempfile import template
 from log import logger
 try:
     import configs
@@ -125,6 +126,18 @@ def request_perms():
 
     elif sys.platform == "win32":
         pass
+
+def require_exit(x=0.99, y=0.99, n=5, delay=0.1):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            result = None
+            try: result = func(*args, **kwargs)
+            except (KeyboardInterrupt, SystemExit): raise
+            except: pass
+            Input_Handler.click_exit(x, y, n, delay)
+            return result
+        return wrapper
+    return decorator
 
 def to_system_home():
     ADB_Manager.adbutils_device.shell("input keyevent KEYCODE_HOME")
@@ -460,6 +473,14 @@ def extend_pythonanywhere_hosting(username, password):
     )
     assert res.url == webapps_url
 
+def in_home_base():
+    return Frame_Handler.locate(
+        Asset_Manager.upgrader_assets["home_gold"],
+        grayscale=False,
+        prefilter=True,
+        thresh=0.9
+    ) != (None, None)
+
 def to_home_base(ref_cache=False):
     import cv2, time, numpy as np
     
@@ -467,28 +488,17 @@ def to_home_base(ref_cache=False):
     
     TEMP_CACHE["location"] = "home_base"
     
-    try:
-        get_home_builders(0, return_amount=False)
-        return
-    except (KeyboardInterrupt, SystemExit): raise
-    except: pass
+    if in_home_base(): return
     
     Input_Handler.zoom(dir="out")
     for _ in range(3):
-        Input_Handler.swipe_up(
-            y1=0.5,
-            y2=1.0,
-        )
+        Input_Handler.swipe_up()
     for _ in range(3):
-        Input_Handler.swipe_left(
-            x1=1.0,
-            x2=0.0,
-        )
+        Input_Handler.swipe_left()
     
     scale_templates = []
     for scale in np.arange(0.43, 0.47, 0.01):
-        template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
-        scale_templates.append(template)
+        scale_templates.append(cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST))
     
     for _ in range(5):
         xys = Frame_Handler.batch_locate(scale_templates, grayscale=True, thresh=0.7, ref="cc")
@@ -497,32 +507,6 @@ def to_home_base(ref_cache=False):
             Input_Handler.click(x, y)
             time.sleep(2)
             return
-
-def get_home_builders(timeout=60, return_amount=True, raise_exception=True, use_cached_frame=False):
-    import time, cv2
-    
-    start = time.time()
-    while True:
-        try:
-            section = Frame_Handler.get_frame_section(0.49, 0.04, -0.455, 0.08, high_contrast=True, use_cached=use_cached_frame)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "home_builders.png")
-            
-            slash = cv2.cvtColor(Asset_Manager.misc_assets["slash"], cv2.COLOR_RGB2GRAY)
-            res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, _ = cv2.minMaxLoc(res)
-            if raise_exception and max_val < 0.9: raise Exception("Slash not found")
-            
-            if not return_amount: return max_val >= 0.9
-            
-            text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
-            available = int(text[0])
-            return available
-        except (KeyboardInterrupt, SystemExit): raise
-        except Exception as e:
-            logger.error(f"get_home_builders: {e}")
-        time.sleep(0.1)
-        if time.time() > start + timeout: break
-    raise Exception("Failed to get home builders")
 
 def start_coc(timeout=60, detailed=False):
     import time
@@ -550,21 +534,14 @@ def start_coc(timeout=60, detailed=False):
             
             Frame_Handler.get_frame()
             
-            try:
-                get_home_builders(0, return_amount=False, use_cached_frame=True)
+            if in_home_base():
                 TEMP_CACHE["location"] = "home_base"
                 break
-            except (KeyboardInterrupt, SystemExit): raise
-            except: pass
-            
-            try:
-                get_builder_builders(0, return_amount=False, use_cached_frame=True)
+            elif in_builder_base():
                 TEMP_CACHE["location"] = "builder_base"
                 break
-            except (KeyboardInterrupt, SystemExit): raise
-            except: pass
-            
-            cont_locs = Frame_Handler.batch_locate(cont_templates, grayscale=True, thresh=0.7, ref="cc", use_cached=True)
+
+            cont_locs = Frame_Handler.batch_locate(cont_templates, grayscale=True, thresh=0.7, prefilter=True, ref="cc", use_cached=True)
             for x, y in cont_locs:
                 if x is not None and y is not None:
                     Input_Handler.click(x, y)
@@ -613,6 +590,14 @@ def update_coc(timeout=10, from_in_game=False):
         pass
     if not from_in_game: to_system_home()
 
+def in_builder_base():
+    return Frame_Handler.locate(
+        Asset_Manager.upgrader_assets["builder_gold"],
+        grayscale=False,
+        prefilter=True,
+        thresh=0.9
+    ) != (None, None)
+
 def to_builder_base(ref_cache=False):
     import cv2, time, numpy as np
     
@@ -620,11 +605,7 @@ def to_builder_base(ref_cache=False):
     
     TEMP_CACHE["location"] = "builder_base"
     
-    try:
-        get_builder_builders(0, return_amount=False)
-        return
-    except (KeyboardInterrupt, SystemExit): raise
-    except: pass
+    if in_builder_base(): return
     
     for _ in range(3):
         Input_Handler.zoom(dir="in")
@@ -636,9 +617,8 @@ def to_builder_base(ref_cache=False):
     
     scale_templates = []
     for scale in np.arange(0.43, 0.47, 0.01):
-        template = cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
-        scale_templates.append(template)
-    
+        scale_templates.append(cv2.resize(Asset_Manager.misc_assets["boat_icon"], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST))
+
     for _ in range(5):
         xys = Frame_Handler.batch_locate(scale_templates, grayscale=True, thresh=0.7, ref="cc")
         for x, y in xys:
@@ -647,44 +627,6 @@ def to_builder_base(ref_cache=False):
             time.sleep(2)
             return
         Input_Handler.swipe(x1=0.5, y1=0.5, x2=0.25, y2=0.75, hold_end_time=100)
-
-def get_builder_builders(timeout=60, return_amount=True, raise_exception=True, use_cached_frame=False):
-    import time, cv2
-    
-    start = time.time()
-    while True:
-        try:
-            section = Frame_Handler.get_frame_section(0.57, 0.04, -0.383, 0.08, high_contrast=True, use_cached=use_cached_frame)
-            if configs.DEBUG: Frame_Handler.save_frame(section, "builder_builders.png")
-            
-            slash = cv2.cvtColor(Asset_Manager.misc_assets["slash"], cv2.COLOR_RGB2GRAY)
-            res = cv2.matchTemplate(section, slash, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, _ = cv2.minMaxLoc(res)
-            if raise_exception and max_val < 0.9: raise Exception("Slash not found")
-            
-            if not return_amount: return max_val >= 0.9
-            
-            text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
-            available = int(text[0])
-            return available
-        except (KeyboardInterrupt, SystemExit): raise
-        except Exception as e:
-            logger.error(f"get_builder_builders: {e}")
-        time.sleep(0.1)
-        if time.time() > start + timeout: break
-    raise Exception("Failed to get builder builders")
-
-def require_exit(n=5, delay=0.1):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            result = None
-            try: result = func(*args, **kwargs)
-            except (KeyboardInterrupt, SystemExit): raise
-            except: pass
-            Input_Handler.click_exit(n, delay)
-            return result
-        return wrapper
-    return decorator
 
 class classproperty:
     def __init__(self, func):
@@ -1493,8 +1435,8 @@ class Input_Handler:
             time.sleep(delay)
 
     @classmethod
-    def click_exit(cls, n=1, delay=0):
-        cls.click(0.99, 0.99, n, delay=delay)
+    def click_exit(cls, x=0.99, y=0.99, n=1, delay=0):
+        cls.click(x, y, n, delay=delay)
 
     @classmethod
     def multi_click(cls, x1, y1, x2, y2, duration=0):
@@ -1530,19 +1472,19 @@ class Input_Handler:
         builder.publish(ADB_Manager.minitouch_device.connection)
 
     @classmethod
-    def swipe_up(cls, y1=0.5, y2=0.0, x=1.0, **kwargs):
+    def swipe_up(cls, y1=1.0, y2=0.0, x=1.0, **kwargs):
         cls.swipe(x, y1, x, y2, **kwargs)
 
     @classmethod
-    def swipe_down(cls, y1=0.5, y2=1.0, x=1.0, **kwargs):
+    def swipe_down(cls, y1=0.0, y2=1.0, x=1.0, **kwargs):
         cls.swipe(x, y1, x, y2, **kwargs)
 
     @classmethod
-    def swipe_left(cls, x1=0.5, x2=0.0, y=1.0, **kwargs):
+    def swipe_left(cls, x1=1.0, x2=0.0, y=1.0, **kwargs):
         cls.swipe(x1, y, x2, y, **kwargs)
 
     @classmethod
-    def swipe_right(cls, x1=0.5, x2=1.0, y=1.0, **kwargs):
+    def swipe_right(cls, x1=0.0, x2=1.0, y=1.0, **kwargs):
         cls.swipe(x1, y, x2, y, **kwargs)
 
     @classmethod
@@ -1597,6 +1539,23 @@ class Frame_Handler:
         return frame[int(h*y1):int(h*y2), int(w*x1):int(w*x2)]
     
     @classmethod
+    def prefilter(cls, source, target):
+        import numpy as np
+        
+        def pack(img):
+            if img.ndim == 2: return img.astype(np.uint32)
+            else: return (
+                (img[..., 0].astype(np.uint32) << 16) |
+                (img[..., 1].astype(np.uint32) << 8)  |
+                (img[..., 2].astype(np.uint32))
+            )
+
+        mask_not_in_img1 = ~np.isin(pack(target), np.unique(pack(source)))
+        out = target.copy()
+        out[mask_not_in_img1] = 0
+        return out
+
+    @classmethod
     def get_frame(cls, grayscale=True, high_contrast=False, thresh=200, use_cached=False):
         import cv2, numpy as np
         if use_cached and cls.cached_frame is not None:
@@ -1641,6 +1600,7 @@ class Frame_Handler:
         ref="cc",
         null_val=None,
         normalize=True,
+        prefilter=False,
         return_confidence=False,
         return_all=False,
         use_cached=False,
@@ -1652,6 +1612,7 @@ class Frame_Handler:
         if frame is None:
             frame = cls.get_frame(grayscale=grayscale, use_cached=use_cached)
         elif grayscale: frame = cls.grayscale(frame)
+        if prefilter: frame = cls.prefilter(template, frame)
         fh, fw = frame.shape[:2]
         nh = fh if normalize else 1
         nw = fw if normalize else 1
@@ -1704,7 +1665,7 @@ class Frame_Handler:
         return null_val, null_val
 
     @classmethod
-    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, normalize=True, return_confidence=False, return_all=False, use_cached=False):
+    def batch_locate(cls, templates, frame=None, grayscale=True, thresh=0, ref="cc", null_val=None, normalize=True, prefilter=False, return_confidence=False, return_all=False, use_cached=False):
         from concurrent.futures import ThreadPoolExecutor
         
         if cls.pool is None:
@@ -1715,15 +1676,27 @@ class Frame_Handler:
         
         threads = []
         for template in templates:
-            threads.append(cls.pool.submit(cls.locate, template, frame, grayscale, thresh, ref, null_val, normalize, return_confidence, return_all))
+            threads.append(cls.pool.submit(
+                cls.locate,
+                template=template,
+                frame=frame,
+                grayscale=grayscale,
+                thresh=thresh,
+                ref=ref,
+                null_val=null_val,
+                normalize=normalize,
+                prefilter=prefilter,
+                return_confidence=return_confidence,
+                return_all=return_all
+            ))
         return [thread.result() for thread in threads]
 
 class Dev_Tools:
     @classmethod
-    def optimal_template_font_size(cls, frame, text, font, font_size_range=(1, 100), color=(255, 255, 255), grayscale=True, return_results=False, plot_results=False):
+    def optimal_template_font_size(cls, frame, text, font, font_size_range=(1, 100), color=(255, 255, 255), grayscale=True, prefilter=True, return_results=False, plot_results=False):
         import numpy as np, matplotlib.pyplot as plt
         templates = [render_text(text, font, size, color) for size in range(font_size_range[0], font_size_range[1] + 1)]
-        results = Frame_Handler.batch_locate(templates, frame=frame, grayscale=grayscale, return_confidence=True)
+        results = Frame_Handler.batch_locate(templates, frame=frame, grayscale=grayscale, prefilter=prefilter, return_confidence=True)
         confidences = [res[2] for res in results]
         highest_conf = max(confidences)
         optimal_size = confidences.index(highest_conf) + font_size_range[0]
@@ -1733,6 +1706,27 @@ class Dev_Tools:
             plt.xlabel("Font Size")
             plt.ylabel("Confidence")
             plt.title(f"Optimal Font Size: {optimal_size} ({highest_conf:.2f})")
+            plt.show()
+        
+        if return_results:
+            return optimal_size, results
+        return optimal_size
+
+    @classmethod
+    def optimal_template_scale(cls, frame, template, scale_range=(0.0, 1.0), step=0.1, grayscale=True, prefilter=True, return_results=False, plot_results=False):
+        import cv2, numpy as np, matplotlib.pyplot as plt
+        scale_range = np.arange(scale_range[0], scale_range[1] + step, step)
+        templates = [cv2.resize(template, (0, 0), fx=scale, fy=scale) for scale in scale_range]
+        results = Frame_Handler.batch_locate(templates, frame=frame, grayscale=grayscale, prefilter=prefilter, return_confidence=True)
+        confidences = [res[2] for res in results]
+        highest_conf = max(confidences)
+        optimal_size = scale_range[confidences.index(highest_conf)]
+        
+        if plot_results:
+            plt.plot(scale_range, confidences)
+            plt.xlabel("Scale")
+            plt.ylabel("Confidence")
+            plt.title(f"Optimal Scale: {optimal_size:.2f} ({highest_conf:.2f})")
             plt.show()
         
         if return_results:
