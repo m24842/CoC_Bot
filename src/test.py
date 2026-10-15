@@ -7,13 +7,13 @@ import cv2
 
 if __name__ == "__main__":
     configs.AUTO_START_EMULATOR = False
-    args = parse_args(debug=True, id="alt")
+    args = parse_args(debug=True, id="main")
     init_instance(args.id)
     bot = CoC_Bot()
     frame = Frame_Handler.screenshot()
     
-    start_coc()
-    # bot.run()
+    # start_coc()
+    bot.run()
     # to_home_base()
     # bot.upgrader.run_home_base()
     # bot.upgrader.home_upgrade()

@@ -225,25 +225,10 @@ class Upgrader:
         # Align view to top right corner
         Input_Handler.zoom(dir="out")
         for _ in range(3):
-            Input_Handler.swipe_up(
-                y1=0.5,
-                y2=1.0,
-            )
-        Input_Handler.swipe_up(
-            y1=0.5,
-            y2=1.0,
-            hold_end_time=500,
-        )
+            Input_Handler.swipe_down(duration=0)
         for _ in range(3):
-            Input_Handler.swipe_left(
-                x1=1.0,
-                x2=0.0,
-            )
-        Input_Handler.swipe_left(
-            x1=1.0,
-            x2=0.0,
-            hold_end_time=500,
-        )
+            Input_Handler.swipe_left(duration=0)
+        Input_Handler.swipe_left(duration=0, hold_end_time=500)
         time.sleep(0.5)
         
         # Open elixir cart menu
@@ -255,7 +240,7 @@ class Upgrader:
         if x is not None and y is not None:
             Input_Handler.click(x, y)
             time.sleep(0.1)
-        Input_Handler.click_exit(5, 0.1)
+        Input_Handler.click_exit(n=5, delay=0.1)
 
     # ============================================================
     # 🧱 Upgrade Management

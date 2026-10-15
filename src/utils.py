@@ -495,9 +495,9 @@ def to_home_base(ref_cache=False):
     
     Input_Handler.zoom(dir="out")
     for _ in range(3):
-        Input_Handler.swipe_up()
+        Input_Handler.swipe_down(duration=0)
     for _ in range(3):
-        Input_Handler.swipe_left()
+        Input_Handler.swipe_left(duration=0)
     
     scale_templates = []
     for scale in np.arange(0.43, 0.47, 0.01):
@@ -1480,7 +1480,7 @@ class Input_Handler:
         cls.swipe(x, y1, x, y2, **kwargs)
 
     @classmethod
-    def swipe_down(cls, y1=0.0, y2=1.0, x=1.0, **kwargs):
+    def swipe_down(cls, y1=0.1, y2=1.0, x=1.0, **kwargs):
         cls.swipe(x, y1, x, y2, **kwargs)
 
     @classmethod
