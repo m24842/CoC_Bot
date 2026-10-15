@@ -12,6 +12,7 @@
 * Hero upgrades 👑
 * Building upgrades 🧱
 * Laboratory upgrades 🔬
+* Pet upgrades 🐶
 * Assistant assignment ⏩️
 * Normal attacks ⚔️
 * Full upgrade priority control 🚦
