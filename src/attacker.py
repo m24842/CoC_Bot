@@ -53,7 +53,7 @@ class Attacker:
             bx, by = Frame_Handler.locate(battle_temp, frame, thresh=0.9)
             if bx is None or by is None: return None, None
             xys = Frame_Handler.locate(find_a_match_temp, frame, thresh=0.9, return_all=True)
-            if len(xys) == 0: return None, None
+            if xys == [[None, None]]: return None, None
             xys = np.array(xys)
             dists = abs(xys[:, 0] - bx)
             if min(dists) > 0.01: return None, None
@@ -333,11 +333,15 @@ class Attacker:
             start_time = time.time()
             while time.time() - start_time < timeout:
                 if in_home_base(): break
-            if time.time() - start_time >= timeout: return
+            if time.time() - start_time >= timeout:
+                logger.error("Not in home base. Aborting home attack.")
+                return
             
             # Complete an attack
             if self.start_normal_attack(timeout):
                 self.complete_normal_attack(restart=restart, exclude_clan_troops=EXCLUDE_CLAN_TROOPS)
+            else:
+                start_coc() # reset in case stuck on find a match screen
         
         except Exception:
             logger.exception("Error in run_home_base():")
@@ -351,11 +355,15 @@ class Attacker:
             start_time = time.time()
             while time.time() - start_time < timeout:
                 if in_builder_base(): break
-            if time.time() - start_time >= timeout: return
+            if time.time() - start_time >= timeout:
+                logger.error("Not in builder base. Aborting builder attack.")
+                return
             
             # Complete an attack
             if self.start_builder_attack(timeout):
                 self.complete_builder_attack(restart=restart)
+            else:
+                start_coc() # reset in case stuck on find a match screen
         
         except Exception:
             logger.exception("Error in run_builder_base():")

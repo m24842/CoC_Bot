@@ -8,6 +8,7 @@ import cv2
 if __name__ == "__main__":
     configs.AUTO_START_EMULATOR = False
     args = parse_args(debug=True, id="main")
+    log.enable_logging(args.id)
     init_instance(args.id)
     bot = CoC_Bot()
     frame = Frame_Handler.screenshot()
@@ -26,7 +27,7 @@ if __name__ == "__main__":
     # bot.upgrader.pet_house_upgrade()
     # bot.upgrader.pet_house_random_upgrade()
     # bot.upgrader.pet_house_specified_upgrade(PET_HOUSE_UPGRADE_PRIORITY[0])
-    # bot.attacker.run_home_base()
+    # bot.attacker.run_home_base(5)
     # bot.attacker.complete_normal_attack(exclude_clan_troops=EXCLUDE_CLAN_TROOPS)
     # bot.attacker.complete_builder_attack()
     # to_builder_base()

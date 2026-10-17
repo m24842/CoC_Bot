@@ -518,6 +518,7 @@ class Upgrader:
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
+            menu_center = (menu_left + menu_right) / 2
             
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
@@ -1135,6 +1136,7 @@ class Upgrader:
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
+            menu_center = (menu_left + menu_right) / 2
 
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
@@ -1305,6 +1307,7 @@ class Upgrader:
             if x_sug is None or y_sug is None: return None
             frame = Frame_Handler.get_frame(grayscale=False, use_cached=True)
             menu, menu_left, menu_top, menu_right, menu_bottom = self._get_upgrade_menu(frame, return_bounds=True)
+            menu_center = (menu_left + menu_right) / 2
 
             # Move ongoing upgrades out of view
             if configs.START_FROM_MENU_TOP:
