@@ -325,7 +325,7 @@ class Attacker:
     # ============================================================
 
     @require_exit()
-    def run_home_base(self, timeout=60, restart=True):
+    def run_home_base(self, timeout=10, restart=True):
         import time
         
         try:
@@ -347,7 +347,7 @@ class Attacker:
             logger.exception("Error in run_home_base():")
 
     @require_exit()
-    def run_builder_base(self, timeout=60, restart=True):
+    def run_builder_base(self, timeout=10, restart=True):
         import time
         
         try:

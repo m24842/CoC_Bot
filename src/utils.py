@@ -1238,9 +1238,10 @@ Asset_Manager.load_attacker_assets()
 Asset_Manager.load_fonts()
 
 class DeviceProxy:
-    def __init__(self, manager_cls, private_attr_name):
+    def __init__(self, manager_cls, private_attr_name, max_retries=1):
         self._manager_cls = manager_cls
         self._private_attr_name = private_attr_name
+        self._max_retries = max_retries
 
     @property
     def _real_device(self):
@@ -1254,19 +1255,32 @@ class DeviceProxy:
             device = self._real_device
         return device
 
+    def _execute(self, func_getter, context_name, *args, **kwargs):
+        attempts = 0
+        while True:
+            device = self._ensure_device()
+            target = func_getter(device)
+            
+            try:
+                return target(*args, **kwargs)
+            except (KeyboardInterrupt, SystemExit): 
+                raise
+            except (AttributeError, NotImplementedError): 
+                raise
+            except Exception as e:
+                if attempts >= self._max_retries:
+                    if self._max_retries == 0:
+                        raise
+                    raise RuntimeError(f"Action '{context_name}' failed, and max retries ({self._max_retries}) exceeded.") from e
+                
+                attempts += 1
+                logger.exception(f"DeviceProxy.{context_name} failed (attempt {attempts}/{self._max_retries}), reconnecting...")
+                
+                if not self._manager_cls.connect():
+                    raise RuntimeError(f"Action '{context_name}' failed, and auto-reconnection timed out.") from e
+
     def __call__(self, *args, **kwargs):
-        device = self._ensure_device()
-        try:
-            return device(*args, **kwargs)
-        except (KeyboardInterrupt, SystemExit): raise
-        except (AttributeError, NotImplementedError): raise
-        except Exception as e:
-            logger.exception("DeviceProxy.__call__ reconnecting...:")
-            if self._manager_cls.connect():
-                new_device = self._real_device
-                return new_device(*args, **kwargs)
-            else:
-                raise RuntimeError("Action failed, and auto-reconnection timed out.") from e
+        return self._execute(lambda d: d, "__call__", *args, **kwargs)
 
     def __getattr__(self, name):
         device = self._ensure_device()
@@ -1274,18 +1288,7 @@ class DeviceProxy:
 
         if callable(attr):
             def wrapper(*args, **kwargs):
-                try:
-                    return attr(*args, **kwargs)
-                except (KeyboardInterrupt, SystemExit): raise
-                except (AttributeError, NotImplementedError): raise
-                except Exception as e:
-                    logger.exception(f"DeviceProxy.{name} reconnecting...:")
-                    if self._manager_cls.connect():
-                        new_device = self._real_device
-                        new_attr = getattr(new_device, name)
-                        return new_attr(*args, **kwargs)
-                    else:
-                        raise RuntimeError("Action failed, and auto-reconnection timed out.") from e
+                return self._execute(lambda d: getattr(d, name), name, *args, **kwargs)
             return wrapper
         
         return attr
@@ -1381,7 +1384,22 @@ class ADB_Manager:
     @classproperty
     def uiautomator_device(cls):
         if cls._uiautomator_device is None: cls.connect()
-        return DeviceProxy(cls, "_uiautomator_device")
+        return DeviceProxy(cls, "_uiautomator_device", max_retries=0)
+
+    @classproperty
+    def adbutils_device_no_retry(cls):
+        if cls._adbutils_device is None: cls.connect()
+        return DeviceProxy(cls, "_adbutils_device", max_retries=0)
+
+    @classproperty
+    def minitouch_device_no_retry(cls):
+        if cls._minitouch_device is None: cls.connect()
+        return DeviceProxy(cls, "_minitouch_device", max_retries=0)
+
+    @classproperty
+    def uiautomator_device_no_retry(cls):
+        if cls._uiautomator_device is None: cls.connect()
+        return DeviceProxy(cls, "_uiautomator_device", max_retries=0)
 
 class Input_Handler:
     @classmethod
@@ -1565,7 +1583,7 @@ class Frame_Handler:
         if use_cached and cls.cached_frame is not None:
             frame = cls.cached_frame.copy()
         else:
-            try: frame = ADB_Manager.adbutils_device.framebuffer() # faster than screenshot but potentially unstable
+            try: frame = ADB_Manager.adbutils_device_no_retry.framebuffer() # faster than screenshot but potentially unstable
             except (KeyboardInterrupt, SystemExit): raise
             except: frame = ADB_Manager.adbutils_device.screenshot()
             frame = np.array(frame)[..., :3]
