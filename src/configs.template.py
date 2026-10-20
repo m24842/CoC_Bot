@@ -9,7 +9,7 @@ PA_USERNAME, PA_PASSWORD = "", "" # only if using pythonanywhere to auto extend 
 # OPTIONAL: Telegram notifications (enter empty string to disable)
 TELEGRAM_BOT_TOKEN = "" # (e.g. 123456789:ABCdefGHIjkl-MNO_pqrSTUvwxYZ)
 
-# OPTIONAL: Groq API key for faster/more accurate OCR (enter empty string to disable)
+# OPTIONAL: Groq API key for faster/more accurate OCR (enter empty string to default to easyocr or native MacOS native OCR which run locally)
 GROQ_API_KEY = ""
 
 # REQUIRED: Instance Settings

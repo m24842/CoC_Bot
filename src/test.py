@@ -14,7 +14,7 @@ if __name__ == "__main__":
     frame = Frame_Handler.screenshot()
     
     # start_coc()
-    bot.run()
+    # bot.run()
     # to_home_base()
     # bot.upgrader.run_home_base()
     # bot.upgrader.home_upgrade()

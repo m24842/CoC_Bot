@@ -1146,6 +1146,19 @@ class OCR_Handler:
 
     @classmethod
     def local_ocr(cls, frame):
+        if sys.platform == "darwin":
+            try:
+                import ocrmac, PIL
+                return ocrmac.OCR(
+                    PIL.Image.fromarray(frame),
+                    recognition_level="accurate",
+                    language_preference=["en-US"],
+                    detail=False
+                )
+            except (KeyboardInterrupt, SystemExit): raise
+            except:
+                logger.warning("ocrmac not available, falling back to easyocr")
+
         if not hasattr(cls, 'reader'):
             import easyocr
             cls.reader = easyocr.Reader(['en'], gpu=True)
