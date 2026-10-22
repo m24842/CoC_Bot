@@ -563,10 +563,13 @@ def start_coc(timeout=60, detailed=False):
         if not detailed: return False
         else: return False, "error"
 
-def stop_coc(sleep=False):
-    from datetime import datetime
+def stop_coc(sleep=False, timeout=60):
+    import time
     logger.info("Stopping CoC...")
-    ADB_Manager.adbutils_device.shell("am force-stop com.supercell.clashofclans")
+    start = time.time()
+    while time.time() - start < timeout:
+        ADB_Manager.adbutils_device.shell("am force-stop com.supercell.clashofclans")
+        if ADB_Manager.adbutils_device.shell("pidof com.supercell.clashofclans") == "": break
     to_system_home()
     if sleep: Emulator_Manager.sleep()
     logger.info("CoC stopped")
