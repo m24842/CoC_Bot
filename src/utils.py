@@ -552,7 +552,7 @@ def start_coc(timeout=60, detailed=False):
             
             i += 1
         if time.time() - start > timeout:
-            stop_coc(configs.SLEEP_EMULATOR_ON_IDLE)
+            stop_coc(sleep=configs.SLEEP_EMULATOR_ON_IDLE)
             raise Exception("Failed to start CoC")
         logger.info("CoC started")
         if not detailed: return True

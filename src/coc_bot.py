@@ -60,7 +60,7 @@ class CoC_Bot:
                         self.attacker.run_builder_base()
                     
                     to_home_base()
-                    stop_coc(sleep=True)
+                    stop_coc(sleep=configs.SLEEP_EMULATOR_ON_IDLE)
                     update_status(time.time())
                 elif res == "error":
                     update_status("error")
