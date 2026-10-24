@@ -78,7 +78,7 @@ class Upgrader:
             import time
             
             start = time.time()
-            while True:
+            while time.time() < start + timeout:
                 try:
                     section = Frame_Handler.get_frame_section(0.89, 0.75, -0.07, -0.21, high_contrast=True, use_cached=use_cached_frame)
                     if configs.DEBUG: Frame_Handler.save_frame(section, "home_builders.png")
@@ -98,15 +98,15 @@ class Upgrader:
                 except (KeyboardInterrupt, SystemExit): raise
                 except Exception as e:
                     logger.error(f"Upgrader.get_home_builders: {e}")
-                time.sleep(0.1)
-                if time.time() > start + timeout: break
+                time.sleep(0.5)
+            logger.error("Upgrader.get_home_builders: Failed to get home builders")
             raise Exception("Failed to get home builders")
     
     def get_builder_builders(self, timeout=60, use_cached_frame=False):
         import time
         
         start = time.time()
-        while True:
+        while time.time() < start + timeout:
             try:
                 section = Frame_Handler.get_frame_section(0.89, 0.75, -0.07, -0.21, high_contrast=True, use_cached=use_cached_frame)
                 if configs.DEBUG: Frame_Handler.save_frame(section, "builder_builders.png")
@@ -126,8 +126,8 @@ class Upgrader:
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
                 logger.error(f"Upgrader.get_builder_builders: {e}")
-            time.sleep(0.1)
-            if time.time() > start + timeout: break
+            time.sleep(0.5)
+        logger.error("Upgrader.get_builder_builders: Failed to get builder builders")
         raise Exception("Failed to get builder builders")
 
     def home_lab_available(self, timeout=60, use_cached_frame=False):
@@ -157,6 +157,7 @@ class Upgrader:
             except Exception as e:
                 logger.error(f"Upgrader.home_lab_available: {e}")
             time.sleep(0.5)
+        logger.error("Upgrader.home_lab_available: Failed to get home lab availability")
         raise Exception("Failed to get home lab availability")
 
     def builder_lab_available(self, timeout=60, use_cached_frame=False):
@@ -186,6 +187,7 @@ class Upgrader:
             except Exception as e:
                 logger.error(f"Upgrader.builder_lab_available: {e}")
             time.sleep(0.5)
+        logger.error("Upgrader.builder_lab_available: Failed to get builder lab availability")
         raise Exception("Failed to get builder lab availability")
     
     @require_exit(x=0.99, y=0.01)
@@ -217,6 +219,7 @@ class Upgrader:
                 except Exception as e:
                     logger.error(f"Upgrader.pet_house_available: {e}")
                 time.sleep(0.5)
+            logger.error("Upgrader.pet_house_available: Failed to get pet house availability")
             raise Exception("Failed to get pet house availability")
 
     def collect_builder_attack_elixir(self):
@@ -1399,7 +1402,8 @@ class Upgrader:
                         elif final_builders == initial_builders and upgraded != "wall": break
                     else: break
                 except (KeyboardInterrupt, SystemExit): raise
-                except: pass
+                except:
+                    logger.warning("Encountered an error while attempting to upgrade home base. Retrying...")
         if not Task_Handler.excluded("builder_apprentice"):
             self.assign_builder_apprentice()
         
@@ -1412,7 +1416,8 @@ class Upgrader:
                 final_lab_avail = self.home_lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded.lower())
         except (KeyboardInterrupt, SystemExit): raise
-        except: pass
+        except:
+            logger.warning("Encountered an error while attempting to upgrade home lab. Retrying...")
         if not Task_Handler.excluded("lab_assistant"):
             self.assign_lab_assistant()
         
@@ -1435,7 +1440,7 @@ class Upgrader:
         
         Input_Handler.zoom(dir="out")
         Input_Handler.swipe_down()
-        
+
         # Building upgrades
         upgrades_started = []
         if not exclude_base:
@@ -1454,7 +1459,8 @@ class Upgrader:
                         elif final_builders == initial_builders and upgraded != "wall": break
                     else: break
                 except (KeyboardInterrupt, SystemExit): raise
-                except: pass
+                except:
+                    logger.warning("Encountered an error while attempting to upgrade builder base. Retrying...")
         
         # Lab upgrades
         lab_upgrades_started = []
@@ -1465,7 +1471,8 @@ class Upgrader:
                 final_lab_avail = self.builder_lab_available(1)
                 if upgraded is not None and not final_lab_avail: lab_upgrades_started.append(upgraded.lower())
         except (KeyboardInterrupt, SystemExit): raise
-        except: pass
+        except:
+            logger.warning("Encountered an error while attempting to upgrade builder lab. Retrying...")
         
         for upgrade in upgrades_started + lab_upgrades_started:
             send_notification(f"Started upgrading {upgrade}")

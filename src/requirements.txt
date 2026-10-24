@@ -9,6 +9,7 @@ loguru
 lxml
 matplotlib
 numpy
+ocrmac; sys_platform == 'darwin'
 opencv-python
 pillow
 portalocker
