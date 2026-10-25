@@ -124,3 +124,12 @@ https://github.com/user-attachments/assets/3068863a-fa5a-4bef-bfb5-fb35f56ddd16
 
 ### Desktop App Demo
 https://github.com/user-attachments/assets/a0893115-0feb-4dba-ab29-756a2f422a83
+
+## Star History
+<a href="https://www.star-history.com/?repos=m24842%2Fcoc_bot&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=m24842/coc_bot&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=m24842/coc_bot&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=m24842/coc_bot&type=date&legend=top-left" />
+ </picture>
+</a>
