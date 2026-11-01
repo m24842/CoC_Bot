@@ -12,7 +12,7 @@ if __name__ == "__main__":
     init_instance(args.id)
     bot = CoC_Bot()
     frame = Frame_Handler.screenshot()
-    
+
     # start_coc()
     # bot.run()
     # to_home_base()

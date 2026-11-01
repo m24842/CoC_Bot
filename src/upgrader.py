@@ -195,6 +195,7 @@ class Upgrader:
             import time
             
             self._click_build_button()
+            time.sleep(0.5)
             start = time.time()
             while time.time() < start + timeout:
                 try:
