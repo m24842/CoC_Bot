@@ -34,17 +34,19 @@ def enable_logging(id):
         filter=lambda record: is_included(record),
     )
 
-    logger.add(
-        sys.stdout,
-        level="INFO",
-        format="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | {message}",
-        filter=lambda record: is_included(record) and record["level"].no < 30
-    )
+    if sys.stdout is not None:
+        logger.add(
+            sys.stdout,
+            level="INFO",
+            format="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | {message}",
+            filter=lambda record: is_included(record) and record["level"].no < 30
+        )
 
-    logger.add(
-        sys.stderr,
-        level="ERROR",
-        format="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | {message}",
-        filter=lambda record: is_included(record) and record["level"].no >= 30
-    )
+    if sys.stderr is not None:
+        logger.add(
+            sys.stderr,
+            level="ERROR",
+            format="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | {message}",
+            filter=lambda record: is_included(record) and record["level"].no >= 30
+        )
 
