@@ -113,11 +113,11 @@
 * Suggest new features in [Ideas](https://github.com/m24842/CoC_Bot/discussions/categories/ideas)
 
 ## Demos
-### Updated Bot Demo
-https://github.com/user-attachments/assets/88e4a675-758b-403a-8496-9490ccffe1b3
+### Latest Bot Demo
+https://github.com/user-attachments/assets/80f1bc50-332c-4c91-a392-99fc832195a3
 
-### Original Bot Demo
-https://github.com/user-attachments/assets/735bb9c0-074d-4dcd-9e3a-e0256b2d9438
+### Archived Bot Demos
+[Click here](media/README.md)
 
 ### Web App Demo
 https://github.com/user-attachments/assets/3068863a-fa5a-4bef-bfb5-fb35f56ddd16
