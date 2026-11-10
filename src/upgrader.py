@@ -75,7 +75,7 @@ class Upgrader:
     # ============================================================
     
     def get_home_builders(self, timeout=60, use_cached_frame=False):
-            import time
+            import time, numpy as np
             
             start = time.time()
             while time.time() < start + timeout:
@@ -83,17 +83,31 @@ class Upgrader:
                     section = Frame_Handler.get_frame_section(0.89, 0.75, -0.07, -0.21, high_contrast=True, use_cached=use_cached_frame)
                     if configs.DEBUG: Frame_Handler.save_frame(section, "home_builders.png")
                     
-                    slash = render_text("/", "SupercellMagic", 24)
+                    # Find the backslash
+                    font_size = 24
+                    slash = render_text("/", "SupercellMagic", font_size)
                     x, y, c = Frame_Handler.locate(
                         slash,
                         section,
                         grayscale=True,
+                        ref="lc",
                         return_confidence=True
                     )
                     if c < 0.9: continue
-                    
-                    text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
-                    available = int(text[0])
+
+                    section = Frame_Handler.crop(section, 0, 0, x, 1)
+
+                    # Determine number by best match to template
+                    numbers = [render_text(str(i), "SupercellMagic", font_size) for i in range(10)]
+                    xycs = Frame_Handler.batch_locate(
+                        numbers,
+                        section,
+                        grayscale=True,
+                        return_confidence=True
+                    )
+                    xs, ys, cs = zip(*xycs)
+                    if max(cs) < 0.8: continue
+                    available = np.argmax(cs)
                     return available
                 except (KeyboardInterrupt, SystemExit): raise
                 except Exception as e:
@@ -103,7 +117,7 @@ class Upgrader:
             raise Exception("Failed to get home builders")
     
     def get_builder_builders(self, timeout=60, use_cached_frame=False):
-        import time
+        import time, numpy as np
         
         start = time.time()
         while time.time() < start + timeout:
@@ -111,17 +125,31 @@ class Upgrader:
                 section = Frame_Handler.get_frame_section(0.89, 0.75, -0.07, -0.21, high_contrast=True, use_cached=use_cached_frame)
                 if configs.DEBUG: Frame_Handler.save_frame(section, "builder_builders.png")
                 
-                slash = render_text("/", "SupercellMagic", 24)
+                # Find the backslash
+                font_size = 26
+                slash = render_text("/", "SupercellMagic", font_size)
                 x, y, c = Frame_Handler.locate(
                     slash,
                     section,
+                    ref="lc",
                     grayscale=True,
                     return_confidence=True
                 )
                 if c < 0.9: continue
-                
-                text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
-                available = int(text[0])
+
+                section = Frame_Handler.crop(section, 0, 0, x, 1)
+
+                # Determine number by best match to template
+                numbers = [render_text(str(i), "SupercellMagic", font_size) for i in range(10)]
+                xycs = Frame_Handler.batch_locate(
+                    numbers,
+                    section,
+                    grayscale=True,
+                    return_confidence=True
+                )
+                xs, ys, cs = zip(*xycs)
+                if max(cs) < 0.8: continue
+                available = np.argmax(cs)
                 return available
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
@@ -131,7 +159,7 @@ class Upgrader:
         raise Exception("Failed to get builder builders")
 
     def home_lab_available(self, timeout=60, use_cached_frame=False):
-        import time
+        import time, numpy as np
         
         start = time.time()
         while time.time() < start + timeout:
@@ -140,18 +168,30 @@ class Upgrader:
                 if configs.DEBUG: Frame_Handler.save_frame(section, "home_lab.png")
                 
                 # Find the backslash
-                slash = render_text("/", "SupercellMagic", 24)
+                font_size = 24
+                slash = render_text("/", "SupercellMagic", font_size)
                 x, y, c = Frame_Handler.locate(
                     slash,
                     section,
+                    ref="lc",
                     grayscale=True,
                     return_confidence=True
                 )
                 if c < 0.9: continue
-                
-                # Extract text
-                text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
-                available = int(text[0])
+
+                section = Frame_Handler.crop(section, 0, 0, x, 1)
+
+                # Determine number by best match to template
+                numbers = [render_text(str(i), "SupercellMagic", font_size) for i in range(10)]
+                xycs = Frame_Handler.batch_locate(
+                    numbers,
+                    section,
+                    grayscale=True,
+                    return_confidence=True
+                )
+                xs, ys, cs = zip(*xycs)
+                if max(cs) < 0.8: continue
+                available = np.argmax(cs)
                 return available > 0
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
@@ -161,7 +201,7 @@ class Upgrader:
         raise Exception("Failed to get home lab availability")
 
     def builder_lab_available(self, timeout=60, use_cached_frame=False):
-        import time
+        import time, numpy as np
         
         start = time.time()
         while time.time() < start + timeout:
@@ -170,18 +210,30 @@ class Upgrader:
                 if configs.DEBUG: Frame_Handler.save_frame(section, "builder_lab.png")
                 
                 # Find the backslash
-                slash = render_text("/", "SupercellMagic", 24)
+                font_size = 26
+                slash = render_text("/", "SupercellMagic", font_size)
                 x, y, c = Frame_Handler.locate(
                     slash,
                     section,
+                    ref="lc",
                     grayscale=True,
                     return_confidence=True
                 )
                 if c < 0.9: continue
-                
-                # Extract text
-                text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
-                available = int(text[0])
+
+                section = Frame_Handler.crop(section, 0, 0, x, 1)
+
+                # Determine number by best match to template
+                numbers = [render_text(str(i), "SupercellMagic", 26) for i in range(10)]
+                xycs = Frame_Handler.batch_locate(
+                    numbers,
+                    section,
+                    grayscale=True,
+                    return_confidence=True
+                )
+                xs, ys, cs = zip(*xycs)
+                if max(cs) < 0.8: continue
+                available = np.argmax(cs)
                 return available > 0
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
@@ -192,7 +244,7 @@ class Upgrader:
     
     @require_exit(x=0.99, y=0.01)
     def pet_house_available(self, timeout=60, use_cached_frame=False):
-            import time
+            import time, numpy as np
             
             self._click_build_button()
             time.sleep(0.5)
@@ -203,18 +255,30 @@ class Upgrader:
                     if configs.DEBUG: Frame_Handler.save_frame(section, "pet_house.png")
                     
                     # Find the backslash
-                    slash = render_text("/", "SupercellMagic", 16)
+                    font_size = 16
+                    slash = render_text("/", "SupercellMagic", font_size)
                     x, y, c = Frame_Handler.locate(
                         slash,
                         section,
+                        ref="lc",
                         grayscale=True,
                         return_confidence=True
                     )
                     if c < 0.9: continue
-                    
-                    # Extract text
-                    text = fix_digits(''.join(OCR_Handler.get_text(section)).replace(' ', '').replace('/', ''))
-                    available = int(text[0])
+
+                    section = Frame_Handler.crop(section, 0, 0, x, 1)
+
+                    # Determine number by best match to template
+                    numbers = [render_text(str(i), "SupercellMagic", font_size) for i in range(10)]
+                    xycs = Frame_Handler.batch_locate(
+                        numbers,
+                        section,
+                        grayscale=True,
+                        return_confidence=True
+                    )
+                    xs, ys, cs = zip(*xycs)
+                    if max(cs) < 0.8: continue
+                    available = np.argmax(cs)
                     return available > 0
                 except (KeyboardInterrupt, SystemExit): raise
                 except Exception as e:

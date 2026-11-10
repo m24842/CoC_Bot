@@ -127,7 +127,7 @@ def request_perms():
     elif sys.platform == "win32":
         pass
 
-def require_exit(x=0.99, y=0.99, n=5, delay=0.1):
+def require_exit(x=0.99, y=0.99, n=4, delay=0.1):
     def decorator(func):
         def wrapper(*args, **kwargs):
             result = None
