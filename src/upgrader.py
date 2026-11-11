@@ -98,7 +98,11 @@ class Upgrader:
                     section = Frame_Handler.crop(section, 0, 0, x, 1)
 
                     # Determine number by best match to template
-                    numbers = [render_text(str(i), "SupercellMagic", font_size) for i in range(10)]
+                    numbers = [
+                        render_text(str(i), "SupercellMagic", font_size + j)
+                        for j in (-1, 0, 1)
+                        for i in range(10)
+                    ]
                     xycs = Frame_Handler.batch_locate(
                         numbers,
                         section,
@@ -107,7 +111,7 @@ class Upgrader:
                     )
                     xs, ys, cs = zip(*xycs)
                     if max(cs) < 0.8: continue
-                    available = np.argmax(cs)
+                    available = np.argmax(cs) % 10
                     return available
                 except (KeyboardInterrupt, SystemExit): raise
                 except Exception as e:
@@ -140,7 +144,11 @@ class Upgrader:
                 section = Frame_Handler.crop(section, 0, 0, x, 1)
 
                 # Determine number by best match to template
-                numbers = [render_text(str(i), "SupercellMagic", font_size) for i in range(10)]
+                numbers = [
+                    render_text(str(i), "SupercellMagic", font_size + j)
+                    for j in (-1, 0, 1)
+                    for i in range(10)
+                ]
                 xycs = Frame_Handler.batch_locate(
                     numbers,
                     section,
@@ -149,7 +157,7 @@ class Upgrader:
                 )
                 xs, ys, cs = zip(*xycs)
                 if max(cs) < 0.8: continue
-                available = np.argmax(cs)
+                available = np.argmax(cs) % 10
                 return available
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
@@ -182,7 +190,11 @@ class Upgrader:
                 section = Frame_Handler.crop(section, 0, 0, x, 1)
 
                 # Determine number by best match to template
-                numbers = [render_text(str(i), "SupercellMagic", font_size) for i in range(10)]
+                numbers = [
+                    render_text(str(i), "SupercellMagic", font_size + j)
+                    for j in (-1, 0, 1)
+                    for i in range(10)
+                ]
                 xycs = Frame_Handler.batch_locate(
                     numbers,
                     section,
@@ -191,7 +203,7 @@ class Upgrader:
                 )
                 xs, ys, cs = zip(*xycs)
                 if max(cs) < 0.8: continue
-                available = np.argmax(cs)
+                available = np.argmax(cs) % 10
                 return available > 0
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
@@ -224,7 +236,11 @@ class Upgrader:
                 section = Frame_Handler.crop(section, 0, 0, x, 1)
 
                 # Determine number by best match to template
-                numbers = [render_text(str(i), "SupercellMagic", 26) for i in range(10)]
+                numbers = [
+                    render_text(str(i), "SupercellMagic", font_size + j)
+                    for j in (-1, 0, 1)
+                    for i in range(10)
+                ]
                 xycs = Frame_Handler.batch_locate(
                     numbers,
                     section,
@@ -233,7 +249,7 @@ class Upgrader:
                 )
                 xs, ys, cs = zip(*xycs)
                 if max(cs) < 0.8: continue
-                available = np.argmax(cs)
+                available = np.argmax(cs) % 10
                 return available > 0
             except (KeyboardInterrupt, SystemExit): raise
             except Exception as e:
@@ -269,7 +285,11 @@ class Upgrader:
                     section = Frame_Handler.crop(section, 0, 0, x, 1)
 
                     # Determine number by best match to template
-                    numbers = [render_text(str(i), "SupercellMagic", font_size) for i in range(10)]
+                    numbers = [
+                        render_text(str(i), "SupercellMagic", font_size + j)
+                        for j in (-1, 0, 1)
+                        for i in range(10)
+                    ]
                     xycs = Frame_Handler.batch_locate(
                         numbers,
                         section,
@@ -278,7 +298,7 @@ class Upgrader:
                     )
                     xs, ys, cs = zip(*xycs)
                     if max(cs) < 0.8: continue
-                    available = np.argmax(cs)
+                    available = np.argmax(cs) % 10
                     return available > 0
                 except (KeyboardInterrupt, SystemExit): raise
                 except Exception as e:
