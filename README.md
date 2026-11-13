@@ -4,7 +4,7 @@
         <img src="media/Cover_Image.png" alt="Cover Image" width="25%">
     </a>
     <br>
-    <a href="#updated-bot-demo">Click for Demo Video</a>
+    <a href="#latest-bot-demo">Click for Demo Video</a>
 </p>
 
 ## Automated Features (Both Villages)
