@@ -477,11 +477,33 @@ def extend_pythonanywhere_hosting(username, password):
     assert res.url == webapps_url
 
 def in_home_base():
+    import numpy as np
+
+    # First check for resource colors
+    section = Frame_Handler.get_frame_section(0.95, 0.02, 1.0, 0.3, grayscale=False)
+    resource_sections = [
+        Frame_Handler.crop(section, 0.0, 0.25*i, 1.0, 0.25*(i+1)) for i in range(4)
+    ]
+    target_colors = [
+        (255, 242, 85), # gold
+        (255, 73, 255), # elixir
+        (63, 48, 66), # dark elixir
+        (211, 236, 116), # gems
+    ]
+    found_all = True
+    for sec, color in zip(resource_sections, target_colors):
+        diff = abs(sec.astype(int) - np.array(color).reshape((1, 1, 3))).sum(2)
+        if min(diff.flatten()) > 10:
+            found_all = False
+            break
+    if found_all: return True
+
+    # Fallback to gold template matching
     return Frame_Handler.locate(
         Asset_Manager.upgrader_assets["home_gold"],
         grayscale=False,
         prefilter=True,
-        thresh=0.9
+        thresh=0.85
     ) != (None, None)
 
 def to_home_base(ref_cache=False):
@@ -596,11 +618,32 @@ def update_coc(timeout=10, from_in_game=False):
     if not from_in_game: to_system_home()
 
 def in_builder_base():
+    import numpy as np
+    
+    # First check for resource colors
+    section = Frame_Handler.get_frame_section(0.95, 0.02, 1.0, 0.225, grayscale=False)
+    resource_sections = [
+        Frame_Handler.crop(section, 0.0, 0.33*i, 1.0, 0.33*(i+1)) for i in range(3)
+    ]
+    target_colors = [
+        (255, 255, 87), # gold
+        (158, 49, 255), # elixir
+        (211, 236, 116), # gems
+    ]
+    found_all = True
+    for sec, color in zip(resource_sections, target_colors):
+        diff = abs(sec.astype(int) - np.array(color).reshape((1, 1, 3))).sum(2).flatten()
+        if min(diff) > 10:
+            found_all = False
+            break
+    if found_all: return True
+
+    # Fallback to gold template matching
     return Frame_Handler.locate(
         Asset_Manager.upgrader_assets["builder_gold"],
         grayscale=False,
         prefilter=True,
-        thresh=0.9
+        thresh=0.85
     ) != (None, None)
 
 def to_builder_base(ref_cache=False):
