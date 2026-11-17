@@ -544,7 +544,7 @@ def start_coc(timeout=60, detailed=False):
         to_system_home()
         logger.info("Starting CoC...")
 
-        cont_templates = [render_text("Continue", "SupercellMagic", s, color=(255, 255, 255)) for s in range(25, 31)]
+        cont_templates = [render_text("Continue", "SupercellMagic", s, color=(255, 255, 255)) for s in range(25, 35)]
 
         i = 0
         start = time.time()
